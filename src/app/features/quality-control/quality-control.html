@@ -1,0 +1,196 @@
+<div class="quality-control">
+  <div class="page-header">
+    <h1>Kiểm Soát Chất Lượng</h1>
+    <div class="header-actions">
+      <button class="btn btn-primary">
+        <i class="fas fa-plus"></i>
+        Thêm kiểm tra
+      </button>
+      <button class="btn btn-success">
+        <i class="fas fa-chart-bar"></i>
+        Báo cáo chất lượng
+      </button>
+    </div>
+  </div>
+  
+  <!-- Quality Metrics -->
+  <div class="row">
+    <div class="col-3">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Tỷ lệ đạt chuẩn</h3>
+        </div>
+        <div class="quality-metric">
+          <span class="metric-number">95.2%</span>
+          <div class="progress-bar">
+            <div class="progress" style="width: 95.2%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-3">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Sản phẩm lỗi</h3>
+        </div>
+        <div class="quality-metric">
+          <span class="metric-number">24</span>
+          <span class="metric-label">Sản phẩm</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-3">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Kiểm tra hôm nay</h3>
+        </div>
+        <div class="quality-metric">
+          <span class="metric-number">156</span>
+          <span class="metric-label">Lần kiểm tra</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-3">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Đang chờ kiểm tra</h3>
+        </div>
+        <div class="quality-metric">
+          <span class="metric-number">8</span>
+          <span class="metric-label">Lô sản phẩm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Quality Checks Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Lịch sử kiểm tra chất lượng</h3>
+      <div class="table-actions">
+        <button class="btn btn-warning">
+          <i class="fas fa-filter"></i>
+          Lọc
+        </button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã kiểm tra</th>
+            <th>Lô sản phẩm</th>
+            <th>Sản phẩm</th>
+            <th>Người kiểm tra</th>
+            <th>Kết quả</th>
+            <th>Ghi chú</th>
+            <th>Ngày kiểm tra</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>QC001</td>
+            <td>#1234</td>
+            <td>Sản phẩm A</td>
+            <td>Nguyễn Văn A</td>
+            <td><span class="badge badge-success">Đạt</span></td>
+            <td>Chất lượng tốt</td>
+            <td>15/09/2024 14:30</td>
+            <td>
+              <button class="btn btn-primary btn-sm">Chi tiết</button>
+              <button class="btn btn-warning btn-sm">Sửa</button>
+            </td>
+          </tr>
+          <tr>
+            <td>QC002</td>
+            <td>#1235</td>
+            <td>Sản phẩm B</td>
+            <td>Trần Thị B</td>
+            <td><span class="badge badge-danger">Không đạt</span></td>
+            <td>Lỗi kích thước</td>
+            <td>15/09/2024 13:15</td>
+            <td>
+              <button class="btn btn-primary btn-sm">Chi tiết</button>
+              <button class="btn btn-warning btn-sm">Sửa</button>
+            </td>
+          </tr>
+          <tr>
+            <td>QC003</td>
+            <td>#1236</td>
+            <td>Sản phẩm C</td>
+            <td>Lê Văn C</td>
+            <td><span class="badge badge-success">Đạt</span></td>
+            <td>Đạt tiêu chuẩn</td>
+            <td>15/09/2024 11:45</td>
+            <td>
+              <button class="btn btn-primary btn-sm">Chi tiết</button>
+              <button class="btn btn-warning btn-sm">Sửa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Quality Standards -->
+  <div class="row">
+    <div class="col-6">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Tiêu chuẩn chất lượng</h3>
+        </div>
+        <div class="standards-list">
+          <div class="standard-item">
+            <div class="standard-name">
+              <i class="fas fa-check-circle text-success"></i>
+              <span>Kích thước sản phẩm</span>
+            </div>
+            <div class="standard-value">±0.1mm</div>
+          </div>
+          <div class="standard-item">
+            <div class="standard-name">
+              <i class="fas fa-check-circle text-success"></i>
+              <span>Độ bền cơ học</span>
+            </div>
+            <div class="standard-value">≥50 N/m²</div>
+          </div>
+          <div class="standard-item">
+            <div class="standard-name">
+              <i class="fas fa-exclamation-triangle text-warning"></i>
+              <span>Độ bóng bề mặt</span>
+            </div>
+            <div class="standard-value">≥80%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-6">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Cảnh báo chất lượng</h3>
+        </div>
+        <div class="quality-alerts">
+          <div class="alert-item warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="alert-content">
+              <h4>Tỷ lệ lỗi tăng cao</h4>
+              <p>Dây chuyền B - Tỷ lệ lỗi tăng 15% so với tuần trước</p>
+            </div>
+          </div>
+          <div class="alert-item info">
+            <i class="fas fa-info-circle"></i>
+            <div class="alert-content">
+              <h4>Cần kiểm tra định kỳ</h4>
+              <p>Thiết bị đo lường cần được hiệu chuẩn</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
