@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Temporarily allow read/write access to all documents for testing
+    // TODO: Restrict access after authentication is properly implemented
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Specific rules for each collection
+    match /tbl_bangve/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tbl_bd_cao/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tbl_bd_ha/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tbl_ep_boiday/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tbl_kcs_approve/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /tbl_user_bangve/{document} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

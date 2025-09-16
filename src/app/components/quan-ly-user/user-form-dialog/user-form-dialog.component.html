@@ -1,0 +1,82 @@
+<div class="user-form-dialog">
+  <h2 mat-dialog-title>
+    {{ data.mode === 'add' ? 'Thêm người dùng mới' : 'Chỉnh sửa người dùng' }}
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="userForm" class="user-form">
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Họ tên</mat-label>
+          <input matInput 
+                 formControlName="displayName"
+                 placeholder="Nhập họ tên">
+          <mat-error *ngIf="userForm.get('displayName')?.invalid && userForm.get('displayName')?.touched">
+            {{ getErrorMessage('displayName') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput 
+                 type="email"
+                 formControlName="email"
+                 placeholder="Nhập email"
+                 [readonly]="data.mode === 'edit'">
+          <mat-error *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched">
+            {{ getErrorMessage('email') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Vai trò</mat-label>
+          <mat-select formControlName="role">
+            <mat-option *ngFor="let role of userRoles" [value]="role">
+              {{ getRoleDisplayName(role) }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="userForm.get('role')?.invalid && userForm.get('role')?.touched">
+            {{ getErrorMessage('role') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Phòng ban</mat-label>
+          <input matInput 
+                 formControlName="department"
+                 placeholder="Nhập phòng ban">
+          <mat-error *ngIf="userForm.get('department')?.invalid && userForm.get('department')?.touched">
+            {{ getErrorMessage('department') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-slide-toggle formControlName="isActive" color="primary">
+          Tài khoản hoạt động
+        </mat-slide-toggle>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="isLoading">
+      Hủy
+    </button>
+    <button mat-raised-button 
+            color="primary" 
+            (click)="onSubmit()"
+            [disabled]="userForm.invalid || isLoading">
+      <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+      <span *ngIf="!isLoading">
+        {{ data.mode === 'add' ? 'Tạo' : 'Cập nhật' }}
+      </span>
+    </button>
+  </mat-dialog-actions>
+</div>

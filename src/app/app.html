@@ -1,14 +1,27 @@
-<div class="app-container">
+<!-- Show layout only when authenticated -->
+<div class="app-container" *ngIf="isAuthenticated">
   <!-- Header -->
-  <app-header (sidebarToggle)="onSidebarToggle()"></app-header>
+  <app-header 
+    [isMobile]="isMobile"
+    (sidebarToggle)="onSidebarToggle()"
+    (mobileSidebarToggle)="onMobileSidebarToggle()">
+  </app-header>
   
   <div class="main-content">
     <!-- Sidebar -->
-    <app-sidebar [isCollapsed]="isSidebarCollapsed"></app-sidebar>
+    <app-sidebar 
+      [isCollapsed]="isSidebarCollapsed"
+      (mobileToggle)="onMobileSidebarToggle()">
+    </app-sidebar>
     
     <!-- Main Content Area -->
     <div class="content-area" [class.sidebar-collapsed]="isSidebarCollapsed">
       <router-outlet></router-outlet>
     </div>
   </div>
+</div>
+
+<!-- Show login page when not authenticated -->
+<div *ngIf="!isAuthenticated">
+  <router-outlet></router-outlet>
 </div>

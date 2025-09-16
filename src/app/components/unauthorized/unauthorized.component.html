@@ -1,0 +1,22 @@
+<div class="unauthorized-container">
+  <mat-card class="unauthorized-card">
+    <mat-card-content>
+      <div class="error-content">
+        <mat-icon class="error-icon">block</mat-icon>
+        <h1>403 - Không có quyền truy cập</h1>
+        <p>Bạn không có quyền truy cập vào trang này.</p>
+        <p>Vui lòng liên hệ quản trị viên để được cấp quyền phù hợp.</p>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Quay lại
+      </button>
+      <button mat-button (click)="goToLogin()">
+        <mat-icon>login</mat-icon>
+        Đăng nhập lại
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

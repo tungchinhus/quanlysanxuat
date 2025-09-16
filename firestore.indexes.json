@@ -1,0 +1,89 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "tbl_bangve",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kyhieubangve",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tbl_bd_cao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kyhieubangve",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ngaygiacong",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tbl_bd_ha",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kyhieubangve",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ngaygiacong",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tbl_ep_boiday",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kyhieubangve",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ngaygiacong",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tbl_kcs_approve",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "kyhieubangve",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ngay_approve",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tbl_user_bangve",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "assigned_at",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
