@@ -1,7 +1,7 @@
 {
   "hosting": {
-    "site": "quanlysanxuat-thibidi",
-    "public": "dist/browser",
+    "site": "quanlysx",
+    "public": "dist/quanlysxFE/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
