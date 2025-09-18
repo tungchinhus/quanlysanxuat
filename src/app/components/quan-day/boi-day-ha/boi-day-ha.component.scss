@@ -1,0 +1,204 @@
+/* app.component.css */
+.main-container {
+  padding: 24px;
+  background-color: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align to top */
+  min-height: 100vh; /* Ensure it takes full viewport height */
+}
+
+.form-card {
+  max-width: 960px; /* Equivalent to max-w-4xl */
+  width: 100%;
+  padding: 24px; /* Equivalent to p-6 sm:p-8 md:p-10 */
+  border-radius: 12px; /* Equivalent to rounded-xl */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Equivalent to shadow-lg */
+}
+
+mat-card-title {
+  font-size: 2rem; /* Equivalent to text-3xl sm:text-4xl */
+  font-weight: 700; /* Equivalent to font-bold */
+  color: #374151; /* Equivalent to text-gray-800 */
+  margin-bottom: 32px; /* Equivalent to mb-8 */
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr; /* Default to single column on small screens */
+  gap: 24px; /* Equivalent to gap-6 */
+  margin-bottom: 24px; /* Equivalent to mb-6 */
+}
+
+@media (min-width: 768px) { /* md breakpoint */
+  .form-row {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+  }
+}
+
+.form-row-3-cols {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) { /* md breakpoint */
+  .form-row-3-cols {
+    grid-template-columns: repeat(3, 1fr); /* 3 columns on medium screens */
+  }
+}
+
+.form-row-4-cols {
+  grid-template-columns: repeat(2, 1fr); /* 2 columns on small screens for these specific inputs */
+}
+
+@media (min-width: 640px) { /* sm breakpoint */
+  .form-row-4-cols {
+    grid-template-columns: repeat(4, 1fr); /* 4 columns on small-medium screens */
+  }
+}
+
+.form-row-full {
+  margin-bottom: 24px; /* Equivalent to mb-6 */
+}
+
+.form-field {
+  width: 100%;
+}
+
+.form-field-full {
+  width: 100%;
+}
+
+/* Adjust Material form field height */
+.mat-form-field-appearance-outline .mat-form-field-flex {
+    padding: 0.375rem 0.75rem !important; /* py-1.5 px-3 */
+}
+
+.mat-form-field-appearance-outline .mat-form-field-infix {
+    padding: 0.375rem 0 !important; /* Adjust vertical padding for infix as well */
+}
+
+.mat-form-field-wrapper {
+    padding-bottom: 1.25em !important; /* Reduce space below field */
+}
+
+.mat-form-field-subscript-wrapper {
+    margin-top: 0; /* Align error messages closer */
+}
+
+.mat-form-field-label {
+    top: 0.5em !important; /* Adjust label position */
+}
+
+.mat-form-field-appearance-outline .mat-form-field-label-wrapper .mat-form-field-label.mat-form-field-label-floating {
+    transform: translateY(-0.75em) scale(0.75) !important; /* Adjust floating label position */
+}
+
+.mat-form-field-outline {
+    border-radius: 8px; /* Equivalent to rounded-lg */
+}
+
+/* Radio button group styling */
+.radio-group {
+  display: flex;
+  flex-direction: column; /* Stack on small screens */
+  gap: 24px; /* Equivalent to space-x-6 (horizontal) or space-y-2 (vertical) */
+  margin-top: 8px; /* Equivalent to mb-2 for label */
+}
+
+@media (min-width: 640px) { /* sm breakpoint */
+  .radio-group {
+    flex-direction: row; /* Row on medium screens */
+  }
+}
+
+.block-label {
+  display: block;
+  color: #374151; /* text-gray-700 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  margin-bottom: 8px; /* mb-2 */
+}
+
+.section-card {
+  margin-bottom: 24px; /* Equivalent to mb-6 */
+  background-color: #f9fafb; /* Equivalent to bg-gray-50 */
+  border-radius: 8px; /* Equivalent to rounded-lg */
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); /* Equivalent to shadow-inner */
+}
+
+.section-card mat-card-title {
+  font-size: 1.125rem; /* Equivalent to text-lg */
+  font-weight: 600; /* Equivalent to font-semibold */
+  color: #374151; /* text-gray-800 */
+  margin-bottom: 16px; /* mb-4 */
+}
+
+.form-group-label {
+  display: block;
+  color: #374151; /* text-gray-700 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  margin-bottom: 12px; /* mb-3 */
+}
+
+.form-row-bv {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr); /* Default to 1 col */
+  gap: 16px; /* gap-4 */
+  align-items: center;
+  margin-bottom: 24px; /* mb-6 */
+}
+
+@media (min-width: 640px) { /* sm breakpoint */
+  .form-row-bv {
+    grid-template-columns: auto auto repeat(3, 1fr); /* 2 auto columns + 3 equal columns */
+  }
+}
+
+.form-row-bv-outside {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr); /* Default to 1 col */
+  gap: 16px; /* gap-4 */
+  align-items: center;
+  margin-bottom: 24px; /* mb-6 */
+}
+
+@media (min-width: 640px) { /* sm breakpoint */
+  .form-row-bv-outside {
+    grid-template-columns: auto auto repeat(4, 1fr); /* 2 auto columns + 4 equal columns */
+  }
+}
+
+.label-text {
+  color: #4b5563; /* text-gray-600 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.label-text-small {
+  color: #6b7280; /* text-gray-500 */
+  font-size: 0.75rem; /* text-xs */
+  white-space: nowrap;
+}
+
+.block-label-inline {
+  color: #374151; /* text-gray-700 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  white-space: nowrap;
+}
+
+.form-row-flex-label {
+  display: flex;
+  flex-direction: column; /* Stack on small screens */
+  gap: 16px; /* gap-4 */
+  margin-bottom: 24px; /* mb-6 */
+}
+
+@media (min-width: 640px) {
+  .form-row-flex-label {
+    flex-direction: row; /* Row on medium screens */
+    align-items: center;
+  }
+}

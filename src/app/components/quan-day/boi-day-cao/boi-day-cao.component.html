@@ -1,0 +1,29 @@
+<div *ngIf="isActive" class="tab-content-container">
+  <mat-form-field appearance="outline">
+    <mat-label>Bối dây Cao</mat-label>
+    <input matInput [formControl]="boiDayCaoControl" placeholder="Nhập giá trị bối dây cao">
+    <mat-error *ngIf="boiDayCaoControl.hasError('required')">Dữ liệu Bối dây cao là bắt buộc!</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Địa chỉ</mat-label>
+    <input matInput placeholder="Nhập địa chỉ">
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Số Điện Thoại</mat-label>
+    <input matInput type="tel" placeholder="Nhập số điện thoại">
+  </mat-form-field>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons" *ngIf="isPopup" style="margin-top: 20px; text-align: right;">
+    <button mat-button (click)="onCancel()" type="button" style="margin-right: 10px;">
+      <mat-icon>cancel</mat-icon>
+      Hủy
+    </button>
+    <button mat-raised-button color="primary" (click)="onComplete()" type="button" [disabled]="!canComplete()">
+      <mat-icon>save</mat-icon>
+      {{ mode === 'view' ? 'Đóng' : 'Hoàn thành' }}
+    </button>
+  </div>
+</div>

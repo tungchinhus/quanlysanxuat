@@ -1,0 +1,717 @@
+.main-container {
+  padding: 8px; // Giảm padding từ 16px xuống 8px
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  max-width: 210mm; // Kích thước A4 width
+  margin: 0 auto;
+}
+
+.boi-day-ha-header {
+ padding: 8px 16px; // Giảm padding từ 12px 20px xuống 8px 16px
+ background-color: #dcfce7;
+ border-bottom: 1px solid #ddd;
+ margin-bottom: 8px; // Giảm margin từ 16px xuống 8px
+
+ h2 {
+   margin: 0;
+   font-size: 16px; // Giảm font-size từ 18px xuống 16px
+   font-weight: bold;
+   color: #333;
+ }
+}
+
+/* Style for the footer with the "Hoàn thành" button */
+.form-footer {
+ padding: 8px 16px; // Giảm padding từ 12px 20px xuống 8px 16px
+ border-top: 1px solid #ddd;
+ text-align: right;
+ margin-top: 8px; // Giảm margin từ 16px xuống 8px
+
+ button {
+   padding: 6px 12px; // Giảm padding từ 8px 16px xuống 6px 12px
+   background-color: #007bff;
+   color: white;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+   font-size: 13px; // Giảm font-size từ 14px xuống 13px
+
+   &:hover {
+     background-color: #0056b3;
+   }
+ }
+}
+
+mat-card-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-card {
+  padding: 8px; // Giảm padding từ 12px xuống 8px
+  margin-bottom: 16px; // Giảm margin từ 20px xuống 16px
+  max-width: 210mm; // Kích thước A4 width
+  margin: 0 auto;
+}
+
+.text-center {
+  text-align: center;
+}
+
+// Compact Grid Layouts
+.compact-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 8px; // Giảm gap từ 6px 12px xuống 4px 8px
+  margin-bottom: 6px; // Giảm margin từ 8px xuống 6px
+  align-items: center;
+}
+
+.compact-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.compact-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.compact-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px 8px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.compact-form-group {
+  display: flex;
+  align-items: center;
+  gap: 8px; // Giảm gap từ 12px xuống 8px
+  flex-wrap: wrap;
+  margin-bottom: 6px; // Giảm margin từ 8px xuống 6px
+
+  .form-group-label {
+    flex-shrink: 0;
+    min-width: 120px; // Giảm min-width từ 140px xuống 120px
+    font-weight: 500;
+    font-size: 12px; // Giảm font-size từ 13px xuống 12px
+    align-self: center;
+  }
+}
+
+.fixed-fields-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px; // Giảm gap từ 8px 16px xuống 6px 12px
+  width: 100%;
+}
+
+.fixed-field-group {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 200px; // Giảm min-width từ 220px xuống 200px
+  max-width: 100%;
+  box-sizing: border-box;
+
+  .fixed-label {
+    font-weight: 500;
+    min-width: 70px; // Giảm min-width từ 80px xuống 70px
+    font-size: 12px; // Giảm font-size từ 13px xuống 12px
+  }
+
+  .fixed-input {
+    flex: 1;
+    min-width: 100px; // Giảm min-width từ 120px xuống 100px
+  }
+
+  .unit-label {
+    margin-left: 2px; // Giảm margin từ 4px xuống 2px
+    font-size: 0.8rem; // Giảm font-size từ 0.85rem xuống 0.8rem
+  }
+}
+
+.form-row,
+.form-row-full,
+.form-row-3-cols,
+.form-row-4-cols,
+.form-row-5-cols,
+.form-row-bv,
+.form-row-bv-outside,
+.form-row-flex-label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px; // Giảm gap từ 6px 12px xuống 4px 8px
+  margin-bottom: 3px; // Giảm margin từ 4px xuống 3px
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.form-row-bv {
+  display: grid;
+  grid-template-columns: auto auto repeat(3, 1fr);
+  align-items: center;
+  gap: 4px 8px;
+  margin-bottom: 3px;
+
+  .label-text {
+    white-space: nowrap;
+    align-self: center;
+    font-size: 12px; // Giảm font-size
+  }
+}
+
+.form-row-flex-label {
+  display: flex;
+  align-items: center;
+  gap: 4px 8px;
+  margin-bottom: 3px;
+
+  .block-label-inline {
+    flex-shrink: 0;
+    align-self: center;
+    font-size: 12px; // Giảm font-size
+  }
+
+  .form-row-3-cols {
+    flex-grow: 1;
+    display: flex;
+    gap: 4px 8px;
+    align-items: center;
+  }
+}
+
+.aligned-form-group {
+  display: flex;
+  align-items: center;
+  gap: 8px; // Giảm gap từ 12px xuống 8px
+  flex-wrap: wrap;
+  margin-bottom: 6px; // Giảm margin từ 8px xuống 6px
+
+  .form-group-label {
+    flex-shrink: 0;
+    min-width: 120px; // Giảm min-width từ 140px xuống 120px
+    font-weight: 500;
+    font-size: 12px; // Giảm font-size
+    align-self: center;
+  }
+}
+
+.form-row-5-cols {
+  flex: 1;
+  display: flex;
+  gap: 4px 8px; // Giảm gap từ 6px 12px xuống 4px 8px
+  flex-wrap: wrap;
+  align-items: center;
+
+  .form-field {
+    flex: 1 1 0;
+    min-width: 50px; // Giảm min-width từ 60px xuống 50px
+  }
+}
+
+.form-field,
+.form-field-full {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-self: center;
+}
+
+.form-field,
+.form-field-full {
+  flex: 1;
+  min-width: 150px; // Giảm min-width từ 200px xuống 150px
+  margin-bottom: 0;
+}
+
+.form-row,
+.form-field,
+.form-field-full {
+  min-width: 0;
+  flex: 1 1 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-row-3-cols > *,
+.form-row-4-cols > *,
+.form-row-bv > *,
+.form-row-bv-outside > * {
+  flex: 1;
+  min-width: 120px; // Giảm min-width từ 160px xuống 120px
+  align-self: center;
+}
+
+/* Radio buttons */
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; // Giảm gap từ 12px xuống 8px
+  align-items: center;
+}
+
+/* Nhãn và văn bản phụ */
+.block-label,
+.block-label-inline,
+.form-group-label {
+  font-weight: 500;
+  margin-bottom: 1px; // Giảm margin từ 2px xuống 1px
+  align-self: center;
+  font-size: 12px; // Giảm font-size
+}
+
+.block-label-inline {
+  margin-right: 6px; // Giảm margin từ 8px xuống 6px
+}
+
+.label-text {
+  align-self: center;
+  font-weight: 500;
+  margin-right: 3px; // Giảm margin từ 4px xuống 3px
+  font-size: 12px; // Giảm font-size
+}
+
+.label-text-small {
+  align-self: center;
+  font-size: 11px; // Giảm font-size từ 12px xuống 11px
+  color: #777;
+  margin-left: 4px; // Giảm margin từ 6px xuống 4px
+}
+
+/* Card section */
+.section-card {
+  margin-top: 8px; // Giảm margin từ 12px xuống 8px
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; // Giảm gap từ 12px xuống 8px
+  }
+}
+
+// Adjust input height - Giảm chiều cao của form fields
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-wrapper {
+  margin: 0;
+}
+
+::ng-deep .mat-form-field-flex {
+  align-items: center;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix {
+  padding: 4px 0; // Giảm padding từ 6px xuống 4px
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-label {
+  margin-top: -2px; // Điều chỉnh vị trí label
+}
+
+// Giảm chiều cao của mat-form-field
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  top: 0;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  top: 0;
+}
+
+// Giảm chiều cao của input
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix {
+  min-height: 28px; // Giảm min-height từ 32px xuống 28px
+  display: flex;
+  align-items: center;
+}
+
+// Giảm font-size của input
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input {
+  font-size: 12px; // Giảm font-size từ 14px xuống 12px
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px; // Đặt line-height bằng với min-height
+  height: 28px; // Đặt height cố định
+  border: none;
+  background: transparent;
+  outline: none;
+}
+
+// Giảm font-size của label
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-label {
+  font-size: 11px; // Giảm font-size từ 13px xuống 11px
+}
+
+// Đảm bảo mat-form-field căn chỉnh đúng
+::ng-deep .mat-form-field {
+  align-self: center;
+}
+
+// Đảm bảo mat-select căn chỉnh đúng
+::ng-deep .mat-select {
+  align-self: center;
+}
+
+// Đảm bảo mat-radio-group căn chỉnh đúng
+::ng-deep .mat-radio-group {
+  align-self: center;
+}
+
+// Căn trái placeholder text
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input::placeholder {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+// Căn trái placeholder cho mat-select
+::ng-deep .mat-select-placeholder {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+// Căn trái text trong input
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+// Căn trái text trong mat-select
+::ng-deep .mat-select-value {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+// Căn trái text trong mat-select trigger
+::ng-deep .mat-select-trigger {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+// Căn trái text trong mat-select value text
+::ng-deep .mat-select-value-text {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+// Căn trái text trong mat-select panel
+::ng-deep .mat-select-panel .mat-option {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+// Căn trái text trong date picker input
+::ng-deep .mat-datepicker-toggle {
+  align-self: center;
+}
+
+// Căn trái text trong date input
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input[matDatepicker] {
+  text-align: left;
+  vertical-align: middle;
+  line-height: 28px;
+}
+
+::ng-deep mat-error {
+  display: none;
+}
+
+.section-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; // Giảm gap từ 8px xuống 6px
+}
+
+.section-separator {
+  border: none;
+  border-top: 1px solid #ccc;
+  width: 100%;
+  margin-top: 12px; // Giảm margin từ 20px xuống 12px
+  margin-bottom: 8px; // Thêm margin-bottom
+}
+
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0px 16px; // Giảm gap từ 0px 20px xuống 0px 16px
+  margin-bottom: 12px; // Giảm margin từ 16px xuống 12px
+  align-items: center;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  height: 28px; // Giảm height từ 32px xuống 28px
+
+  .label {
+    min-width: 60px; // Giảm min-width từ 70px xuống 60px
+    font-size: 11px; // Giảm font-size từ 13px xuống 11px
+    font-weight: 500;
+    align-self: center;
+  }
+
+  .input-field {
+    flex: 1;
+    min-width: 120px; // Giảm min-width từ 140px xuống 120px
+    align-self: center;
+  }
+
+  .unit {
+    font-size: 10px; // Giảm font-size từ 12px xuống 10px
+    white-space: nowrap;
+    align-self: center;
+  }
+}
+
+.mat-form-field-subscript-wrapper {
+  margin-top: 0 !important;
+}
+
+/* Responsive Design cho Tablet và Mobile */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .main-container {
+    padding: 6px;
+  }
+  
+  .form-card {
+    padding: 6px;
+    max-width: 100%;
+  }
+  
+  .compact-grid-2,
+  .compact-grid-3,
+  .compact-grid-4,
+  .compact-grid-5 {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .compact-form-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    
+    .form-group-label {
+      min-width: unset;
+      width: 100%;
+    }
+  }
+}
+
+/* Mobile (up to 767px) */
+@media (max-width: 767px) {
+  .main-container {
+    padding: 4px;
+  }
+  
+  .boi-day-ha-header {
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    
+    h2 {
+      font-size: 14px;
+    }
+  }
+  
+  .form-card {
+    padding: 4px;
+  }
+  
+  .form-footer {
+    padding: 6px 8px;
+    margin-top: 8px;
+    
+    button {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  }
+  
+  .form-item {
+    height: 24px;
+    
+    .label {
+      min-width: 50px;
+      font-size: 10px;
+    }
+    
+    .input-field {
+      min-width: 100px;
+    }
+    
+    .unit {
+      font-size: 9px;
+    }
+  }
+  
+  .section-separator {
+    margin-top: 12px;
+  }
+  
+  .compact-grid-2,
+  .compact-grid-3,
+  .compact-grid-4,
+  .compact-grid-5 {
+    margin-bottom: 4px;
+  }
+}
+
+/* Large Tablet (1025px - 1366px) */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .main-container {
+    padding: 6px;
+  }
+  
+  .form-card {
+    max-width: 95%;
+  }
+  
+  .compact-grid-2,
+  .compact-grid-3,
+  .compact-grid-4,
+  .compact-grid-5 {
+    gap: 3px 6px;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .form-field,
+  .form-field-full {
+    min-height: 40px; // Giảm từ 44px xuống 40px
+  }
+  
+  .form-item {
+    min-height: 40px; // Giảm từ 44px xuống 40px
+  }
+  
+  .form-footer button {
+    min-height: 40px; // Giảm từ 44px xuống 40px
+    min-width: 100px; // Giảm từ 120px xuống 100px
+  }
+}
+
+/* Landscape Tablet */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .main-container {
+    padding: 4px;
+  }
+  
+  .form-card {
+    padding: 4px;
+  }
+  
+  .compact-grid-2,
+  .compact-grid-3,
+  .compact-grid-4,
+  .compact-grid-5 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3px 6px;
+  }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .form-item .label {
+    font-weight: 600;
+  }
+  
+  .form-footer button {
+    font-weight: 600;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .form-card {
+    background-color: #1a1a1a;
+    color: #fff;
+  }
+  
+  .boi-day-ha-header {
+    background-color: #2d2d2d;
+    border-bottom-color: #444;
+  }
+  
+  .section-separator {
+    border-top-color: #444;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .form-field,
+  .form-field-full,
+  .form-item {
+    transition: none;
+  }
+}
+
+/* Print Styles - Tối ưu cho in A4 */
+@media print {
+  .main-container {
+    padding: 0;
+    max-width: 210mm;
+    width: 210mm;
+  }
+  
+  .form-card {
+    box-shadow: none;
+    border: 1px solid #000;
+    max-width: 210mm;
+    width: 210mm;
+  }
+  
+  .form-footer {
+    display: none;
+  }
+  
+  .compact-grid-2,
+  .compact-grid-3,
+  .compact-grid-4,
+  .compact-grid-5 {
+    page-break-inside: avoid;
+  }
+  
+  .compact-form-group {
+    page-break-inside: avoid;
+  }
+  
+  // Đảm bảo tất cả text có thể đọc được khi in
+  ::ng-deep .mat-form-field-appearance-outline .mat-form-field-infix input {
+    color: #000 !important;
+    background: transparent !important;
+  }
+  
+  ::ng-deep .mat-form-field-appearance-outline .mat-form-field-label {
+    color: #000 !important;
+  }
+}

@@ -1,0 +1,341 @@
+<div class="container">
+  <!-- Header Section -->
+  <mat-toolbar class="header-toolbar">
+    <div class="header-content">
+      <div class="title-container">
+        <h1 class="header-title">Quản lý Bảng vẽ</h1>
+        <p class="header-subtitle">Quản lý và theo dõi quy trình sản xuất bảng vẽ</p>
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <!-- Authentication Check -->
+  <div *ngIf="!isAuthenticated" class="auth-warning mat-elevation-z2" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <mat-icon style="color: #f39c12; font-size: 48px; width: 48px; height: 48px;">warning</mat-icon>
+    <h3 style="color: #856404; margin: 16px 0;">Yêu cầu đăng nhập</h3>
+    <p style="color: #856404; margin: 16px 0;">Bạn cần đăng nhập để xem danh sách bảng vẽ.</p>
+    <button mat-raised-button color="primary" (click)="goToLogin()" style="margin-top: 16px;">
+      <mat-icon>login</mat-icon>
+      Đăng nhập ngay
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" *ngIf="isAuthenticated">
+    <!-- Tab Navigation -->
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;">
+    <mat-tab label="Bảng vẽ mới">
+      <div class="tab-content">
+        <!-- Search Bar -->
+        <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+          <mat-form-field appearance="outline" class="search-autocomplete" style="flex: 1;">
+            <mat-label>Tìm kiếm ký hiệu bảng vẽ</mat-label>
+            <input type="text" matInput [matAutocomplete]="auto" [(ngModel)]="searchTerm" (ngModelChange)="filterAutoComplete()" placeholder="Nhập ký hiệu...">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAutoCompleteSelected($event)" [displayWith]="displayFn">
+              <mat-option *ngFor="let drawing of filteredDrawingsForAutocomplete" [value]="drawing" class="custom-option">
+                <div class="option-content">
+                  <div class="option-header">
+                    <span class="symbol">{{ drawing.kyhieubangve }}</span>
+                    <span class="power">{{ drawing.congsuat }}kVA - {{ drawing.dienap }}</span>
+                  </div>
+                  <div class="option-footer">
+                    <span class="info">TBKT: {{ drawing.tbkt }} | Người tạo: {{ drawing.user_create }}</span>
+                  </div>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+          <button mat-stroked-button class="add-btn" (click)="openAddBangVeDialog()" style="min-width: 110px;" *ngIf="hasAdminOrManagerRole()">
+            <mat-icon>add</mat-icon> Thêm mới
+          </button>
+        </div>
+
+        <!-- Table for New Drawings -->
+        <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+          <mat-table [dataSource]="pagedNewDrawings" class="table" *ngIf="pagedNewDrawings.length > 0" matSort>
+            <ng-container matColumnDef="kyhieubangve">
+              <mat-header-cell *matHeaderCellDef> Ký hiệu </mat-header-cell>
+              <mat-cell *matCellDef="let d"> <b>{{d.kyhieubangve}}</b> </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="congsuat">
+              <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.congsuat}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="tbkt">
+              <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.tbkt}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="dienap">
+              <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_ha_trong">
+              <mat-header-cell *matHeaderCellDef> BD Hạ Trong </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_ha_trong}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_ha_ngoai">
+              <mat-header-cell *matHeaderCellDef> BD Hạ Ngoài </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_ha_ngoai}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_cao">
+              <mat-header-cell *matHeaderCellDef> BD Cao </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_cao}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_ep">
+              <mat-header-cell *matHeaderCellDef> BD Ép </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_ep}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bung_bd">
+              <mat-header-cell *matHeaderCellDef> Bưng BD </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bung_bd}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="user_create">
+              <mat-header-cell *matHeaderCellDef> Người tạo </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.user_create}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="trang_thai">
+              <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
+              <mat-cell *matCellDef="let d">
+                <mat-chip [color]="(d.trang_thai === 1 || d.trang_thai === true) ? 'primary' : 'warn'" selected>
+                  <mat-icon>{{(d.trang_thai === 1 || d.trang_thai === true) ? 'check_circle' : 'cancel'}}</mat-icon>
+                  {{(d.trang_thai === 1 || d.trang_thai === true) ? 'Đang hoạt động' : 'Ngừng'}}
+                </mat-chip>
+              </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="created_at">
+              <mat-header-cell *matHeaderCellDef> Ngày tạo </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.created_at | date:'dd/MM/yyyy'}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
+              <mat-cell *matCellDef="let d">
+                <button mat-icon-button [matMenuTriggerFor]="actionMenu" aria-label="Menu hành động" class="action-menu-trigger">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #actionMenu="matMenu" class="custom-action-menu">
+                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')" class="menu-item">
+                    <mat-icon class="menu-icon">visibility</mat-icon>
+                    <span class="menu-text">Xem thông tin bảng vẽ</span>
+                  </button>
+                  <button *ngIf="hasAdminOrManagerRole()" mat-menu-item (click)="openBangVeDetailDialog(d,'edit')" class="menu-item">
+                    <mat-icon class="menu-icon">edit</mat-icon>
+                    <span class="menu-text">Sửa</span>
+                  </button>
+                  <button mat-menu-item (click)="onGiaCong(d)" class="menu-item">
+                     <mat-icon class="menu-icon">build</mat-icon>
+                     <span class="menu-text">Thao tác quấn dây</span>
+                  </button>
+                </mat-menu>
+              </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></mat-row>
+          </mat-table>
+          <mat-paginator [length]="filteredDrawings.length"
+                         [pageSize]="pageSize"
+                         [pageSizeOptions]="[5, 10, 20]"
+                         (page)="onNewDrawingsPageChange($event)"
+                         style="border-radius: 0 0 8px 8px;">
+          </mat-paginator>
+          <div *ngIf="pagedNewDrawings.length === 0" class="empty-table" style="padding: 32px; text-align: center; color: #888;">
+            <mat-icon style="font-size: 48px; color: #ccc;">inbox</mat-icon>
+            <div style="margin-top: 8px;">Không có bảng vẽ mới.</div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab Đang gia công -->
+    <mat-tab label="Đang gia công">
+      <div class="tab-content">
+        <!-- Search Bar for In Progress Drawings -->
+        <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+          <mat-form-field appearance="outline" class="search-autocomplete" style="flex: 1;">
+            <mat-label>Tìm kiếm ký hiệu bảng vẽ đang gia công</mat-label>
+            <input type="text" matInput [(ngModel)]="searchTermInProgress" (ngModelChange)="searchInProgressDrawings()" placeholder="Nhập ký hiệu...">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Table for In Progress Drawings -->
+        <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+          <mat-table [dataSource]="pagedInProgressDrawings" class="table" *ngIf="pagedInProgressDrawings.length > 0" matSort>
+            <ng-container matColumnDef="kyhieubangve">
+              <mat-header-cell *matHeaderCellDef> Ký hiệu </mat-header-cell>
+              <mat-cell *matCellDef="let d"> <b>{{d.kyhieubangve}}</b> </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="congsuat">
+              <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.congsuat}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="tbkt">
+              <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.tbkt}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="dienap">
+              <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="created_at">
+              <mat-header-cell *matHeaderCellDef> Ngày tạo </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.created_at | date:'dd/MM/yyyy'}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
+              <mat-cell *matCellDef="let d">
+                <button mat-icon-button [matMenuTriggerFor]="actionMenuInProgress" aria-label="Menu hành động" class="action-menu-trigger">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #actionMenuInProgress="matMenu" class="custom-action-menu">
+                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')" class="menu-item">
+                    <mat-icon class="menu-icon">visibility</mat-icon>
+                    <span class="menu-text">Xem thông tin bảng vẽ</span>
+                  </button>
+                  <button mat-menu-item disabled (click)="onGiaCong(d)" class="menu-item">
+                    <mat-icon class="menu-icon">build</mat-icon>
+                    <span class="menu-text">Thao tác quấn dây</span>
+                  </button>
+                </mat-menu>
+              </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="displayedColumnsInProgress"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumnsInProgress;" class="table-row"></mat-row>
+          </mat-table>
+          <mat-paginator [length]="filteredInProgressDrawings.length"
+                         [pageSize]="pageSize"
+                         [pageSizeOptions]="[5, 10, 20]"
+                         (page)="onInProgressDrawingsPageChange($event)"
+                         style="border-radius: 0 0 8px 8px;">
+          </mat-paginator>
+          <div *ngIf="pagedInProgressDrawings.length === 0" class="empty-table" style="padding: 32px; text-align: center; color: #888;">
+            <mat-icon style="font-size: 48px; color: #ccc;">inbox</mat-icon>
+            <div style="margin-top: 8px;">Không có bảng vẽ đang gia công.</div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Bảng vẽ đã xử lý">
+      <div class="tab-content">
+        <!-- Search Bar for Processed Drawings -->
+        <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+          <mat-form-field appearance="outline" class="search-autocomplete" style="flex: 1;">
+            <mat-label>Tìm kiếm ký hiệu bảng vẽ đã xử lý</mat-label>
+            <input type="text" matInput [matAutocomplete]="autoProcessed" [(ngModel)]="searchTermProcessed" (ngModelChange)="filterAutoCompleteProcessed()" placeholder="Nhập ký hiệu...">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-autocomplete #autoProcessed="matAutocomplete" (optionSelected)="onAutoCompleteSelectedProcessed($event)" [displayWith]="displayFnProcessed">
+              <mat-option *ngFor="let drawing of filteredProcessedDrawingsForAutocomplete" [value]="drawing" class="custom-option">
+                <div class="option-content">
+                  <div class="option-header">
+                    <span class="symbol">{{ drawing.kyhieubangve }}</span>
+                    <span class="power">{{ drawing.congsuat }}kVA - {{ drawing.dienap }}</span>
+                  </div>
+                  <div class="option-footer">
+                    <span class="info">TBKT: {{ drawing.tbkt }} | Người xử lý: {{ drawing.user_process }}</span>
+                  </div>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+
+        <!-- Table for Processed Drawings -->
+        <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+          <mat-table [dataSource]="pagedProcessedDrawings" class="table" *ngIf="pagedProcessedDrawings.length > 0" matSort>
+            <ng-container matColumnDef="kyhieubangve">
+              <mat-header-cell *matHeaderCellDef> Ký hiệu </mat-header-cell>
+              <mat-cell *matCellDef="let d"> <b>{{d.kyhieubangve}}</b> </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="congsuat">
+              <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.congsuat}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="tbkt">
+              <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.tbkt}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="dienap">
+              <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_ha_trong">
+              <mat-header-cell *matHeaderCellDef> BD Hạ Trong </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_ha_trong}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_ha_ngoai">
+              <mat-header-cell *matHeaderCellDef> BD Hạ Ngoài </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_ha_ngoai}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_cao">
+              <mat-header-cell *matHeaderCellDef> BD Cao </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_cao}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bd_ep">
+              <mat-header-cell *matHeaderCellDef> BD Ép </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bd_ep}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="bung_bd">
+              <mat-header-cell *matHeaderCellDef> Bưng BD </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.bung_bd}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="user_process">
+              <mat-header-cell *matHeaderCellDef> Người xử lý </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.user_process}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="process_date">
+              <mat-header-cell *matHeaderCellDef> Ngày xử lý </mat-header-cell>
+              <mat-cell *matCellDef="let d"> {{d.process_date | date:'dd/MM/yyyy'}} </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="trang_thai">
+              <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
+              <mat-cell *matCellDef="let d">
+                <mat-chip color="accent" selected>
+                  <mat-icon>check_circle</mat-icon>
+                  Đã xử lý
+                </mat-chip>
+              </mat-cell>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <mat-header-cell *matHeaderCellDef class="column-actions"> Thao tác </mat-header-cell>
+              <mat-cell *matCellDef="let d">
+                <button mat-icon-button [matMenuTriggerFor]="actionMenuProcessed" aria-label="Menu hành động" class="action-menu-trigger">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #actionMenuProcessed="matMenu" class="custom-action-menu">
+                  <button mat-menu-item (click)="openBangVeDetailDialog(d,'view')" class="menu-item">
+                    <mat-icon class="menu-icon">visibility</mat-icon>
+                    <span class="menu-text">Xem thông tin bảng vẽ</span>
+                  </button>
+                  <button mat-menu-item (click)="onViewProcessedDetails(d)" class="menu-item">
+                     <mat-icon class="menu-icon">info</mat-icon>
+                     <span class="menu-text">Chi tiết xử lý</span>
+                  </button>
+                </mat-menu>
+              </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="displayedColumnsProcessed"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: displayedColumnsProcessed;" class="table-row"></mat-row>
+          </mat-table>
+          <mat-paginator [length]="filteredProcessedDrawings.length"
+                         [pageSize]="pageSize"
+                         [pageSizeOptions]="[5, 10, 20]"
+                         (page)="onProcessedDrawingsPageChange($event)"
+                         style="border-radius: 0 0 8px 8px;">
+          </mat-paginator>
+          <div *ngIf="pagedProcessedDrawings.length === 0" class="empty-table" style="padding: 32px; text-align: center; color: #888;">
+            <mat-icon style="font-size: 48px; color: #ccc;">inbox</mat-icon>
+            <div style="margin-top: 8px;">Không có bảng vẽ đã xử lý.</div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+  </div>
+</div>

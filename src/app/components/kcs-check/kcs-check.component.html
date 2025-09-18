@@ -1,0 +1,419 @@
+<div class="kcs-check-container">
+  <div class="header">
+    <h1>
+      <mat-icon class="header-icon">verified</mat-icon>
+      KCS Check - Kiểm tra chất lượng
+    </h1>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <mat-tab-group (selectedTabChange)="onTabChange($event)" class="kcs-tabs">
+    <mat-tab label="Bối dây hạ">
+      <div class="tab-content">
+        <!-- Search Section -->
+        <div class="search-section">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Tìm kiếm theo tên bảng vẽ</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchBangVe" 
+                   (ngModelChange)="onSearchBangVeChange($event)"
+                   placeholder="Nhập tên bảng vẽ để tìm kiếm...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchKeyword" 
+                   (ngModelChange)="onSearchChange($event)"
+                   placeholder="Tìm kiếm ký hiệu quấn dây hoặc TBKT...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+          <!-- Loading indicator -->
+          <div *ngIf="isLoading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Đang tải dữ liệu...</p>
+          </div>
+
+          <!-- No data message -->
+          <div *ngIf="!isLoading && boiDayHaDataSource.data.length === 0" class="no-data-container">
+            <mat-icon>inbox</mat-icon>
+            <p>Không có dữ liệu bối dây hạ chờ duyệt</p>
+          </div>
+
+          <!-- Data table -->
+          <table *ngIf="!isLoading && boiDayHaDataSource.data.length > 0" 
+                 mat-table [dataSource]="boiDayHaDataSource" class="kcs-table">
+            <!-- Ký hiệu quấn dây Column -->
+            <ng-container matColumnDef="kyhieuQuanDay">
+              <th mat-header-cell *matHeaderCellDef>Ký hiệu quấn dây</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="kyhieu-link" (click)="viewBangVeDetails(element)">
+                  {{element.kyhieuquanday}}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Tên bảng vẽ Column -->
+            <ng-container matColumnDef="tenBangVe">
+              <th mat-header-cell *matHeaderCellDef>Tên bảng vẽ</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.tenBangVe}}
+              </td>
+            </ng-container>
+
+            <!-- Công suất Column -->
+            <ng-container matColumnDef="congSuat">
+              <th mat-header-cell *matHeaderCellDef>Công suất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.congsuat}}
+              </td>
+            </ng-container>
+
+            <!-- TBKT Column -->
+            <ng-container matColumnDef="tbkt">
+              <th mat-header-cell *matHeaderCellDef>TBKT</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.tbkt}}
+              </td>
+            </ng-container>
+
+            <!-- Nhà sản xuất Column -->
+            <ng-container matColumnDef="nhaSanXuat">
+              <th mat-header-cell *matHeaderCellDef>Nhà sản xuất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.nha_san_xuat}}
+              </td>
+            </ng-container>
+
+            <!-- Ngày sản xuất Column -->
+            <ng-container matColumnDef="ngaySanXuat">
+              <th mat-header-cell *matHeaderCellDef>Ngày sản xuất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.ngay_san_xuat | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <!-- Ngày gia công Column -->
+            <ng-container matColumnDef="ngayGiaCong">
+              <th mat-header-cell *matHeaderCellDef>Ngày gia công</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.ngaygiacong | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <!-- Trạng thái Column -->
+            <ng-container matColumnDef="trangThai">
+              <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="status-badge" [class]="getStatusClass(element.trang_thai)">
+                  <span class="status-dot"></span>
+                  {{getStatusText(element.trang_thai)}}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Thao tác Column -->
+            <ng-container matColumnDef="thaoTac">
+              <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+              <td mat-cell *matCellDef="let element">
+                <button mat-icon-button [matMenuTriggerFor]="menu" class="action-button">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item (click)="viewBangVeDetails(element)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Xem chi tiết bảng vẽ</span>
+                  </button>
+                  <button mat-menu-item (click)="approveKcs(element)">
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Duyệt KCS</span>
+                  </button>
+                  <button mat-menu-item (click)="rejectKcs(element)">
+                    <mat-icon>cancel</mat-icon>
+                    <span>Từ chối KCS</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="boiDayHaDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: boiDayHaDisplayedColumns;"></tr>
+          </table>
+
+          <!-- Pagination -->
+          <div *ngIf="!isLoading && boiDayHaDataSource.data.length > 0" class="pagination-container">
+            <mat-paginator 
+              [length]="totalCount"
+              [pageSize]="pageSize"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              [pageIndex]="currentPage - 1"
+              (page)="onPageChange($event)"
+              showFirstLastButtons 
+              aria-label="Select page of KCS check items">
+            </mat-paginator>
+            
+            <!-- Additional pagination info -->
+            <div class="pagination-info">
+              <span>Hiển thị {{(currentPage - 1) * pageSize + 1}} - {{Math.min(currentPage * pageSize, totalCount)}} của {{totalCount}} kết quả</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Bối dây cao">
+      <div class="tab-content">
+        <!-- Similar content for Bối dây cao -->
+        <div class="search-section">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Tìm kiếm theo tên bảng vẽ</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchBangVeCao" 
+                   (ngModelChange)="onSearchBangVeCaoChange($event)"
+                   placeholder="Nhập tên bảng vẽ để tìm kiếm...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchKeywordCao" 
+                   (ngModelChange)="onSearchCaoChange($event)"
+                   placeholder="Tìm kiếm ký hiệu quấn dây hoặc TBKT...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Data Table for Bối dây cao -->
+        <div class="table-container">
+          <table mat-table [dataSource]="boiDayCaoDataSource" class="kcs-table">
+            <!-- Similar columns for Bối dây cao -->
+            <ng-container matColumnDef="kyhieuQuanDay">
+              <th mat-header-cell *matHeaderCellDef>Ký hiệu quấn dây</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="kyhieu-link" (click)="viewBangVeDetails(element)">
+                  {{element.kyhieuquanday}}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tenBangVe">
+              <th mat-header-cell *matHeaderCellDef>Tên bảng vẽ</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.tenbangve || 'N/A'}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="congSuat">
+              <th mat-header-cell *matHeaderCellDef>Công suất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.congsuat}} kVA
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tbkt">
+              <th mat-header-cell *matHeaderCellDef>TBKT</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.tbkt}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nhaSanXuat">
+              <th mat-header-cell *matHeaderCellDef>Nhà sản xuất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.nha_san_xuat}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="ngaySanXuat">
+              <th mat-header-cell *matHeaderCellDef>Ngày sản xuất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.ngay_san_xuat | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="ngayGiaCong">
+              <th mat-header-cell *matHeaderCellDef>Ngày gia công</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.ngaygiacong | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="trangThai">
+              <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="status-badge" [class]="getStatusClass(element.trangthai)">
+                  <span class="status-dot"></span>
+                  {{getStatusText(element.trangthai)}}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="thaoTac">
+              <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+              <td mat-cell *matCellDef="let element">
+                <button mat-icon-button [matMenuTriggerFor]="menuCao" class="action-button">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menuCao="matMenu">
+                  <button mat-menu-item (click)="viewBangVeDetails(element)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Xem chi tiết bảng vẽ</span>
+                  </button>
+                  <button mat-menu-item (click)="approveKcs(element)">
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Duyệt KCS</span>
+                  </button>
+                  <button mat-menu-item (click)="rejectKcs(element)">
+                    <mat-icon>cancel</mat-icon>
+                    <span>Từ chối KCS</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="boiDayCaoDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: boiDayCaoDisplayedColumns;"></tr>
+          </table>
+
+          <!-- Pagination -->
+          <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" 
+                         showFirstLastButtons 
+                         aria-label="Select page of KCS check items">
+          </mat-paginator>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Ép bối dây">
+      <div class="tab-content">
+        <!-- Similar content for Ép bối dây -->
+        <div class="search-section">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Tìm kiếm theo tên bảng vẽ</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchBangVeEp" 
+                   (ngModelChange)="onSearchBangVeEpChange($event)"
+                   placeholder="Nhập tên bảng vẽ để tìm kiếm...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchKeywordEp" 
+                   (ngModelChange)="onSearchEpChange($event)"
+                   placeholder="Tìm kiếm ký hiệu quấn dây hoặc TBKT...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Data Table for Ép bối dây -->
+        <div class="table-container">
+          <table mat-table [dataSource]="epBoiDayDataSource" class="kcs-table">
+            <!-- Similar columns for Ép bối dây -->
+            <ng-container matColumnDef="kyhieuQuanDay">
+              <th mat-header-cell *matHeaderCellDef>Ký hiệu quấn dây</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="kyhieu-link" (click)="viewBangVeDetails(element)">
+                  {{element.kyhieuquanday}}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tenBangVe">
+              <th mat-header-cell *matHeaderCellDef>Tên bảng vẽ</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.tenbangve || 'N/A'}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="congSuat">
+              <th mat-header-cell *matHeaderCellDef>Công suất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.congsuat}} kVA
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tbkt">
+              <th mat-header-cell *matHeaderCellDef>TBKT</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.tbkt}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nhaSanXuat">
+              <th mat-header-cell *matHeaderCellDef>Nhà sản xuất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.nhasanxuat}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="ngaySanXuat">
+              <th mat-header-cell *matHeaderCellDef>Ngày sản xuất</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.ngaysanxuat | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="ngayGiaCong">
+              <th mat-header-cell *matHeaderCellDef>Ngày gia công</th>
+              <td mat-cell *matCellDef="let element">
+                {{element.ngaygiacong | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="trangThai">
+              <th mat-header-cell *matHeaderCellDef>Trạng thái</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="status-badge" [class]="getStatusClass(element.trangthai)">
+                  <span class="status-dot"></span>
+                  {{getStatusText(element.trangthai)}}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="thaoTac">
+              <th mat-header-cell *matHeaderCellDef>Thao tác</th>
+              <td mat-cell *matCellDef="let element">
+                <button mat-icon-button [matMenuTriggerFor]="menuEp" class="action-button">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menuEp="matMenu">
+                  <button mat-menu-item (click)="viewBangVeDetails(element)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Xem chi tiết bảng vẽ</span>
+                  </button>
+                  <button mat-menu-item (click)="approveKcs(element)">
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Duyệt KCS</span>
+                  </button>
+                  <button mat-menu-item (click)="rejectKcs(element)">
+                    <mat-icon>cancel</mat-icon>
+                    <span>Từ chối KCS</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="epBoiDayDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: epBoiDayDisplayedColumns;"></tr>
+          </table>
+
+          <!-- Pagination -->
+          <div class="paginator-container">
+            <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]"
+                           [showFirstLastButtons]="true"
+                           aria-label="Select page of KCS check items">
+            </mat-paginator>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

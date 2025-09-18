@@ -1,0 +1,231 @@
+<!-- Loading Spinner -->
+<div *ngIf="isLoading" class="loading-container">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Đang tải dữ liệu...</p>
+</div>
+
+<!-- Dashboard Content -->
+<div *ngIf="!isLoading && stats" class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>dashboard</mat-icon>
+        Dashboard Quản Lý Sản Xuất
+      </h1>
+      <p>Tổng quan tình hình sản xuất máy biến áp - Khâu quấn dây</p>
+    </div>
+    <div class="header-actions">
+      <button 
+        mat-raised-button 
+        color="primary"
+        (click)="refreshStats()"
+        [disabled]="isRefreshing">
+        <mat-icon>{{ isRefreshing ? 'refresh' : 'refresh' }}</mat-icon>
+        {{ isRefreshing ? 'Đang tải...' : 'Làm mới' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+
+    <!-- Máy biến áp hoàn thành -->
+    <mat-card class="stat-card completed">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ formatNumber(stats.completedTransformers) }}</h3>
+            <p>Đã hoàn thành quấn dây</p>
+            <div class="stat-progress">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="stats.completionRate"
+                color="primary">
+              </mat-progress-bar>
+              <span class="progress-text">{{ formatPercentage(stats.completionRate) }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Máy biến áp đang quấn dây -->
+    <mat-card class="stat-card in-progress">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>build</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ formatNumber(stats.inProgressTransformers) }}</h3>
+            <p>Đang quấn dây</p>
+            <div class="stat-progress">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="(stats.inProgressTransformers / stats.totalTransformers) * 100"
+                color="accent">
+              </mat-progress-bar>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Máy biến áp bị lỗi quấn dây -->
+    <mat-card class="stat-card error">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>error</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ formatNumber(stats.errorTransformers) }}</h3>
+            <p>Bị lỗi quấn dây</p>
+            <div class="stat-progress">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="stats.errorRate"
+                color="warn">
+              </mat-progress-bar>
+              <span class="progress-text">{{ formatPercentage(stats.errorRate) }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Error Breakdown -->
+  <div class="error-breakdown" *ngIf="stats.errorTransformers > 0">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>error_outline</mat-icon>
+          Phân tích lỗi quấn dây
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="error-chips">
+          <mat-chip-set>
+            <mat-chip color="warn">
+              <mat-icon>flash_on</mat-icon>
+              Cuộn dây cao áp: {{ formatNumber(stats.highVoltageErrors) }}
+            </mat-chip>
+            <mat-chip color="accent">
+              <mat-icon>power</mat-icon>
+              Cuộn dây hạ áp: {{ formatNumber(stats.lowVoltageErrors) }}
+            </mat-chip>
+            <mat-chip color="basic">
+              <mat-icon>help_outline</mat-icon>
+              Lỗi khác: {{ formatNumber(stats.errorTransformers - stats.highVoltageErrors - stats.lowVoltageErrors) }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Charts and Activities -->
+  <div class="charts-section">
+    <!-- Drawing Management -->
+    <div class="chart-container">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>design_services</mat-icon>
+            Quản lý Bảng vẽ Sản xuất
+          </mat-card-title>
+          <mat-card-subtitle>Quản lý các bảng vẽ máy biến áp theo từng giai đoạn sản xuất</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p>Chức năng quản lý bảng vẽ được triển khai trong trang riêng biệt để tránh xung đột phụ thuộc.</p>
+          <button mat-raised-button color="primary" routerLink="/ds-bangve">
+            <mat-icon>engineering</mat-icon>
+            Quản lý bảng vẽ
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="activities-container">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>history</mat-icon>
+            Hoạt động gần đây
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item 
+              *ngFor="let activity of stats.recentActivities" 
+              class="activity-item">
+              <mat-icon 
+                matListItemIcon 
+                [color]="getChipColor(activity.status)">
+                {{ activity.icon }}
+              </mat-icon>
+              <div matListItemTitle>{{ activity.title }}</div>
+              <div matListItemLine>{{ formatTime(activity.time) }}</div>
+              <mat-chip 
+                matListItemMeta
+                [color]="getChipColor(activity.status)">
+                {{ activity.status === 'completed' ? 'Hoàn thành' : 
+                   activity.status === 'in_progress' ? 'Đang thi công' : 
+                   activity.status === 'error' ? 'Bị lỗi' : 'Chờ xử lý' }}
+              </mat-chip>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>flash_on</mat-icon>
+          Thao tác nhanh
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-buttons">
+          <button mat-raised-button color="primary">
+            <mat-icon>add</mat-icon>
+            Thêm máy biến áp mới
+          </button>
+          <button mat-raised-button color="accent">
+            <mat-icon>assignment</mat-icon>
+            Báo cáo sản xuất
+          </button>
+          <button mat-raised-button color="warn">
+            <mat-icon>warning</mat-icon>
+            Xem lỗi quấn dây
+          </button>
+          <button mat-stroked-button>
+            <mat-icon>settings</mat-icon>
+            Cài đặt sản xuất
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- No Data State -->
+<div *ngIf="!isLoading && !stats" class="no-data">
+  <mat-icon>inbox</mat-icon>
+  <h3>Không có dữ liệu</h3>
+  <p>Chưa có dữ liệu thống kê để hiển thị</p>
+  <button mat-raised-button color="primary" (click)="refreshStats()">
+    <mat-icon>refresh</mat-icon>
+    Tải lại
+  </button>
+</div>

@@ -3,13 +3,9 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "quanlysxFE": {
+    "dieuxe-fe": {
       "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
+      "schematics": {},
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -22,7 +18,29 @@
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "canvg",
+              "html2canvas",
+              "jspdf",
+              "jspdf-autotable",
+              "xlsx",
+              "core-js/modules/es.promise.js",
+              "core-js/modules/es.string.match.js",
+              "core-js/modules/es.string.replace.js",
+              "core-js/modules/es.string.starts-with.js",
+              "core-js/modules/es.array.iterator.js",
+              "core-js/modules/web.dom-collections.iterator.js",
+              "core-js/modules/es.array.reduce.js",
+              "core-js/modules/es.string.ends-with.js",
+              "core-js/modules/es.string.split.js",
+              "raf",
+              "core-js/modules/es.string.trim.js",
+              "rgbcolor",
+              "core-js/modules/es.array.index-of.js",
+              "core-js/modules/es.string.includes.js",
+              "core-js/modules/es.array.reverse.js",
+              "core-js/modules/es.regexp.to-string.js"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -30,28 +48,29 @@
               },
               {
                 "glob": "**/*",
-                "input": "src/assets",
+                "input": "src/app/assets",
                 "output": "assets"
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/custom-theme.scss",
+              "src/styles.css"
             ]
           },
           "configurations": {
             "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
-              ],
+        "budgets": [
+          {
+            "type": "initial",
+            "maximumWarning": "1.5MB",
+            "maximumError": "2MB"
+          },
+          {
+            "type": "anyComponentStyle",
+            "maximumWarning": "15kB",
+            "maximumError": "20kB"
+          }
+        ],
               "outputHashing": "all"
             },
             "development": {
@@ -66,10 +85,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "quanlysxFE:build:production"
+              "buildTarget": "dieuxe-fe:build:production"
             },
             "development": {
-              "buildTarget": "quanlysxFE:build:development"
+              "buildTarget": "dieuxe-fe:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -85,20 +104,14 @@
               "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "**/*",
-                "input": "src/assets",
-                "output": "assets"
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.css"
             ]
           }
         }
@@ -106,6 +119,6 @@
     }
   },
   "cli": {
-    "analytics": "ac85e7fc-71dd-407c-bc4a-87ce6f690e66"
+    "analytics": "1c29f751-052f-4b22-9aff-a181bfea9221"
   }
 }

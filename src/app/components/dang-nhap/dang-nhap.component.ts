@@ -1,18 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-
+import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '../../services/auth.service';
-import { LoginRequest } from '../../models/auth.model';
 
 @Component({
   selector: 'app-dang-nhap',
@@ -20,22 +19,24 @@ import { LoginRequest } from '../../models/auth.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatCheckboxModule
+    MatProgressSpinnerModule,
+    MatCheckboxModule,
+    MatDividerModule
   ],
   templateUrl: './dang-nhap.component.html',
-  styleUrl: './dang-nhap.component.scss'
+  styleUrl: './dang-nhap.component.css'
 })
 export class DangNhapComponent implements OnInit {
   loginForm: FormGroup;
   isLoading = false;
   hidePassword = true;
+  rememberMe = false;
 
   constructor(
     private fb: FormBuilder,
@@ -44,15 +45,15 @@ export class DangNhapComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required]],
+      username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
     });
   }
 
   ngOnInit(): void {
-    // Check if user is already logged in and redirect to dashboard
-    if (this.authService.isUserAuthenticated()) {
+    // Check if user is already logged in
+    if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard']);
     }
   }
@@ -60,44 +61,65 @@ export class DangNhapComponent implements OnInit {
   onSubmit(): void {
     if (this.loginForm.valid) {
       this.isLoading = true;
-      const formValue = this.loginForm.value;
+      const { username, password, rememberMe } = this.loginForm.value;
       
-      // Convert username to email format for authentication
-      const credentials: LoginRequest = {
-        email: formValue.username.includes('@') ? formValue.username : `${formValue.username}@thibidi.com`,
-        password: formValue.password
-      };
-
-      this.authService.login(credentials).subscribe({
-        next: (user) => {
-          this.isLoading = false;
+      this.authService.login(username, password).then(result => {
+        this.isLoading = false;
+        
+        if (result.success) {
+          this.snackBar.open(result.message, 'Đóng', {
+            duration: 3000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['success-snackbar']
+          });
           
-          // Handle remember me functionality
-          if (formValue.rememberMe) {
-            localStorage.setItem('rememberedUser', formValue.username);
+          // Store remember me preference
+          if (rememberMe) {
+            localStorage.setItem('rememberMe', 'true');
           } else {
-            localStorage.removeItem('rememberedUser');
+            localStorage.removeItem('rememberMe');
           }
           
-          this.snackBar.open(`Chào mừng ${user.displayName}!`, 'Đóng', {
-            duration: 3000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top'
-          });
+          // Redirect to main page
           this.router.navigate(['/dashboard']);
-        },
-        error: (error) => {
-          this.isLoading = false;
-          this.snackBar.open(error.message || 'Đăng nhập thất bại', 'Đóng', {
+        } else {
+          this.snackBar.open(result.message, 'Đóng', {
             duration: 5000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top'
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['error-snackbar']
           });
         }
+      }).catch(error => {
+        this.isLoading = false;
+        console.error('Login error:', error);
+        this.snackBar.open('Có lỗi xảy ra khi đăng nhập', 'Đóng', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        });
       });
     } else {
       this.markFormGroupTouched();
     }
+  }
+
+  togglePasswordVisibility(): void {
+    this.hidePassword = !this.hidePassword;
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const field = this.loginForm.get(fieldName);
+    if (field?.hasError('required')) {
+      return 'Trường này là bắt buộc';
+    }
+    if (field?.hasError('minlength')) {
+      const requiredLength = field.errors?.['minlength'].requiredLength;
+      return `Tối thiểu ${requiredLength} ký tự`;
+    }
+    return '';
   }
 
   private markFormGroupTouched(): void {
@@ -107,46 +129,15 @@ export class DangNhapComponent implements OnInit {
     });
   }
 
-  getErrorMessage(fieldName: string): string {
-    const control = this.loginForm.get(fieldName);
-    if (control?.hasError('required')) {
-      return `${this.getFieldDisplayName(fieldName)} là bắt buộc`;
-    }
-    if (control?.hasError('minlength')) {
-      return `${this.getFieldDisplayName(fieldName)} phải có ít nhất 6 ký tự`;
-    }
-    return '';
-  }
-
-  private getFieldDisplayName(fieldName: string): string {
-    const fieldNames: { [key: string]: string } = {
-      username: 'Tên đăng nhập',
-      password: 'Mật khẩu'
-    };
-    return fieldNames[fieldName] || fieldName;
-  }
-
-  togglePasswordVisibility(): void {
-    this.hidePassword = !this.hidePassword;
-  }
-
-  quickLogin(role: string): void {
-    const demoCredentials = {
+  // Demo accounts for testing
+  fillDemoAccount(accountType: 'admin' | 'manager' | 'user'): void {
+    const accounts = {
       admin: { username: 'admin', password: 'admin123' },
       manager: { username: 'manager1', password: 'manager123' },
       user: { username: 'user1', password: 'user123' }
     };
-
-    const credentials = demoCredentials[role as keyof typeof demoCredentials];
-    if (credentials) {
-      this.loginForm.patchValue({
-        username: credentials.username,
-        password: credentials.password,
-        rememberMe: false
-      });
-      
-      // Auto submit the form
-      this.onSubmit();
-    }
+    
+    const account = accounts[accountType];
+    this.loginForm.patchValue(account);
   }
 }

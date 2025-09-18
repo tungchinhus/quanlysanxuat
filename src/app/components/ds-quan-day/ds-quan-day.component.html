@@ -1,0 +1,177 @@
+<div class="ds-quan-day-container">
+  
+ <div class="content-section">
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" [selectedIndex]="currentTabIndex">
+      
+      <!-- Tab: Danh sách mới -->
+      <mat-tab label="Danh sách mới">
+        <div class="tab-content">
+
+          <div class="table-section">
+            <table mat-table [dataSource]="pagedNewQuanDays" class="quan-day-table">
+              
+              <!-- Ký hiệu -->
+              <ng-container matColumnDef="kyhieuquanday">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Ký hiệu</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.kyhieuquanday}}</td>
+              </ng-container>
+
+              <!-- Công suất -->
+              <ng-container matColumnDef="congsuat">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Công suất</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.congsuat}}</td>
+              </ng-container>
+
+              <!-- Thiết bị kỹ thuật -->
+              <ng-container matColumnDef="tbkt">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">TBKT</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.tbkt}}</td>
+              </ng-container>
+
+              <!-- Điện áp -->
+              <ng-container matColumnDef="dienap">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Điện áp</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.dienap}}</td>
+              </ng-container>
+
+              <!-- Ngày tạo -->
+              <ng-container matColumnDef="created_at">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Ngày tạo</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.created_at | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <!-- Actions -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Thao tác</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-button">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">                    
+                    <!-- Hiển thị nút gia công hạ nếu user có quyền và trạng thái phù hợp -->
+                    <button mat-menu-item 
+                            *ngIf="canShowGiaCongHa(element)" 
+                            (click)="onGiaCongHa(element)"
+                            class="gia-cong-ha-button">
+                      <mat-icon>build</mat-icon>
+                      <span>Quấn dây hạ</span>
+                    </button>
+                    
+                    <!-- Hiển thị nút gia công cao nếu user có quyền và trạng thái phù hợp -->
+                    <button mat-menu-item 
+                            *ngIf="canShowGiaCongCao(element)" 
+                            (click)="onGiaCongCao(element)"
+                            class="gia-cong-cao-button">
+                      <mat-icon>build</mat-icon>
+                      <span>Quấn dây cao</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns" class="header-row"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="data-row"></tr>
+            </table>
+
+            <div class="pagination-section" *ngIf="filteredQuanDays.length > 0">
+              <mat-paginator 
+                [length]="filteredQuanDays.length"
+                [pageSize]="pageSize"
+                [pageIndex]="pageIndex"
+                [pageSizeOptions]="[5, 10, 25, 50]"
+                (page)="onPageChange($event)"
+                showFirstLastButtons
+                class="right-aligned-paginator">
+              </mat-paginator>
+            </div>
+
+            <div class="no-data" *ngIf="filteredQuanDays.length === 0">
+              <p>Không có dữ liệu</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Đã hoàn thành -->
+      <mat-tab label="Đã hoàn thành">
+        <div class="tab-content">
+
+          <div class="table-section">
+            <table mat-table [dataSource]="pagedCompletedQuanDays" class="quan-day-table">
+              
+              <!-- Ký hiệu -->
+              <ng-container matColumnDef="kyhieuquanday">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Ký hiệu</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.kyhieuquanday}}</td>
+              </ng-container>
+
+              <!-- Công suất -->
+              <ng-container matColumnDef="congsuat">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Công suất</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.congsuat}}</td>
+              </ng-container>
+
+              <!-- Thiết bị kỹ thuật -->
+              <ng-container matColumnDef="tbkt">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">TBKT</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.tbkt}}</td>
+              </ng-container>
+
+              <!-- Điện áp -->
+              <ng-container matColumnDef="dienap">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Điện áp</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.dienap}}</td>
+              </ng-container>
+
+              <!-- Ngày hoàn thành -->
+              <ng-container matColumnDef="completed_date">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Ngày hoàn thành</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">{{element.completed_date | date:'dd/MM/yyyy'}}</td>
+              </ng-container>
+
+              <!-- Actions -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="header-cell">Thao tác</th>
+                <td mat-cell *matCellDef="let element" class="data-cell">
+                  <button mat-icon-button [matMenuTriggerFor]="menuCompleted" class="action-menu-button">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menuCompleted="matMenu">                    
+                    <button mat-menu-item disabled (click)="openDialog('Xem chi tiết: ' + element.kyhieuquanday)">
+                      <mat-icon>visibility</mat-icon>
+                      <span>Xem chi tiết</span>
+                    </button>
+                    <button mat-menu-item disabled (click)="openDialog('Xuất báo cáo: ' + element.kyhieuquanday)">
+                      <mat-icon>download</mat-icon>
+                      <span>Xuất báo cáo</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumnsCompleted" class="header-row"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsCompleted;" class="data-row"></tr>
+            </table>
+
+            <div class="pagination-section" *ngIf="filteredCompletedQuanDays.length > 0">
+              <mat-paginator 
+                [length]="filteredCompletedQuanDays.length"
+                [pageSize]="pageSizeCompleted"
+                [pageIndex]="pageIndexCompleted"
+                [pageSizeOptions]="[5, 10, 25, 50]"
+                (page)="onPageChangeCompleted($event)"
+                showFirstLastButtons
+                class="right-aligned-paginator">
+              </mat-paginator>
+            </div>
+
+            <div class="no-data" *ngIf="filteredCompletedQuanDays.length === 0">
+              <p>Không có dữ liệu</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+</div>

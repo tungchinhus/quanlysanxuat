@@ -1,271 +1,308 @@
-import { Injectable, inject } from '@angular/core';
-import { Auth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from '@angular/fire/auth';
-import { Firestore, doc, docData, collection, addDoc, updateDoc, query, where, getDocs } from '@angular/fire/firestore';
-import { Observable, BehaviorSubject, from, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
-import { User as AppUser, UserRole } from '../models/user.model';
-import { LoginRequest, AuthState } from '../models/auth.model';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import { User } from '../models/user.model';
+import { UserManagementFirebaseService } from './user-management-firebase.service';
+import { FirebaseService } from './firebase.service';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private auth: Auth = inject(Auth);
-  private firestore: Firestore = inject(Firestore);
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+  private tokenSubject = new BehaviorSubject<string | null>(null);
 
-  // BehaviorSubjects for reactive state management
-  private authState = new BehaviorSubject<AuthState>({
-    isAuthenticated: false,
-    user: null,
-    loading: true,
-    error: null
-  });
+  public currentUser$ = this.currentUserSubject.asObservable();
+  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+  public token$ = this.tokenSubject.asObservable();
 
-  // Public readonly observables
-  public readonly isAuthenticated = this.authState.asObservable().pipe(
-    map(state => state.isAuthenticated)
-  );
-  public readonly currentUser = this.authState.asObservable().pipe(
-    map(state => state.user)
-  );
-  public readonly loading = this.authState.asObservable().pipe(
-    map(state => state.loading)
-  );
-  public readonly error = this.authState.asObservable().pipe(
-    map(state => state.error)
-  );
+  constructor(
+    private userManagementService: UserManagementFirebaseService,
+    private router: Router,
+    private firebaseService: FirebaseService
+  ) {
+    this.initializeAuth();
+  }
 
-  constructor() {
-    // Listen to auth state changes
-    onAuthStateChanged(this.auth, (user) => {
-      if (user) {
-        this.getUserProfile(user.uid).subscribe({
-          next: (appUser) => {
-            if (appUser) {
-              this.authState.next({
-                isAuthenticated: true,
-                user: appUser,
-                loading: false,
-                error: null
-              });
-            } else {
-              // User not found in Firestore, create a basic user profile
-              const basicUser: AppUser = {
-                id: user.uid,
-                uid: user.uid,
-                email: user.email || '',
-                displayName: user.displayName || user.email?.split('@')[0] || 'User',
-                role: UserRole.ADMIN, // Default role
-                department: 'Unknown',
-                isActive: true,
-                createdAt: new Date()
-              };
-              
-              this.authState.next({
-                isAuthenticated: true,
-                user: basicUser,
-                loading: false,
-                error: null
-              });
+  private initializeAuth(): void {
+    // Subscribe Firebase auth state
+    onAuthStateChanged(this.firebaseService.getAuth(), async (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        try {
+          const token = await fbUser.getIdToken();
+          this.tokenSubject.next(token);
+          this.isAuthenticatedSubject.next(true);
+
+          // Try to map Firebase user to app user by email
+          const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise();
+          const matchedUser = (users || []).find(u => u.email?.toLowerCase() === (fbUser.email || '').toLowerCase() || u.username?.toLowerCase() === (fbUser.email || '').toLowerCase());
+
+          if (matchedUser) {
+            // Refresh user data to ensure roles are properly loaded
+            try {
+              const refreshedUser = await this.userManagementService.getUserById(matchedUser.id).toPromise();
+              if (refreshedUser) {
+                this.currentUserSubject.next(refreshedUser);
+                localStorage.setItem('currentUser', JSON.stringify(refreshedUser));
+                localStorage.setItem('authToken', token);
+              } else {
+                this.currentUserSubject.next(matchedUser);
+                localStorage.setItem('currentUser', JSON.stringify(matchedUser));
+                localStorage.setItem('authToken', token);
+              }
+            } catch (refreshError) {
+              console.warn('Could not refresh user data, using original user:', refreshError);
+              this.currentUserSubject.next(matchedUser);
+              localStorage.setItem('currentUser', JSON.stringify(matchedUser));
+              localStorage.setItem('authToken', token);
             }
-          },
-          error: (error) => {
-            console.error('Error loading user profile:', error);
-            this.authState.next({
-              isAuthenticated: false,
-              user: null,
-              loading: false,
-              error: 'Failed to load user profile'
-            });
+          } else {
+            // Minimal fallback mapping if no profile found
+            const minimalUser: User = {
+              id: fbUser.uid,
+              username: fbUser.email || fbUser.uid,
+              email: fbUser.email || '',
+              fullName: fbUser.displayName || (fbUser.email || ''),
+              isActive: true,
+              roles: [],
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            this.currentUserSubject.next(minimalUser);
+            localStorage.setItem('currentUser', JSON.stringify(minimalUser));
+            localStorage.setItem('authToken', token);
           }
-        });
+        } catch (err) {
+          console.error('Error handling auth state change:', err);
+          this.clearAuthData();
+        }
       } else {
-        this.authState.next({
-          isAuthenticated: false,
-          user: null,
-          loading: false,
-          error: null
-        });
+        this.clearAuthData();
       }
+    });
+
+    // Load from storage for initial paint (will be reconciled by onAuthStateChanged)
+    const storedUser = localStorage.getItem('currentUser');
+    const storedToken = localStorage.getItem('authToken');
+    if (storedUser && storedToken) {
+      try {
+        const user = JSON.parse(storedUser);
+        this.currentUserSubject.next(user);
+        this.isAuthenticatedSubject.next(true);
+        this.tokenSubject.next(storedToken);
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        this.clearAuthData();
+      }
+    }
+  }
+
+  async login(usernameOrEmail: string, password: string): Promise<{ success: boolean; message: string; user?: User }> {
+    try {
+      // Use Firebase Auth (treat username field as email)
+      const credential = await signInWithEmailAndPassword(this.firebaseService.getAuth(), usernameOrEmail, password);
+      const fbUser = credential.user;
+      const token = await fbUser.getIdToken();
+
+      // Map Firebase user to app user by email/username
+      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise() || [];
+      const appUser = users.find(u => u.email?.toLowerCase() === (fbUser.email || '').toLowerCase() || u.username?.toLowerCase() === (fbUser.email || '').toLowerCase());
+
+      if (!appUser) {
+        // Allow login but with minimal user; optional: restrict if no profile
+        const minimalUser: User = {
+          id: fbUser.uid,
+          username: fbUser.email || fbUser.uid,
+          email: fbUser.email || '',
+          fullName: fbUser.displayName || (fbUser.email || ''),
+          isActive: true,
+          roles: [],
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        this.setAuthData(minimalUser, token);
+        this.router.navigate(['/dashboard']);
+        return { success: true, message: 'Đăng nhập thành công', user: minimalUser };
+      }
+
+      // Update last login (best-effort)
+      try {
+        await this.userManagementService.updateUser(appUser.id, { lastLogin: new Date() }).pipe(take(1)).toPromise();
+      } catch (updateError) {
+        console.warn('Could not update last login:', updateError);
+      }
+
+      // Refresh user data to ensure roles are properly loaded
+      try {
+        const refreshedUser = await this.userManagementService.getUserById(appUser.id).toPromise();
+        if (refreshedUser) {
+          this.setAuthData(refreshedUser, token);
+          this.router.navigate(['/dashboard']);
+          return { success: true, message: 'Đăng nhập thành công', user: refreshedUser };
+        }
+      } catch (refreshError) {
+        console.warn('Could not refresh user data, using original user:', refreshError);
+      }
+      
+      this.setAuthData(appUser, token);
+      this.router.navigate(['/dashboard']);
+      return { success: true, message: 'Đăng nhập thành công', user: appUser };
+    } catch (error: any) {
+      console.error('Firebase login error:', error);
+      const message = this.translateFirebaseError(error?.code) || 'Tên đăng nhập hoặc mật khẩu không đúng';
+      return { success: false, message };
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const auth = this.firebaseService.getAuth();
+      const fbUser = auth.currentUser;
+      if (!fbUser || !fbUser.email) {
+        return { success: false, message: 'Không xác định được người dùng hiện tại' };
+      }
+
+      const credential = EmailAuthProvider.credential(fbUser.email, currentPassword);
+      await reauthenticateWithCredential(fbUser, credential);
+      await updatePassword(fbUser, newPassword);
+
+      return { success: true, message: 'Đổi mật khẩu thành công' };
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      let message = 'Không thể đổi mật khẩu';
+      switch (error?.code) {
+        case 'auth/weak-password':
+          message = 'Mật khẩu mới quá yếu';
+          break;
+        case 'auth/wrong-password':
+          message = 'Mật khẩu hiện tại không đúng';
+          break;
+        case 'auth/too-many-requests':
+          message = 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau';
+          break;
+        default:
+          break;
+      }
+      return { success: false, message };
+    }
+  }
+
+  logout(): void {
+    signOut(this.firebaseService.getAuth()).finally(() => {
+      this.clearAuthData();
+      this.router.navigate(['/dang-nhap']);
     });
   }
 
-  // Login method
-  login(credentials: LoginRequest): Observable<any> {
-    this.authState.next({ ...this.authState.value, loading: true, error: null });
-    
-    // Check if it's a username login (for demo accounts)
-    if (!credentials.email.includes('@')) {
-      return this.loginWithUsername(credentials.email, credentials.password);
+  getCurrentUser(): User | null {
+    return this.currentUserSubject.value;
+  }
+
+  isAuthenticated(): boolean {
+    return this.isAuthenticatedSubject.value;
+  }
+
+  getToken(): string | null {
+    return this.tokenSubject.value;
+  }
+
+  hasPermission(permission: string): Observable<boolean> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      return of(false);
     }
-    
-    return from(signInWithEmailAndPassword(this.auth, credentials.email, credentials.password)).pipe(
-      switchMap((userCredential) => {
-        return this.getUserProfile(userCredential.user.uid).pipe(
-          map(appUser => {
-            this.authState.next({
-              isAuthenticated: true,
-              user: appUser,
-              loading: false,
-              error: null
-            });
-            return appUser;
-          })
-        );
-      }),
-      catchError(error => {
-        console.error('Firebase Auth login error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        this.authState.next({
-          isAuthenticated: false,
-          user: null,
-          loading: false,
-          error: this.getErrorMessage(error.code)
-        });
-        throw error;
-      })
-    );
+    return this.userManagementService.hasPermission(currentUser.id, permission);
   }
 
-  // Login with username (for demo accounts)
-  private loginWithUsername(username: string, password: string): Observable<any> {
-    return this.getUserProfileByUsername(username).pipe(
-      switchMap(appUser => {
-        if (!appUser) {
-          throw new Error('Tài khoản không tồn tại');
-        }
-        
-        // For demo purposes, we'll simulate login without Firebase Auth
-        // In production, you should create Firebase Auth users for demo accounts
-        this.authState.next({
-          isAuthenticated: true,
-          user: appUser,
-          loading: false,
-          error: null
-        });
-        
-        return of(appUser);
-      }),
-      catchError(error => {
-        this.authState.next({
-          isAuthenticated: false,
-          user: null,
-          loading: false,
-          error: error.message || 'Đăng nhập thất bại'
-        });
-        throw error;
-      })
-    );
+  hasRole(roleName: string): Observable<boolean> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      return of(false);
+    }
+    return this.userManagementService.hasRole(currentUser.id, roleName);
   }
 
-  // Logout method
-  logout(): Observable<void> {
-    return from(signOut(this.auth)).pipe(
-      map(() => {
-        this.authState.next({
-          isAuthenticated: false,
-          user: null,
-          loading: false,
-          error: null
-        });
-      })
-    );
+  hasAnyRole(roleNames: string[]): Observable<boolean> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser || !currentUser.roles) {
+      return of(false);
+    }
+    const hasAnyRole = currentUser.roles.some(userRole => {
+      const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;
+      return roleNames.includes(roleName);
+    });
+    return of(hasAnyRole);
   }
 
-  // Get user profile from Firestore
-  private getUserProfile(uid: string): Observable<AppUser | null> {
-    const userRef = doc(this.firestore, 'users', uid);
-    return docData(userRef, { idField: 'id' }) as Observable<AppUser | null>;
+  // Token validity handled by Firebase; keep 24h fallback for stored token
+  isTokenValid(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1] || ''));
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      return tokenData && tokenData.exp && nowSeconds < tokenData.exp;
+    } catch (error) {
+      return false;
+    }
   }
 
-  // Get user profile by username (for demo login)
-  getUserProfileByUsername(username: string): Observable<AppUser | null> {
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('uid', '==', username));
-    return from(getDocs(q)).pipe(
-      map(snapshot => {
-        if (snapshot.empty) return null;
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as AppUser;
-      })
-    );
+  async refreshUserData(): Promise<void> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) return;
+    try {
+      const user = await this.userManagementService.getUserById(currentUser.id).toPromise();
+      if (user) {
+        this.currentUserSubject.next(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
   }
 
-  // Create user profile in Firestore
-  createUserProfile(user: AppUser): Observable<any> {
-    const usersRef = collection(this.firestore, 'users');
-    return from(addDoc(usersRef, user));
+  private setAuthData(user: User, token: string): void {
+    this.currentUserSubject.next(user);
+    this.isAuthenticatedSubject.next(true);
+    this.tokenSubject.next(token);
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.setItem('authToken', token);
   }
 
-  // Update user profile
-  updateUserProfile(uid: string, userData: Partial<AppUser>): Observable<void> {
-    const userRef = doc(this.firestore, 'users', uid);
-    return from(updateDoc(userRef, userData));
+  private clearAuthData(): void {
+    this.currentUserSubject.next(null);
+    this.isAuthenticatedSubject.next(false);
+    this.tokenSubject.next(null);
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('authToken');
   }
 
-  // Get all users
-  getAllUsers(): Observable<AppUser[]> {
-    const usersRef = collection(this.firestore, 'users');
-    return from(getDocs(usersRef)).pipe(
-      map(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser)))
-    );
+  private translateFirebaseError(code?: string): string | null {
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'Email không hợp lệ';
+      case 'auth/user-disabled':
+        return 'Tài khoản đã bị vô hiệu hóa';
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+        return 'Tên đăng nhập hoặc mật khẩu không đúng';
+      case 'auth/too-many-requests':
+        return 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau';
+      default:
+        return null;
+    }
   }
 
-  // Get users by role
-  getUsersByRole(role: UserRole): Observable<AppUser[]> {
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('role', '==', role));
-    return from(getDocs(q)).pipe(
-      map(snapshot => snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser)))
-    );
+  // Additional methods for compatibility
+  getUserInfo(): User | null {
+    return this.currentUserSubject.value;
   }
 
-  // Check if user has permission
-  hasPermission(permission: string): boolean {
-    const currentUser = this.authState.value.user;
-    if (!currentUser) return false;
-    
-    const rolePermissions = this.getRolePermissions(currentUser.role);
-    return rolePermissions.includes('all') || rolePermissions.includes(permission);
-  }
-
-  // Get role permissions
-  private getRolePermissions(role: UserRole): string[] {
-    const roleConfig = {
-      [UserRole.ADMIN]: ['all'],
-      [UserRole.TOTRUONG_QUANDAY]: ['bangve_create', 'bangve_edit', 'bangve_view', 'bangve_delete'],
-      [UserRole.QUANDAY_HA]: ['bd_ha_create', 'bd_ha_edit', 'bd_ha_view'],
-      [UserRole.QUANDAY_CAO]: ['bd_cao_create', 'bd_cao_edit', 'bd_cao_view'],
-      [UserRole.EP_BOIDAY]: ['ep_boiday_create', 'ep_boiday_edit', 'ep_boiday_view'],
-      [UserRole.KCS]: ['kcs_approve', 'kcs_view', 'quality_control']
-    };
-    
-    return roleConfig[role] || [];
-  }
-
-  // Get current user
-  getCurrentUser(): AppUser | null {
-    return this.authState.value.user;
-  }
-
-  // Check if user is authenticated
-  isUserAuthenticated(): boolean {
-    return this.authState.value.isAuthenticated;
-  }
-
-  // Error message mapping
-  private getErrorMessage(errorCode: string): string {
-    const errorMessages: { [key: string]: string } = {
-      'auth/user-not-found': 'Không tìm thấy tài khoản với email này',
-      'auth/wrong-password': 'Mật khẩu không chính xác',
-      'auth/invalid-email': 'Email không hợp lệ',
-      'auth/user-disabled': 'Tài khoản đã bị vô hiệu hóa',
-      'auth/too-many-requests': 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau',
-      'auth/network-request-failed': 'Lỗi kết nối mạng',
-      'auth/invalid-credential': 'Thông tin đăng nhập không chính xác'
-    };
-    
-    return errorMessages[errorCode] || 'Đã xảy ra lỗi không xác định';
+  isLoggedIn(): boolean {
+    return this.isAuthenticatedSubject.value;
   }
 }

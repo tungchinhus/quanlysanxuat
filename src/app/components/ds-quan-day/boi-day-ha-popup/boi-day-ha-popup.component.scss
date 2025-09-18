@@ -1,0 +1,248 @@
+.boi-day-ha-popup {
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .close-button {
+      color: #666;
+    }
+  }
+
+  .popup-content {
+    padding: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden; // Không cho scroll ngang
+  }
+
+  .info-section {
+    margin-bottom: 20px;
+
+    h3 {
+      margin-bottom: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1976d2;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px 24px;
+    }
+
+    .info-item {
+      display: flex;
+      font-size: 14px;
+
+      .label {
+        font-weight: 500;
+        margin-right: 8px;
+      }
+
+      .value {
+        font-style: italic;
+      }
+    }
+  }
+
+  .form-section {
+    margin-bottom: 24px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .form-field {
+    width: 100%;
+    min-width: 0; // Bỏ min-width mặc định của Material để tránh đẩy rộng cột
+    box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
+  }
+
+  .combined-field {
+    .field-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .input-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .small-input {
+      min-width: 0; // Tránh đẩy rộng cột
+      width: 100%;
+    }
+  }
+
+  .radio-group {
+    display: flex;
+    gap: 16px;
+
+    .radio-button {
+      margin-right: 12px;
+    }
+  }
+
+  .thickness-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .thickness-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .thickness-label {
+      min-width: 80px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .thickness-inputs {
+      display: flex;
+      gap: 8px;
+
+      .thickness-input {
+        width: 70px;
+        min-width: 0; // Tránh đẩy rộng cột
+        padding: 4px;
+        text-align: center;
+        box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
+      }
+    }
+  }
+
+  .tc-note {
+    font-size: 12px;
+    color: #666;
+    margin-left: 8px;
+  }
+
+  .popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  /* KCS Failure Dialog */
+  .kcs-failure-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kcs-failure-dialog {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+
+    .kcs-failure-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+    }
+
+    .kcs-failure-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 16px;
+    }
+  }
+}
+
+.with-note {
+  display: flex;
+  align-items: center; // Căn giữa theo chiều dọc
+  gap: 8px;
+
+  .form-field {
+    flex: 1; // Input chiếm hết không gian còn lại
+  }
+
+  .tc-note {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap; // Ngăn không cho xuống dòng
+  }
+}
+
+::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  min-height: 32px !important;
+}
+
+::ng-deep .mat-mdc-form-field-flex {
+  min-height: 32px !important;
+}
+
+::ng-deep input.mat-mdc-input-element,
+::ng-deep textarea.mat-mdc-input-element {
+  height: 32px !important;
+  padding: 2px 6px !important;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  min-height: 32px !important;
+}
+
+::ng-deep .mat-mdc-select-trigger {
+  min-height: 32px !important;
+  padding: 2px 6px !important;
+  font-size: 13px;
+}
+
+::ng-deep .mat-form-field-wrapper {
+  padding-bottom: 0px !important;
+}
+
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  position: absolute; // Định vị tuyệt đối
+  bottom: 0px;       // Đặt ở sát đáy của wrapper
+  left: 0;
+  right: 0;
+}
+
+::ng-deep mat-error {
+  margin-top: 4px; // Điều chỉnh giá trị này
+  font-size: 12px;
+  line-height: 1.2;
+  // Các thuộc tính khác nếu cần
+  display: block !important; // Đảm bảo luôn hiển thị
+  position: relative;
+}

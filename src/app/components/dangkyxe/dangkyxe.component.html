@@ -1,0 +1,213 @@
+<div class="container">
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Top Header Bar -->
+    <div class="top-header">
+      <div class="header-content">
+        <h1 class="header-title">Quản lý Đăng ký Xe</h1>
+        <p class="header-subtitle">Quản lý đăng ký xe đưa đón của nhân viên</p>
+      </div>
+    </div>
+
+    
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+      <!-- Search and Action Section -->
+      <div class="search-action-bar">
+      <div class="search-container">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Tìm kiếm nhanh theo họ tên, trạm xe...</mat-label>
+          <input matInput 
+                 #searchInput
+                 (input)="applyFilter(searchInput.value)"
+                 placeholder="Tìm kiếm nhanh theo họ tên, trạm xe...">
+          <mat-icon matSuffix>search</mat-icon>
+          <button mat-icon-button 
+                  matSuffix 
+                  *ngIf="searchInput.value"
+                  (click)="clearSearch(searchInput)"
+                  matTooltip="Xóa tìm kiếm">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+      
+      <div class="button-container">
+        <button mat-raised-button 
+                color="primary" 
+                (click)="openAddRegistrationDialog()"
+                class="action-button">
+          <mat-icon>add</mat-icon>
+          Thêm Đăng ký
+        </button>
+        
+        <button mat-raised-button 
+                color="primary" 
+                [disabled]="isImportingExcel"
+                (click)="openFileUploadDialog()"
+                class="action-button">
+          <mat-icon>upload_file</mat-icon>
+          Import từ Excel
+        </button>
+        
+        <button mat-raised-button 
+                color="warn" 
+                [disabled]="getSelectedCount() === 0"
+                (click)="deleteSelectedRegistrations()"
+                class="action-button">
+          <mat-icon>delete</mat-icon>
+          Xóa Đã chọn ({{ getSelectedCount() }})
+        </button>
+        
+        <button mat-raised-button 
+                color="accent" 
+                [disabled]="dataSource.data.length === 0 || isExportingPDF || isExportingEmployeeStationPDF"
+                [matMenuTriggerFor]="pdfMenu"
+                class="action-button" (click)="exportToPDF()">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Xuất PDF
+        </button>
+        
+        <mat-menu #pdfMenu="matMenu">
+          <button mat-menu-item (click)="exportToPDF()">
+            <mat-icon>description</mat-icon>
+            <span>Phiếu báo làm thêm giờ</span>
+          </button>
+          <button mat-menu-item (click)="exportEmployeeStationPDF()" [disabled]="true">
+            <mat-icon>people</mat-icon>
+            <span>Danh sách nhân viên theo trạm</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <!-- Data Display Section -->
+    <div class="table-section">
+      <div class="table-header">
+        <h3 class="table-title">Danh sách đăng ký xe</h3>
+        <div class="search-results-info" *ngIf="getFilteredCount() !== getTotalCount()">
+          <mat-icon>search</mat-icon>
+          <span>Hiển thị {{ getFilteredCount() }} / {{ getTotalCount() }} kết quả</span>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" class="data-table">
+            <!-- Select Column -->
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-checkbox
+                  (change)="$event ? masterToggle() : null"
+                  [checked]="isAllSelected()"
+                  [indeterminate]="isIndeterminate()"
+                  [aria-label]="checkboxLabel()">
+                </mat-checkbox>
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <mat-checkbox
+                  (click)="$event.stopPropagation()"
+                  (change)="$event ? toggleSelection(row) : null"
+                  [checked]="isSelected(row)"
+                  [aria-label]="checkboxLabel()">
+                </mat-checkbox>
+              </td>
+            </ng-container>
+
+            <!-- Mã nhân viên Column -->
+            <ng-container matColumnDef="maNhanVien">
+              <th mat-header-cell *matHeaderCellDef>Mã Nhân Viên</th>
+              <td mat-cell *matCellDef="let row">{{row.maNhanVien}}</td>
+            </ng-container>
+
+            <!-- Họ tên Column -->
+            <ng-container matColumnDef="hoTen">
+              <th mat-header-cell *matHeaderCellDef>Tên Nhân Viên</th>
+              <td mat-cell *matCellDef="let row">{{row.hoTen}}</td>
+            </ng-container>
+
+            <!-- Điện thoại Column -->
+            <ng-container matColumnDef="dienThoai">
+              <th mat-header-cell *matHeaderCellDef>Số Điện Thoại</th>
+              <td mat-cell *matCellDef="let row">{{row.dienThoai}}</td>
+            </ng-container>
+
+            <!-- Ngày đăng ký Column -->
+            <ng-container matColumnDef="ngayDangKy">
+              <th mat-header-cell *matHeaderCellDef>Ngày Đăng Ký</th>
+              <td mat-cell *matCellDef="let row">{{row.ngayDangKy}}</td>
+            </ng-container>
+
+            <!-- Thời gian Column -->
+            <ng-container matColumnDef="thoiGianBatDau">
+              <th mat-header-cell *matHeaderCellDef>Thời Gian</th>
+              <td mat-cell *matCellDef="let row">
+                <span *ngIf="row.thoiGianBatDau && row.thoiGianKetThuc; else noTime">
+                  {{formatTime(row.thoiGianBatDau)}} - {{formatTime(row.thoiGianKetThuc)}}
+                </span>
+                <ng-template #noTime>
+                  <span class="no-time">Chưa có thời gian</span>
+                </ng-template>
+              </td>
+            </ng-container>
+
+            <!-- Trạm xe Column -->
+            <ng-container matColumnDef="tramXe">
+              <th mat-header-cell *matHeaderCellDef>Trạm Xe</th>
+              <td mat-cell *matCellDef="let row">{{row.tramXe}}</td>
+            </ng-container>
+
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button [matMenuTriggerFor]="menu" [matMenuTriggerData]="{registration: row}">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <ng-template matMenuContent let-registration="registration">
+                    <button mat-menu-item (click)="editRegistration(registration)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Chỉnh sửa</span>
+                    </button>
+                    <button mat-menu-item (click)="deleteRegistration(registration)">
+                      <mat-icon>delete</mat-icon>
+                      <span>Xóa</span>
+                    </button>
+                  </ng-template>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+                [class.selected-row]="isSelected(row)"></tr>
+          </table>
+          
+          <mat-paginator 
+            [pageSizeOptions]="[5, 10, 25, 50]" 
+            [pageSize]="10" 
+            showFirstLastButtons
+            aria-label="Chọn trang">
+          </mat-paginator>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Loading Overlay -->
+  <div *ngIf="isImportingExcel || isExportingPDF || isExportingEmployeeStationPDF" class="loading-overlay">
+    <div class="loading-content">
+      <mat-spinner class="loading-spinner" diameter="50"></mat-spinner>
+      <div class="loading-text">
+        <span *ngIf="isImportingExcel">Đang import dữ liệu từ Excel...</span>
+        <span *ngIf="isExportingPDF">Đang tạo file PDF...</span>
+        <span *ngIf="isExportingEmployeeStationPDF">Đang tạo file PDF danh sách nhân viên...</span>
+      </div>
+      <div class="loading-subtitle">
+        <span *ngIf="isImportingExcel">Vui lòng chờ trong giây lát</span>
+        <span *ngIf="isExportingPDF">Vui lòng chờ trong giây lát</span>
+        <span *ngIf="isExportingEmployeeStationPDF">Vui lòng chờ trong giây lát</span>
+      </div>
+    </div>
+  </div>

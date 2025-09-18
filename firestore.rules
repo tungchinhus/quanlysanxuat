@@ -1,35 +1,140 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Temporarily allow read/write access to all documents for testing
-    // TODO: Restrict access after authentication is properly implemented
-    match /{document=**} {
-      allow read, write: if true;
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    // Specific rules for each collection
-    match /tbl_bangve/{document} {
-      allow read, write: if request.auth != null;
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'admin' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
-    match /tbl_bd_cao/{document} {
-      allow read, write: if request.auth != null;
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'super_admin' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
-    match /tbl_bd_ha/{document} {
-      allow read, write: if request.auth != null;
+    function isManager() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'manager' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
-    match /tbl_ep_boiday/{document} {
-      allow read, write: if request.auth != null;
+    function hasRole(role) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             role in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
-    match /tbl_kcs_approve/{document} {
-      allow read, write: if request.auth != null;
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
-    match /tbl_user_bangve/{document} {
-      allow read, write: if request.auth != null;
+    // Rules cho collection xeDuaDon
+    match /xeDuaDon/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection lichTrinhXe
+    match /lichTrinhXe/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection chiTietTuyenDuong
+    match /chiTietTuyenDuong/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection dangKyPhanXe
+    match /dangKyPhanXe/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection routeDetails (backup)
+    match /routeDetails/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection registrations
+    match /registrations/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection nhanVien
+    match /nhanVien/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager());
+    }
+    
+    // Rules cho collection users (quản lý người dùng)
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if isOwner(userId);
+      // Only admins can read all users
+      allow read: if isAdmin() || isSuperAdmin();
+      // Only admins can create users
+      allow create: if isAdmin() || isSuperAdmin();
+      // Users can update their own data, admins can update any user
+      allow update: if isOwner(userId) || isAdmin() || isSuperAdmin();
+      // Only super admins can delete users
+      allow delete: if isSuperAdmin();
+    }
+    
+    // Rules cho collection roles (quản lý vai trò)
+    match /roles/{roleId} {
+      // All authenticated users can read roles
+      allow read: if isAuthenticated();
+      // Only super admins can create, update, or delete roles
+      allow write: if isSuperAdmin();
+    }
+    
+    // Rules cho collection permissions (quản lý quyền)
+    match /permissions/{permissionId} {
+      // All authenticated users can read permissions
+      allow read: if isAuthenticated();
+      // Only super admins can create, update, or delete permissions
+      allow write: if isSuperAdmin();
+    }
+    
+    // Rules cho collection userRoles (liên kết người dùng-vai trò)
+    match /userRoles/{userRoleId} {
+      // Users can read their own role assignments
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) || isAdmin() || isSuperAdmin());
+      // Only admins can create, update, or delete role assignments
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Rules cho collection userPermissions (liên kết người dùng-quyền)
+    match /userPermissions/{userPermissionId} {
+      // Users can read their own permission assignments
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) || isAdmin() || isSuperAdmin());
+      // Only admins can create, update, or delete permission assignments
+      allow write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // Rules cho audit logs (nếu có)
+    match /auditLogs/{logId} {
+      // Only admins can read audit logs
+      allow read: if isAdmin() || isSuperAdmin();
+      // System can write audit logs
+      allow write: if isAuthenticated();
     }
   }
 }

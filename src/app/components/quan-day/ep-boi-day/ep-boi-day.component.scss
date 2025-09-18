@@ -1,0 +1,45 @@
+/* src/app/pages/landing/boi-day-ha/boi-day-ha.component.css */
+/* (Tương tự cho boi-day-cao.component.css và ep-boi-day.component.css) */
+.tab-content-container {
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Khoảng cách giữa các trường nhập liệu */
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+/* Tinh chỉnh riêng cho mat-form-field trong các tab (kiểu outline với label nổi) */
+.mat-form-field-appearance-outline {
+  .mat-form-field-wrapper {
+    padding-bottom: 0.5em; /* Giảm padding dưới wrapper */
+  }
+  .mat-form-field-outline-thick {
+    color: #3f51b5; /* Màu border khi focus */
+  }
+  .mat-form-field-outline {
+    color: rgba(0, 0, 0, 0.42); /* Màu border khi không focus */
+  }
+  .mat-form-field-label-wrapper {
+    top: -0.6em; /* Điều chỉnh vị trí label nổi */
+  }
+  .mat-form-field-label {
+    transform: translateY(0) scale(0.75) !important; /* Luôn scale và dịch chuyển label lên trên */
+    width: 133.33333%; /* Do scale 0.75 */
+    color: rgba(0, 0, 0, 0.6) !important; /* Màu label */
+  }
+  .mat-form-field-infix {
+    padding: 0.7em 0 0.5em !important; /* Điều chỉnh padding input */
+  }
+  .mat-input-element {
+    color: rgba(0, 0, 0, 0.87); /* Màu chữ input */
+    font-size: 1em;
+  }
+}
+
+/* Loại bỏ placeholder ẩn để không gây nhiễu */
+.mat-form-field-appearance-outline .mat-form-field-flex .mat-form-field-placeholder-wrapper {
+  display: none;
+}

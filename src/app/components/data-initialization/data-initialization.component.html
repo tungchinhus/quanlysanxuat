@@ -1,0 +1,137 @@
+<div class="data-initialization-container">
+  <!-- Header -->
+  <mat-toolbar color="primary" class="header-toolbar">
+    <button mat-icon-button (click)="toggleSidenav()" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span class="header-title">Khởi tạo Dữ liệu Hệ thống</span>
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="refreshData()" [disabled]="isLoading" matTooltip="Làm mới dữ liệu">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="content-container">
+    <!-- System Statistics -->
+    <div class="stats-section">
+      <h2>Thống kê Hệ thống</h2>
+      <div class="stats-grid">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon" color="primary">people</mat-icon>
+              <div class="stat-info">
+                <div class="stat-number">{{ systemStats.users }}</div>
+                <div class="stat-label">Người dùng</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon" color="accent">admin_panel_settings</mat-icon>
+              <div class="stat-info">
+                <div class="stat-number">{{ systemStats.roles }}</div>
+                <div class="stat-label">Vai trò</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon" color="warn">security</mat-icon>
+              <div class="stat-info">
+                <div class="stat-number">{{ systemStats.permissions }}</div>
+                <div class="stat-label">Quyền hạn</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Initialization Actions -->
+    <div class="actions-section">
+      <h2>Quản lý Dữ liệu</h2>
+      
+      <div class="action-cards">
+        <!-- Initialize Data Card -->
+        <mat-card class="action-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar color="primary">play_arrow</mat-icon>
+            <mat-card-title>Khởi tạo Dữ liệu</mat-card-title>
+            <mat-card-subtitle>Tạo dữ liệu mẫu cho hệ thống</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p>Khởi tạo các vai trò, quyền hạn và người dùng mẫu cho hệ thống quản lý sản xuất.</p>
+            <div class="feature-list">
+              <mat-chip-set>
+                <mat-chip>5 Vai trò cơ bản</mat-chip>
+                <mat-chip>40+ Quyền hạn</mat-chip>
+                <mat-chip>Super Admin</mat-chip>
+              </mat-chip-set>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button 
+              mat-raised-button 
+              color="primary" 
+              (click)="initializeSystemData()" 
+              [disabled]="isLoading">
+              <mat-icon>play_arrow</mat-icon>
+              Khởi tạo Dữ liệu
+            </button>
+          </mat-card-actions>
+        </mat-card>
+
+        <!-- Reset Data Card -->
+        <mat-card class="action-card warning-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar color="warn">warning</mat-icon>
+            <mat-card-title>Reset Dữ liệu</mat-card-title>
+            <mat-card-subtitle>Xóa và tạo lại toàn bộ dữ liệu</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p><strong>Cảnh báo:</strong> Hành động này sẽ xóa toàn bộ dữ liệu hiện tại và tạo lại từ đầu.</p>
+            <div class="warning-list">
+              <mat-list>
+                <mat-list-item>
+                  <mat-icon mat-list-icon color="warn">delete</mat-icon>
+                  <div mat-line>Xóa tất cả người dùng (trừ Super Admin)</div>
+                </mat-list-item>
+                <mat-list-item>
+                  <mat-icon mat-list-icon color="warn">delete</mat-icon>
+                  <div mat-line>Xóa tất cả vai trò và quyền hạn</div>
+                </mat-list-item>
+                <mat-list-item>
+                  <mat-icon mat-list-icon color="warn">delete</mat-icon>
+                  <div mat-line>Tạo lại dữ liệu mẫu</div>
+                </mat-list-item>
+              </mat-list>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button 
+              mat-raised-button 
+              color="warn" 
+              (click)="resetSystemData()" 
+              [disabled]="isLoading">
+              <mat-icon>warning</mat-icon>
+              Reset Dữ liệu
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Đang xử lý...</p>
+    </div>
+  </div>
+</div>

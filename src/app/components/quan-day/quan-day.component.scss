@@ -1,0 +1,171 @@
+/* src/app/pages/landing/quan-day/quan-day.component.css */
+.quan-day-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Căn trên cùng */
+  min-height: 100vh;
+  background-color: #f0f2f5; /* Nền nhẹ */
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.form-card {
+  width: 90%;
+  max-width: 700px; /* Giữ max-width để form không quá rộng */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24); /* Shadow nhẹ */
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.header {
+  background-color: #3f51b5; /* Màu xanh đậm cho header */
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header .mat-card-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.3em;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  text-align: center;
+  width: 100%;
+}
+
+/* --- Fixed Fields Grid --- */
+.fixed-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 cột */
+  gap: 10px 40px; /* Gap dọc 10px, gap ngang 40px */
+  padding: 20px 30px 10px; /* Padding cho khu vực này */
+  align-items: baseline; /* Căn chỉnh baseline của các input */
+}
+
+.custom-fixed-field {
+  width: 100%;
+}
+
+/* Tinh chỉnh label và input của các trường cố định (appearance="standard") */
+.custom-fixed-field .mat-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
+.custom-fixed-field .mat-form-field-underline {
+  bottom: 0.5em !important;
+  background-color: #ccc !important; /* Màu gạch chân nhạt hơn khi không focus */
+}
+.custom-fixed-field.mat-focused .mat-form-field-underline {
+  background-color: #3f51b5 !important; /* Màu gạch chân khi focus */
+}
+.custom-fixed-field .mat-form-field-ripple {
+    background-color: #3f51b5 !important; /* Màu ripple khi focus */
+}
+.custom-fixed-field .mat-form-field-label {
+  color: rgba(0, 0, 0, 0.6) !important; /* Màu chữ label */
+  font-size: 0.9em;
+  top: 0.7em !important; /* Điều chỉnh vị trí label */
+}
+.custom-fixed-field .mat-form-field-infix {
+  padding-top: 0.4em !important; /* Giảm padding trên input */
+}
+.custom-fixed-field .mat-input-element {
+    color: rgba(0, 0, 0, 0.87); /* Màu chữ input */
+    font-size: 1em;
+}
+
+/* Căn chỉnh cụ thể cho các label và input để khớp ảnh tốt hơn */
+.fixed-fields-grid .mat-form-field:nth-child(odd) { /* Các trường ở cột trái (Công suất, Điện áp) */
+    text-align: left;
+}
+.fixed-fields-grid .mat-form-field:nth-child(even) { /* Các trường ở cột phải (KVA TBKT, KV, Số bối dây) */
+    text-align: left; /* Đổi thành left để label ở cột phải căn trái giống ảnh */
+}
+/* Để input luôn nằm dưới label như trong ảnh (nếu dùng appearance="standard") */
+.fixed-fields-grid .mat-form-field-flex {
+    align-items: flex-end; /* Căn chỉnh input xuống dưới cùng */
+}
+
+
+/* --- Tab Group Styling --- */
+.custom-tab-group {
+  margin-top: 20px;
+  background-color: white;
+}
+
+/* Style cho thanh tab header */
+::ng-deep .mat-tab-header {
+  background-color: white; /* Nền trắng cho tab header */
+  border-bottom: 1px solid #e0e0e0; /* Đường kẻ dưới tab header */
+  padding: 0 20px; /* Padding ngang cho tab header */
+  margin-bottom: 0; /* Đảm bảo không có margin bottom dư thừa */
+}
+
+/* Style cho mỗi tab header (màu chữ, padding) */
+::ng-deep .mat-tab-label {
+  min-width: unset !important;
+  padding: 0 20px !important; /* Tăng padding giữa các tab để giãn ra */
+  height: 48px !important;
+  color: rgba(0, 0, 0, 0.7); /* Màu chữ tab không chọn */
+  font-weight: 500;
+  opacity: 1 !important;
+  font-size: 0.9em;
+  letter-spacing: 0.2px;
+}
+
+/* Style cho tab được chọn */
+::ng-deep .mat-tab-label-active {
+  color: #3f51b5 !important; /* Màu xanh đậm cho tab được chọn */
+  font-weight: 500;
+}
+
+/* Màu thanh gạch chân tab được chọn */
+::ng-deep .mat-ink-bar {
+  background-color: #3f51b5 !important; /* Màu xanh đậm cho gạch chân */
+  height: 2px !important;
+}
+
+/* Nội dung của tab */
+.mat-tab-body-wrapper {
+  padding: 20px 30px; /* Padding bên trong mỗi tab content */
+  border: 1px solid #e0e0e0; /* Border bao quanh nội dung tab */
+  border-top: none; /* Bỏ border top */
+  min-height: 200px; /* Đảm bảo đủ không gian cho nội dung tab */
+}
+
+/* --- Navigation Buttons --- */
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 30px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 0;
+  background-color: #f8f8f8;
+}
+
+.nav-button {
+  min-width: 120px;
+  height: 40px;
+  font-size: 0.9em;
+  font-weight: 500;
+  background-color: #3f51b5;
+  color: white;
+  border-radius: 4px;
+  box-shadow: none; /* Bỏ box-shadow mặc định để giống ảnh */
+  text-transform: uppercase;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.nav-button:hover:not(:disabled) {
+  background-color: #303f9f;
+}
+
+.nav-button:disabled {
+  background-color: #a0a0a0 !important;
+  color: #e0e0e0 !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}

@@ -1,0 +1,36 @@
+<div class="approve-dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon class="header-icon">check_circle</mat-icon>
+      Xác nhận duyệt KCS
+    </h2>
+    <button mat-icon-button mat-dialog-close class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <div class="item-info">
+      <p><strong>Ký hiệu:</strong> {{data.itemName}}</p>
+      <p><strong>Loại:</strong> {{getItemTypeDisplayName(data.itemType)}}</p>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button 
+      mat-button 
+      (click)="onCancel()" 
+      [disabled]="isLoading">
+      Hủy
+    </button>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="onSubmit()" 
+      [disabled]="isLoading || !approveForm.valid"
+      class="submit-button">
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+      <span *ngIf="!isLoading">Duyệt KCS</span>
+    </button>
+  </div>
+</div>

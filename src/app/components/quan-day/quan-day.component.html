@@ -1,0 +1,77 @@
+<div class="quan-day-container">
+  <mat-card class="form-card">
+    <mat-card-header class="header">
+      <mat-card-title>THẺ KIỂM TRA CÔNG ĐOẠN KHÂU QUẦN DÂY</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="fixed-fields-grid">
+        <mat-form-field appearance="outline" class="custom-fixed-field">
+          <mat-label>Công suất:</mat-label>
+          <input matInput>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="custom-fixed-field">
+          <mat-label>KVA TBKT:</mat-label>
+          <input matInput>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="custom-fixed-field">
+          <mat-label>Điện áp:</mat-label>
+          <input matInput>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="custom-fixed-field">
+          <mat-label>KV:</mat-label>
+          <input matInput>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="custom-fixed-field">
+          <mat-label>Số bối dây:</mat-label>
+          <input matInput type="number">
+        </mat-form-field>
+      </div>
+
+      <mat-tab-group
+        #tabGroup
+        [selectedIndex]="selectedIndex"
+        (selectedIndexChange)="onTabChange($event)"
+        animationDuration="0ms"
+        class="custom-tab-group"
+        [@.disabled]="true"
+      >
+        <mat-tab label="Bối dây Hạ">
+          <ng-template matTabContent>
+            <app-boi-day-ha
+              [isActive]="selectedIndex === 0"
+              (isValid)="onTabValidityChange(0, $event)"
+            ></app-boi-day-ha>
+          </ng-template>
+        </mat-tab>
+
+        <mat-tab label="Bối dây Cao">
+          <ng-template matTabContent>
+            <app-boi-day-cao
+              [isActive]="selectedIndex === 1"
+              (isValid)="onTabValidityChange(1, $event)"
+            ></app-boi-day-cao>
+          </ng-template>
+        </mat-tab>
+
+        <mat-tab label="Ép bối dây">
+          <ng-template matTabContent>
+            <app-ep-boi-day
+              [isActive]="selectedIndex === 2"
+              (isValid)="onTabValidityChange(2, $event)"
+            ></app-ep-boi-day>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
+
+    </mat-card-content>
+    <div class="navigation-buttons">
+      <button mat-raised-button class="nav-button" (click)="goToPreviousTab()" [disabled]="selectedIndex === 0">
+        QUAY LẠI
+      </button>
+
+      <button mat-raised-button class="nav-button" (click)="goToNextTab()"
+              [disabled]="!tabValidity[selectedIndex] || selectedIndex === tabValidity.length - 1">
+        TIẾP THEO
+      </button>
+    </div>
+  </mat-card>

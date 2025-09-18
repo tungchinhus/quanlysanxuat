@@ -1,0 +1,92 @@
+<div class="ep-boi-day-popup">
+    <div class="popup-header">
+      <h2 mat-dialog-title>Gia công bối dây ép</h2>
+      <button mat-icon-button (click)="onCancel()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  
+    <mat-dialog-content>
+      <div class="quan-day-info">
+        <h3>Thông tin quấn dây</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Ký hiệu quấn dây:</label>
+            <span>{{ data.quanDay?.kyhieuquanday }}</span>
+          </div>
+          <div class="info-item">
+            <label>Công suất:</label>
+            <span>{{ data.quanDay?.congsuat }} kVA</span>
+          </div>
+          <div class="info-item">
+            <label>TBKT:</label>
+            <span>{{ data.quanDay?.tbkt }}</span>
+          </div>
+          <div class="info-item">
+            <label>Điện áp:</label>
+            <span>{{ data.quanDay?.dienap }}</span>
+          </div>
+        </div>
+      </div>
+  
+      <form [formGroup]="epForm" class="ep-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Bối dây ép</mat-label>
+            <input matInput formControlName="bd_ep" placeholder="Nhập thông tin bối dây ép">
+            <mat-error *ngIf="epForm.get('bd_ep')?.hasError('required')">
+              Bối dây ép là bắt buộc
+            </mat-error>
+          </mat-form-field>
+        </div>
+  
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Bung bối dây</mat-label>
+            <input matInput type="number" formControlName="bung_bd" placeholder="Nhập số bung bối dây">
+            <mat-error *ngIf="epForm.get('bung_bd')?.hasError('required')">
+              Bung bối dây là bắt buộc
+            </mat-error>
+          </mat-form-field>
+        </div>
+  
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Ghi chú</mat-label>
+            <textarea matInput formControlName="ghi_chu" rows="3" placeholder="Nhập ghi chú (nếu có)"></textarea>
+          </mat-form-field>
+        </div>
+  
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Ngày hoàn thành</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="ngay_hoan_thanh">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="epForm.get('ngay_hoan_thanh')?.hasError('required')">
+              Ngày hoàn thành là bắt buộc
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </form>
+  
+      <div class="message-container" *ngIf="errorMessage || successMessage">
+        <div class="error-message" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+        <div class="success-message" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+      </div>
+    </mat-dialog-content>
+  
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onCancel()" [disabled]="isLoading">
+        Hủy
+      </button>
+      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="isLoading || !epForm.valid">
+        <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+        {{ isLoading ? 'Đang lưu...' : 'Lưu' }}
+      </button>
+    </mat-dialog-actions>
+  </div>

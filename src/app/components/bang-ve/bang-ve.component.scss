@@ -1,0 +1,171 @@
+.bang-ve-popup-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); /* Bóng đổ mạnh hơn cho popup */
+  padding: 16px; /* Giảm khoảng đệm bên trong từ 24px xuống 16px */
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh; /* Giới hạn chiều cao để có thể cuộn nếu nội dung dài */
+  overflow: hidden; /* Ngăn cuộn chính của popup */
+}
+
+/* Header của popup (tiêu đề và nút đóng) */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px; /* Giảm khoảng cách dưới tiêu đề từ 15px xuống 10px */
+  padding-bottom: 8px; /* Giảm padding dưới từ 10px xuống 8px */
+  border-bottom: 1px solid #eee; /* Đường kẻ dưới tiêu đề */
+}
+
+/* Tiêu đề popup */
+.popup-title {
+  font-size: 1.6em; /* Giảm kích thước font từ 1.8em xuống 1.6em */
+  font-weight: 600;
+  color: #3f51b5; /* Màu Material Primary */
+  margin: 0; /* Bỏ margin mặc định của h2 */
+}
+
+/* Nút đóng dialog */
+.close-button {
+  color: #757575; /* Màu xám */
+  margin-left: 8px; /* Giảm khoảng cách với tiêu đề từ 10px xuống 8px */
+}
+
+/* Body của popup (chứa form) */
+.popup-body {
+  flex-grow: 1; /* Cho phép body mở rộng */
+  //overflow-y: auto; /* Cho phép cuộn dọc nếu form quá dài */
+  padding-right: 8px; /* Giảm padding-right từ 10px xuống 8px */
+  margin-right: -8px; /* Bù lại padding-right để thanh cuộn không bị đẩy vào */
+}
+
+/* Định dạng form */
+.bang-ve-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Giảm khoảng cách giữa các hàng trong form từ 10px xuống 8px */
+}
+
+/* Định dạng hàng trong form để có 2 cột trên màn hình lớn */
+.form-row {
+  display: flex;
+  gap: 10px; /* Giảm khoảng cách giữa các trường trong cùng một hàng từ 15px xuống 10px */
+  width: 100%;
+  height: 90px;
+}
+
+/* Đảm bảo các trường chiếm toàn bộ chiều rộng có sẵn trong hàng */
+.form-row .full-width {
+  flex: 1; /* Mỗi trường sẽ chiếm một phần bằng nhau */
+}
+
+/* Định dạng các trường nhập liệu Material */
+mat-form-field {
+  margin-bottom: 3px; /* Giảm khoảng cách dưới mỗi trường từ 5px xuống 3px */
+}
+
+/* Điều chỉnh chiều cao của input bên trong mat-form-field */
+mat-form-field .mat-form-field-wrapper {
+  padding-bottom: 0 !important; /* Loại bỏ padding dưới cùng mặc định */
+}
+
+mat-form-field .mat-form-field-flex {
+  align-items: center; /* Căn giữa nội dung theo chiều dọc */
+}
+
+mat-form-field .mat-form-field-infix {
+  padding: 0.4em 0 !important; /* Giảm padding trên và dưới của infix từ 0.5em xuống 0.4em */
+  border-top: none !important; /* Loại bỏ border-top mặc định */
+}
+
+mat-form-field input.mat-input-element {
+  height: 25px !important; /* Đặt chiều cao mong muốn */
+  line-height: 25px !important; /* Đảm bảo text căn giữa theo chiều dọc */
+  padding: 0 !important; /* Loại bỏ padding mặc định của input */
+}
+
+/* Định dạng checkbox */
+mat-checkbox {
+  margin-top: 3px; /* Giảm khoảng cách trên checkbox từ 5px xuống 3px */
+  margin-bottom: 10px; /* Giảm khoảng cách dưới checkbox từ 15px xuống 10px */
+}
+
+.mat-form-field-appearance-outline .mat-form-field-infix{
+  padding: 0 0 1em 0 !important;
+}
+
+/* Footer của popup (chứa các nút hành động) */
+.popup-actions {
+  display: flex;
+  justify-content: flex-end; /* Căn các nút sang phải */
+  gap: 8px; /* Giảm khoảng cách giữa các nút từ 10px xuống 8px */
+  margin-top: 10px; /* Giảm khoảng cách trên các nút từ 15px xuống 10px */
+  padding-top: 8px; /* Giảm padding trên đường kẻ từ 10px xuống 8px */
+  border-top: 1px solid #eee; /* Đường kẻ trên các nút */
+  flex-wrap: wrap; /* Cho phép các nút xuống dòng trên màn hình nhỏ */
+}
+
+/* Định dạng các nút Material */
+button[mat-raised-button],
+button[mat-button] {
+  padding: 6px 12px; /* Giảm padding của nút từ 8px 15px xuống 6px 12px */
+  font-size: 0.85em; /* Giảm kích thước font của nút từ 0.9em xuống 0.85em */
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Giảm khoảng cách giữa icon và text từ 6px xuống 5px */
+}
+
+/* Spinning animation for loading state */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Ghi đè style của MatDialogContainer để loại bỏ đường viền và bóng mặc định */
+/* Sử dụng ::ng-deep để xuyên qua shadow DOM của MatDialogContainer */
+::ng-deep .mat-dialog-container {
+  border-radius: 8px !important; /* Đảm bảo bo tròn góc */
+  box-shadow: none !important; /* Loại bỏ bóng mặc định */
+  padding: 0 !important; /* Loại bỏ padding mặc định của container */
+  background: transparent !important; /* Đảm bảo nền trong suốt nếu cần */
+  overflow: hidden !important; /* Ngăn cuộn thừa nếu có */
+}
+
+
+/* Responsive design cho màn hình nhỏ */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column; /* Chuyển sang hiển thị cột trên màn hình nhỏ */
+    gap: 0; /* Bỏ khoảng cách giữa các trường khi hiển thị cột */
+  }
+
+  .form-row .full-width {
+    width: 100%; /* Các trường chiếm toàn bộ chiều rộng */
+  }
+
+  .bang-ve-popup-content {
+    padding: 15px;
+  }
+
+  .popup-title {
+    font-size: 1.5em;
+  }
+
+  .popup-actions {
+    justify-content: center; /* Căn giữa các nút trên màn hình nhỏ */
+    flex-direction: column; /* Xếp các nút theo cột */
+    gap: 10px; /* Khoảng cách giữa các nút */
+  }
+
+  button[mat-raised-button],
+  button[mat-button] {
+    width: 100%; /* Các nút chiếm toàn bộ chiều rộng */
+  }
+}

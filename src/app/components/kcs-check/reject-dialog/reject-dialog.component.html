@@ -1,0 +1,54 @@
+<div class="reject-dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon class="header-icon">cancel</mat-icon>
+      Từ chối KCS
+    </h2>
+    <button mat-icon-button mat-dialog-close class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <div class="item-info">
+      <p><strong>Ký hiệu:</strong> {{data.itemName}}</p>
+      <p><strong>Loại:</strong> {{getItemTypeDisplayName(data.itemType)}}</p>
+    </div>
+
+    <form [formGroup]="rejectForm" (ngSubmit)="onSubmit()">
+      <div class="form-section">
+        <h3>Ghi chú *</h3>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Ghi chú từ chối</mat-label>
+          <textarea 
+            matInput 
+            formControlName="ghiChu" 
+            rows="4"
+            placeholder="Nhập ghi chú từ chối...">
+          </textarea>
+          <mat-error *ngIf="rejectForm.get('ghiChu')?.hasError('required')">
+            {{getErrorMessage('ghiChu')}}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog-actions">
+    <button 
+      mat-button 
+      (click)="onCancel()" 
+      [disabled]="isLoading">
+      Hủy
+    </button>
+    <button 
+      mat-raised-button 
+      color="warn" 
+      (click)="onSubmit()" 
+      [disabled]="rejectForm.invalid || isLoading"
+      class="submit-button">
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+      <span *ngIf="!isLoading">Từ chối</span>
+    </button>
+  </div>
+</div>

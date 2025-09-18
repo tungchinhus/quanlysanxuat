@@ -1,0 +1,124 @@
+<div class="bang-ve-popup-content">
+    <div class="popup-header">
+      <!-- Tiêu đề động dựa trên chế độ -->
+      <h2 class="text-gray-800">
+        <span *ngIf="data.mode === 'add'">Thêm Mới Bảng Vẽ</span>
+        <span *ngIf="data.mode === 'view'">Chi Tiết Bảng Vẽ</span>
+        <span *ngIf="data.mode === 'edit'">Chỉnh Sửa Bảng Vẽ</span>
+      </h2>
+      <!-- Nút đóng dialog -->
+      <button mat-icon-button class="close-button" (click)="onCancel()" aria-label="Close dialog">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  
+    <div class="popup-body">
+      <!-- FormGroup được liên kết với bangVeForm trong component.ts -->
+      <form [formGroup]="bangVeForm" class="bang-ve-form">
+        <!-- Bỏ trường ID theo yêu cầu -->
+        <!-- Hàng đầu tiên cho Ký hiệu bảng vẽ và Công suất -->
+        <div class="form-row">
+          <!-- Trường Ký hiệu bảng vẽ -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Ký hiệu bảng vẽ</mat-label>
+            <input matInput formControlName="kyhieubangve" placeholder="Nhập ký hiệu bảng vẽ">
+            <!-- Thông báo lỗi nếu trường không hợp lệ -->
+            <mat-error *ngIf="bangVeForm.get('kyhieubangve')?.hasError('required') && bangVeForm.get('kyhieubangve')?.touched">
+              Ký hiệu bảng vẽ là bắt buộc.
+            </mat-error>
+          </mat-form-field>
+  
+          <!-- Trường Công suất -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Công suất</mat-label>
+            <input matInput formControlName="congsuat" type="number" placeholder="Nhập công suất">
+            <mat-error *ngIf="bangVeForm.get('congsuat')?.hasError('required') && bangVeForm.get('congsuat')?.touched">
+              Công suất là bắt buộc.
+            </mat-error>
+            <mat-error *ngIf="bangVeForm.get('congsuat')?.hasError('pattern') && bangVeForm.get('congsuat')?.touched">
+              Công suất phải là số nguyên.
+            </mat-error>
+          </mat-form-field>
+        </div>
+  
+        <!-- Hàng thứ hai cho TBKT và Điện áp -->
+        <div class="form-row">
+          <!-- Trường TBKT -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>TBKT</mat-label>
+            <input matInput formControlName="tbkt" placeholder="Nhập TBKT">
+          </mat-form-field>
+  
+          <!-- Trường Điện áp -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Điện áp</mat-label>
+            <input matInput formControlName="dienap" placeholder="Nhập điện áp">
+          </mat-form-field>
+        </div>
+  
+        <!-- Hàng thứ ba cho Số bối dây và BD Hạ trong -->
+        <div class="form-row">
+          <!-- Trường Số bối dây -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Số bối dây</mat-label>
+            <input matInput formControlName="soboiday" placeholder="Nhập số bối dây">
+          </mat-form-field>
+  
+          <!-- Trường BD Hạ trong -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>BD Hạ trong</mat-label>
+            <input matInput formControlName="bd_ha_trong" placeholder="Nhập BD Hạ trong">
+          </mat-form-field>
+        </div>
+  
+        <!-- Hàng thứ tư cho BD Hạ ngoài và BD Cao -->
+        <div class="form-row">
+          <!-- Trường BD Hạ ngoài -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>BD Hạ ngoài</mat-label>
+            <input matInput formControlName="bd_ha_ngoai" placeholder="Nhập BD Hạ ngoài">
+          </mat-form-field>
+  
+          <!-- Trường BD Cao -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>BD Cao</mat-label>
+            <input matInput formControlName="bd_cao" placeholder="Nhập BD Cao">
+          </mat-form-field>
+        </div>
+  
+        <!-- Hàng thứ năm cho BD Ép và Bụng BD -->
+        <div class="form-row">
+          <!-- Trường BD Ép -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>BD Ép</mat-label>
+            <input matInput formControlName="bd_ep" placeholder="Nhập BD Ép">
+          </mat-form-field>
+  
+          <!-- Trường Bụng BD -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Bụng BD</mat-label>
+            <input matInput formControlName="bung_bd" type="number" placeholder="Nhập Bụng BD">
+            <mat-error *ngIf="bangVeForm.get('bung_bd')?.hasError('pattern') && bangVeForm.get('bung_bd')?.touched">
+              Bụng BD phải là số nguyên.
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </form>
+    </div>
+  
+    <div class="popup-actions">      
+      <!-- Nút "Thêm Bảng Vẽ" chỉ hiển thị khi ở chế độ 'add' -->
+      <button mat-raised-button color="primary" (click)="themBangVe()" *ngIf="data.mode === 'add'" 
+              [disabled]="isSaving || bangVeForm.invalid">
+        <mat-icon *ngIf="!isSaving">save</mat-icon>
+        <mat-icon *ngIf="isSaving" class="spinning">refresh</mat-icon>
+        {{ isSaving ? 'Đang lưu...' : 'Thêm mới bảng vẽ' }}
+      </button>     
+  
+      <!-- Nút "Đóng" hoặc "Hủy" -->
+      <button mat-button (click)="onCancel()">
+        <mat-icon>close</mat-icon> Đóng
+      </button>
+    </div>
+</div>
+  
