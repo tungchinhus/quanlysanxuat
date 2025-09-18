@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "quanlysanxuat"
-  }
+  },
+  "targets": {
+    "quanlysanxuat": {
+      "hosting": {
+        "dieuxe": [
+          "quanlysanxuat"
+        ],
+        "quanlysx": [
+          "quanlysx"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

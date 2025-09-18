@@ -1,6 +1,42 @@
 {
-  "hosting": {
-    "site": "dieuxe",
+  "hosting": [
+    {
+      "target": "quanlysanxuat-b7346",
+      "public": "dist/dieuxe-fe/browser",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.js",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/javascript"
+            }
+          ]
+        },
+        {
+          "source": "**/*.css",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "text/css"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "quanlysx",
     "public": "dist/dieuxe-fe/browser",
     "ignore": [
       "firebase.json",
@@ -32,8 +68,9 @@
           }
         ]
       }
-    ]
-  },
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules"
   }
