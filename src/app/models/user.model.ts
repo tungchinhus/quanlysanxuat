@@ -1,6 +1,7 @@
 export interface User {
   id: string;
   userId?: string; // Additional ID field for compatibility
+  uid?: string; // Firebase Authentication UID - để trống sẽ thêm sau
   username: string;
   email: string;
   fullName: string;
@@ -66,7 +67,8 @@ export enum Module {
   QUAN_LY_USER = 'quan_ly_user',
   QUAN_LY_PHAN_QUYEN = 'quan_ly_phan_quyen',
   BAO_CAO = 'bao_cao',
-  CAI_DAT = 'cai_dat'
+  CAI_DAT = 'cai_dat',
+  BANG_VE = 'bang_ve'
 }
 
 // Enum cho các hành động
@@ -88,7 +90,8 @@ export const PREDEFINED_ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
   USER: 'user',
-  VIEWER: 'viewer'
+  VIEWER: 'viewer',
+  TOTRUONG: 'totruong'
 };
 
 // Predefined permissions
@@ -144,5 +147,13 @@ export const PREDEFINED_PERMISSIONS = {
   // System settings permissions
   SETTINGS_VIEW: 'settings_view',
   SETTINGS_UPDATE: 'settings_update',
-  SYSTEM_CONFIG: 'system_config'
+  SYSTEM_CONFIG: 'system_config',
+  
+  // Drawing management permissions
+  DRAWING_VIEW: 'drawing_view',
+  DRAWING_CREATE: 'drawing_create',
+  DRAWING_UPDATE: 'drawing_update',
+  DRAWING_DELETE: 'drawing_delete',
+  DRAWING_EXPORT: 'drawing_export',
+  DRAWING_IMPORT: 'drawing_import'
 };

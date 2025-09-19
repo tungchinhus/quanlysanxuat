@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { User } from '../models/user.model';
 import { UserManagementFirebaseService } from './user-management-firebase.service';
 import { FirebaseService } from './firebase.service';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, User as FirebaseUser, createUserWithEmailAndPassword } from 'firebase/auth';
 import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 
 @Injectable({
@@ -61,14 +61,35 @@ export class AuthService {
               localStorage.setItem('authToken', token);
             }
           } else {
+            // Check if this is a special demo user and assign appropriate role
+            let assignedRoles: string[] = [];
+            if (fbUser.email?.toLowerCase().includes('totruong')) {
+              assignedRoles = ['totruong'];
+            } else if (fbUser.email?.toLowerCase().includes('quandaycao') || fbUser.email?.toLowerCase().includes('boidaycao')) {
+              assignedRoles = ['quandaycao'];
+            } else if (fbUser.email?.toLowerCase().includes('quandayha') || fbUser.email?.toLowerCase().includes('boidayha')) {
+              assignedRoles = ['quandayha'];
+            } else if (fbUser.email?.toLowerCase().includes('epboiday') || fbUser.email?.toLowerCase().includes('boidayep')) {
+              assignedRoles = ['epboiday'];
+            } else if (fbUser.email?.toLowerCase().includes('kcs')) {
+              assignedRoles = ['kcs'];
+            } else if (fbUser.email?.toLowerCase().includes('admin')) {
+              assignedRoles = ['admin'];
+            } else if (fbUser.email?.toLowerCase().includes('manager')) {
+              assignedRoles = ['manager'];
+            } else {
+              assignedRoles = ['user']; // Default role
+            }
+
             // Minimal fallback mapping if no profile found
             const minimalUser: User = {
               id: fbUser.uid,
+              uid: fbUser.uid, // Set uid field to Firebase UID
               username: fbUser.email || fbUser.uid,
               email: fbUser.email || '',
               fullName: fbUser.displayName || (fbUser.email || ''),
               isActive: true,
-              roles: [],
+              roles: assignedRoles,
               createdAt: new Date(),
               updatedAt: new Date()
             };
@@ -103,54 +124,110 @@ export class AuthService {
 
   async login(usernameOrEmail: string, password: string): Promise<{ success: boolean; message: string; user?: User }> {
     try {
-      // Use Firebase Auth (treat username field as email)
-      const credential = await signInWithEmailAndPassword(this.firebaseService.getAuth(), usernameOrEmail, password);
+      // First, get all users to find the correct email for username
+      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise() || [];
+      
+      // Check if input is email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const isEmail = emailRegex.test(usernameOrEmail);
+      
+      let actualEmail = usernameOrEmail;
+      let appUser: User | undefined;
+      
+      if (isEmail) {
+        // Input is email, find user by email
+        appUser = users.find(u => u.email?.toLowerCase() === usernameOrEmail.toLowerCase());
+        actualEmail = usernameOrEmail;
+      } else {
+        // Input is username, find user by username and get their email
+        appUser = users.find(u => u.username?.toLowerCase() === usernameOrEmail.toLowerCase());
+        if (appUser && appUser.email) {
+          actualEmail = appUser.email;
+        } else {
+          return { success: false, message: 'Tên đăng nhập không tồn tại' };
+        }
+      }
+      
+      if (!appUser) {
+        // Check if this is a demo user that should be allowed to login
+        if (actualEmail.toLowerCase().includes('totruong') || 
+            actualEmail.toLowerCase().includes('admin') || 
+            actualEmail.toLowerCase().includes('manager') ||
+            actualEmail.toLowerCase().includes('user') ||
+            actualEmail.toLowerCase().includes('quandaycao') ||
+            actualEmail.toLowerCase().includes('boidaycao') ||
+            actualEmail.toLowerCase().includes('quandayha') ||
+            actualEmail.toLowerCase().includes('boidayha') ||
+            actualEmail.toLowerCase().includes('epboiday') ||
+            actualEmail.toLowerCase().includes('boidayep') ||
+            actualEmail.toLowerCase().includes('kcs')) {
+          // Allow login for demo users even if not in database
+          console.log('Demo user login allowed:', actualEmail);
+        } else {
+          return { success: false, message: 'Tài khoản không tồn tại' };
+        }
+      }
+      
+      // Use the actual email for Firebase authentication
+      const credential = await signInWithEmailAndPassword(this.firebaseService.getAuth(), actualEmail, password);
       const fbUser = credential.user;
       const token = await fbUser.getIdToken();
 
-      // Map Firebase user to app user by email/username
-      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise() || [];
-      const appUser = users.find(u => u.email?.toLowerCase() === (fbUser.email || '').toLowerCase() || u.username?.toLowerCase() === (fbUser.email || '').toLowerCase());
+      // Update last login (best-effort) - only if appUser exists
+      if (appUser) {
+        try {
+          await this.userManagementService.updateUser(appUser.id, { lastLogin: new Date() }).pipe(take(1)).toPromise();
+        } catch (updateError) {
+          console.warn('Could not update last login:', updateError);
+        }
 
-      if (!appUser) {
-        // Allow login but with minimal user; optional: restrict if no profile
+        // Refresh user data to ensure roles are properly loaded
+        try {
+          const refreshedUser = await this.userManagementService.getUserById(appUser.id).toPromise();
+          if (refreshedUser) {
+            this.setAuthData(refreshedUser, token);
+            this.router.navigate(['/dashboard']);
+            return { success: true, message: 'Đăng nhập thành công', user: refreshedUser };
+          }
+        } catch (refreshError) {
+          console.warn('Could not refresh user data, using original user:', refreshError);
+        }
+      }
+      
+      // If appUser exists, use it; otherwise create a minimal user with appropriate role
+      if (appUser) {
+        this.setAuthData(appUser, token);
+        this.router.navigate(['/dashboard']);
+        return { success: true, message: 'Đăng nhập thành công', user: appUser };
+      } else {
+        // Create minimal user for demo accounts
+        let assignedRoles: string[] = [];
+        if (actualEmail.toLowerCase().includes('totruong')) {
+          assignedRoles = ['totruong'];
+        } else if (actualEmail.toLowerCase().includes('admin')) {
+          assignedRoles = ['admin'];
+        } else if (actualEmail.toLowerCase().includes('manager')) {
+          assignedRoles = ['manager'];
+        } else {
+          assignedRoles = ['user'];
+        }
+
         const minimalUser: User = {
           id: fbUser.uid,
-          username: fbUser.email || fbUser.uid,
-          email: fbUser.email || '',
-          fullName: fbUser.displayName || (fbUser.email || ''),
+          uid: fbUser.uid, // Set uid field to Firebase UID
+          username: actualEmail.split('@')[0],
+          email: actualEmail,
+          fullName: actualEmail.split('@')[0],
           isActive: true,
-          roles: [],
+          roles: assignedRoles,
           createdAt: new Date(),
           updatedAt: new Date()
         };
+
         this.setAuthData(minimalUser, token);
         this.router.navigate(['/dashboard']);
         return { success: true, message: 'Đăng nhập thành công', user: minimalUser };
       }
-
-      // Update last login (best-effort)
-      try {
-        await this.userManagementService.updateUser(appUser.id, { lastLogin: new Date() }).pipe(take(1)).toPromise();
-      } catch (updateError) {
-        console.warn('Could not update last login:', updateError);
-      }
-
-      // Refresh user data to ensure roles are properly loaded
-      try {
-        const refreshedUser = await this.userManagementService.getUserById(appUser.id).toPromise();
-        if (refreshedUser) {
-          this.setAuthData(refreshedUser, token);
-          this.router.navigate(['/dashboard']);
-          return { success: true, message: 'Đăng nhập thành công', user: refreshedUser };
-        }
-      } catch (refreshError) {
-        console.warn('Could not refresh user data, using original user:', refreshError);
-      }
-      
-      this.setAuthData(appUser, token);
-      this.router.navigate(['/dashboard']);
-      return { success: true, message: 'Đăng nhập thành công', user: appUser };
     } catch (error: any) {
       console.error('Firebase login error:', error);
       const message = this.translateFirebaseError(error?.code) || 'Tên đăng nhập hoặc mật khẩu không đúng';
@@ -187,6 +264,92 @@ export class AuthService {
         default:
           break;
       }
+      return { success: false, message };
+    }
+  }
+
+  /**
+   * Tạo user mới với quy trình: Authentication trước, sau đó lưu vào Firestore
+   * @param userData Dữ liệu user cần tạo
+   * @param password Mật khẩu cho Firebase Authentication
+   * @returns Promise<{ success: boolean; message: string; user?: User; firebaseUID?: string }>
+   */
+  async createUserWithAuth(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, password: string): Promise<{ success: boolean; message: string; user?: User; firebaseUID?: string }> {
+    try {
+      console.log('Creating user with authentication:', userData.email);
+      
+      // Bước 1: Tạo user trong Firebase Authentication
+      const credential = await createUserWithEmailAndPassword(
+        this.firebaseService.getAuth(), 
+        userData.email, 
+        password
+      );
+      const firebaseUser = credential.user;
+      const firebaseUID = firebaseUser.uid;
+      
+      console.log('Firebase Authentication user created with UID:', firebaseUID);
+      
+      // Bước 2: Tạo user data với Firebase UID làm ID
+      const newUser: User = {
+        ...userData,
+        id: firebaseUID, // Sử dụng Firebase UID làm document ID
+        uid: firebaseUID, // Set uid field to Firebase UID
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Bước 3: Lưu user data vào Firestore với documentID là Firebase UID
+      try {
+        // Sử dụng method mới để tạo user với document ID cụ thể
+        const createdUser = await this.userManagementService.createUserWithDocumentId(
+          userData, 
+          firebaseUID
+        ).pipe(take(1)).toPromise();
+        console.log('User data saved to Firestore:', createdUser);
+        
+        return { 
+          success: true, 
+          message: 'Tạo user thành công', 
+          user: createdUser, 
+          firebaseUID: firebaseUID 
+        };
+      } catch (firestoreError) {
+        console.error('Error saving user to Firestore:', firestoreError);
+        // Nếu lưu Firestore thất bại, xóa user khỏi Authentication
+        try {
+          await firebaseUser.delete();
+          console.log('Firebase Authentication user deleted due to Firestore error');
+        } catch (deleteError) {
+          console.error('Error deleting Firebase Authentication user:', deleteError);
+        }
+        
+        return { 
+          success: false, 
+          message: 'Tạo user thất bại: Không thể lưu dữ liệu user' 
+        };
+      }
+    } catch (error: any) {
+      console.error('Error creating user with authentication:', error);
+      let message = 'Không thể tạo user';
+      
+      switch (error?.code) {
+        case 'auth/email-already-in-use':
+          message = 'Email đã được sử dụng';
+          break;
+        case 'auth/invalid-email':
+          message = 'Email không hợp lệ';
+          break;
+        case 'auth/weak-password':
+          message = 'Mật khẩu quá yếu';
+          break;
+        case 'auth/operation-not-allowed':
+          message = 'Tạo tài khoản không được phép';
+          break;
+        default:
+          message = error?.message || 'Lỗi không xác định';
+          break;
+      }
+      
       return { success: false, message };
     }
   }
@@ -295,6 +458,50 @@ export class AuthService {
       default:
         return null;
     }
+  }
+
+  // Redirect user based on their role
+  private redirectBasedOnRole(user: User): void {
+    if (!user || !user.roles) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    const roles = Array.isArray(user.roles) ? user.roles : [user.roles];
+    const roleNames = roles.map((role: any) => typeof role === 'string' ? role : role.name || role.role_name);
+
+    // Check for bối dây cao role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('quandaycao') || 
+      role?.toLowerCase().includes('boidaycao') ||
+      role?.toLowerCase().includes('cao')
+    )) {
+      this.router.navigate(['/ds-quan-day']);
+      return;
+    }
+
+    // Check for bối dây hạ role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('quandayha') || 
+      role?.toLowerCase().includes('boidayha') ||
+      role?.toLowerCase().includes('ha')
+    )) {
+      this.router.navigate(['/ds-quan-day']);
+      return;
+    }
+
+    // Check for ép bối dây role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('epboiday') || 
+      role?.toLowerCase().includes('boidayep') ||
+      role?.toLowerCase().includes('ep')
+    )) {
+      this.router.navigate(['/ds-quan-day']);
+      return;
+    }
+
+    // Default redirect to dashboard
+    this.router.navigate(['/dashboard']);
   }
 
   // Additional methods for compatibility

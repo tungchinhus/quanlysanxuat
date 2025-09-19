@@ -3,6 +3,7 @@ import {
   collection, 
   doc, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   getDoc, 
@@ -121,12 +122,39 @@ export class FirebaseUserManagementService {
     }
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    try {
+      console.log('Getting user by email:', email);
+      
+      const q = query(
+        collection(this.firestore, this.COLLECTIONS.USERS),
+        where('email', '==', email.toLowerCase())
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const user = this.convertFirestoreDocToUser(doc);
+        console.log('Found user by email:', user);
+        return user;
+      }
+      
+      console.log('No user found with email:', email);
+      return null;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      return null;
+    }
+  }
+
   async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     try {
       console.log('Creating user with data:', userData);
       const now = new Date();
       const data = {
         ...userData,
+        uid: userData.uid || '', // Set uid field, empty if not provided
         createdAt: Timestamp.fromDate(now),
         updatedAt: Timestamp.fromDate(now)
       };
@@ -156,6 +184,54 @@ export class FirebaseUserManagementService {
       return newUser;
     } catch (error) {
       console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Tạo user với document ID cụ thể (Firebase UID)
+   * @param userData Dữ liệu user cần tạo
+   * @param documentId Document ID cụ thể (thường là Firebase UID)
+   * @returns Promise<User>
+   */
+  async createUserWithDocumentId(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, documentId: string): Promise<User> {
+    try {
+      console.log('Creating user with specific document ID:', documentId, userData);
+      const now = new Date();
+      const data = {
+        ...userData,
+        uid: documentId, // Set uid field to documentId (Firebase UID)
+        createdAt: Timestamp.fromDate(now),
+        updatedAt: Timestamp.fromDate(now)
+      };
+      
+      console.log('Data to save to Firebase with document ID:', data);
+      console.log('Firestore instance:', this.firestore);
+      console.log('Collection name:', this.COLLECTIONS.USERS);
+      
+      // Sử dụng setDoc với document ID cụ thể thay vì addDoc
+      const docRef = doc(this.firestore, this.COLLECTIONS.USERS, documentId);
+      await setDoc(docRef, data);
+      console.log('Document created with specific ID:', documentId);
+      
+      const newUser: User = {
+        ...userData,
+        id: documentId, // Sử dụng document ID được chỉ định
+        createdAt: now,
+        updatedAt: now
+      };
+      
+      console.log('New user object with specific ID:', newUser);
+      
+      // Update local state
+      const currentUsers = this.usersSubject.value;
+      console.log('Current users before update:', currentUsers);
+      this.usersSubject.next([...currentUsers, newUser]);
+      console.log('Users updated in local state');
+      
+      return newUser;
+    } catch (error) {
+      console.error('Error creating user with specific document ID:', error);
       throw error;
     }
   }
@@ -510,6 +586,7 @@ export class FirebaseUserManagementService {
     
     return {
       id: doc.id,
+      uid: data?.['uid'] || '', // Firebase Authentication UID
       username: data?.['username'] || '',
       email: data?.['email'] || '',
       fullName: data?.['fullName'] || '',

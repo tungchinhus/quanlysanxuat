@@ -76,7 +76,7 @@ export class FirebaseBangVeService {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const bangVe: BangVeData = {
-          id: parseInt(doc.id) || 0, // Convert string ID to number or use 0 as fallback
+          id: doc.id, // Keep as string ID for Firebase compatibility
           kyhieubangve: data['kyhieubangve'] || '',
           congsuat: data['congsuat'] || 0,
           tbkt: data['tbkt'] || '',
@@ -241,6 +241,38 @@ export class FirebaseBangVeService {
       return bangVeList;
     } catch (error) {
       console.error('Error fetching bang ve by status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update bang ve status by ID
+   * @param id - The document ID (string)
+   * @param trangThai - The new status
+   * @returns Promise<void>
+   */
+  async updateBangVeStatus(id: string, trangThai: number): Promise<void> {
+    try {
+      console.log('Updating bang ve status for ID:', id, 'to status:', trangThai);
+      
+      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
+      
+      // Kiểm tra document có tồn tại không trước khi update
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.error('Document does not exist:', id);
+        throw new Error(`Document with ID ${id} does not exist in bangve collection`);
+      }
+      
+      console.log('Document exists, proceeding with update...');
+      await updateDoc(docRef, {
+        trang_thai: trangThai,
+        updated_at: Timestamp.fromDate(new Date())
+      });
+      
+      console.log('Bang ve status updated successfully');
+    } catch (error) {
+      console.error('Error updating bang ve status:', error);
       throw error;
     }
   }

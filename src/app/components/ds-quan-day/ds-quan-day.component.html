@@ -1,77 +1,126 @@
 <div class="ds-quan-day-container">
-  
- <div class="content-section">
-    <mat-tab-group (selectedTabChange)="onTabChange($event)" [selectedIndex]="currentTabIndex">
-      
-      <!-- Tab: Danh sách mới -->
-      <mat-tab label="Danh sách mới">
+  <!-- Header Section -->
+  <mat-toolbar class="header-toolbar">
+    <div class="header-content">
+      <div class="title-container">
+        <h1 class="header-title">Quản lý Quấn dây</h1>
+        <p class="header-subtitle">Quản lý và theo dõi quy trình sản xuất quấn dây</p>
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <!-- Authentication Check -->
+  <div *ngIf="!isAuthenticated" class="auth-warning mat-elevation-z2" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+    <mat-icon style="color: #f39c12; font-size: 48px; width: 48px; height: 48px;">warning</mat-icon>
+    <h3 style="color: #856404; margin: 16px 0;">Yêu cầu đăng nhập</h3>
+    <p style="color: #856404; margin: 16px 0;">Bạn cần đăng nhập để xem danh sách quấn dây.</p>
+    <button mat-raised-button color="primary" (click)="goToLogin()" style="margin-top: 16px;">
+      <mat-icon>login</mat-icon>
+      Đăng nhập ngay
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" *ngIf="isAuthenticated">
+    <!-- Tab Navigation -->
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;">
+      <mat-tab label="Quấn dây mới">
         <div class="tab-content">
+          <!-- Search Bar -->
+          <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+            <mat-form-field appearance="outline" class="search-autocomplete" style="flex: 1;">
+              <mat-label>Tìm kiếm ký hiệu quấn dây</mat-label>
+              <input type="text" matInput [(ngModel)]="searchTerm" (ngModelChange)="filterQuanDays()" placeholder="Nhập ký hiệu...">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+            <button mat-stroked-button class="add-btn" (click)="openAddQuanDayDialog()" style="min-width: 110px;" *ngIf="hasAdminOrManagerRole()">
+              <mat-icon>add</mat-icon> Thêm mới
+            </button>
+          </div>
 
-          <div class="table-section">
-            <table mat-table [dataSource]="pagedNewQuanDays" class="quan-day-table">
+          <!-- Table for New Quan Days -->
+          <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+            <mat-table [dataSource]="pagedNewQuanDays" class="table" *ngIf="pagedNewQuanDays.length > 0" matSort>
               
-              <!-- Ký hiệu -->
               <ng-container matColumnDef="kyhieuquanday">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Ký hiệu</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.kyhieuquanday}}</td>
+                <mat-header-cell *matHeaderCellDef> Ký hiệu </mat-header-cell>
+                <mat-cell *matCellDef="let d"> <b>{{d.kyhieuquanday}}</b> </mat-cell>
               </ng-container>
-
-              <!-- Công suất -->
               <ng-container matColumnDef="congsuat">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Công suất</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.congsuat}}</td>
+                <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.congsuat}} </mat-cell>
               </ng-container>
-
-              <!-- Thiết bị kỹ thuật -->
               <ng-container matColumnDef="tbkt">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">TBKT</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.tbkt}}</td>
+                <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.tbkt}} </mat-cell>
               </ng-container>
-
-              <!-- Điện áp -->
               <ng-container matColumnDef="dienap">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Điện áp</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.dienap}}</td>
+                <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
               </ng-container>
-
-              <!-- Ngày tạo -->
+              <ng-container matColumnDef="bd_ha_trong">
+                <mat-header-cell *matHeaderCellDef> BD Hạ Trong </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.bd_ha_trong}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="bd_ha_ngoai">
+                <mat-header-cell *matHeaderCellDef> BD Hạ Ngoài </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.bd_ha_ngoai}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="bd_cao">
+                <mat-header-cell *matHeaderCellDef> BD Cao </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.bd_cao}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="bd_ep">
+                <mat-header-cell *matHeaderCellDef> BD Ép </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.bd_ep}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="bung_bd">
+                <mat-header-cell *matHeaderCellDef> Bưng BD </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.bung_bd}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="user_create">
+                <mat-header-cell *matHeaderCellDef> Người tạo </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.user_create}} </mat-cell>
+              </ng-container>
               <ng-container matColumnDef="created_at">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Ngày tạo</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.created_at | date:'dd/MM/yyyy'}}</td>
+                <mat-header-cell *matHeaderCellDef> Ngày tạo </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.created_at | date:'dd/MM/yyyy'}} </mat-cell>
               </ng-container>
-
-              <!-- Actions -->
+              <ng-container matColumnDef="trang_thai">
+                <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
+                <mat-cell *matCellDef="let d">
+                  <span [ngClass]="getStatusClass(d.trang_thai)">{{ getStatusText(d.trang_thai) }}</span>
+                </mat-cell>
+              </ng-container>
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Thao tác</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">
+                <mat-header-cell *matHeaderCellDef> Thao tác </mat-header-cell>
+                <mat-cell *matCellDef="let d">
                   <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-button">
                     <mat-icon>more_vert</mat-icon>
                   </button>
                   <mat-menu #menu="matMenu">                    
-                    <!-- Hiển thị nút gia công hạ nếu user có quyền và trạng thái phù hợp -->
                     <button mat-menu-item 
-                            *ngIf="canShowGiaCongHa(element)" 
-                            (click)="onGiaCongHa(element)"
+                            *ngIf="canShowGiaCongHa(d)" 
+                            (click)="onGiaCongHa(d)"
                             class="gia-cong-ha-button">
                       <mat-icon>build</mat-icon>
                       <span>Quấn dây hạ</span>
                     </button>
                     
-                    <!-- Hiển thị nút gia công cao nếu user có quyền và trạng thái phù hợp -->
                     <button mat-menu-item 
-                            *ngIf="canShowGiaCongCao(element)" 
-                            (click)="onGiaCongCao(element)"
+                            *ngIf="canShowGiaCongCao(d)" 
+                            (click)="onGiaCongCao(d)"
                             class="gia-cong-cao-button">
                       <mat-icon>build</mat-icon>
                       <span>Quấn dây cao</span>
                     </button>
                   </mat-menu>
-                </td>
+                </mat-cell>
               </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="displayedColumns" class="header-row"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="data-row"></tr>
-            </table>
+              <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+            </mat-table>
 
             <div class="pagination-section" *ngIf="filteredQuanDays.length > 0">
               <mat-paginator 
@@ -92,66 +141,148 @@
         </div>
       </mat-tab>
 
-      <!-- Tab: Đã hoàn thành -->
-      <mat-tab label="Đã hoàn thành">
+      <!-- Tab: Đang gia công -->
+      <mat-tab label="Đang gia công">
         <div class="tab-content">
+          <!-- Search Bar for In Progress -->
+          <div class="search-bar mat-elevation-z1" style="display: flex; align-items: center; gap: 16px; padding: 20px 24px 12px 24px; background: #fff; border-radius: 0 0 8px 8px;">
+            <mat-form-field appearance="outline" class="search-autocomplete" style="flex: 1;">
+              <mat-label>Tìm kiếm ký hiệu quấn dây đang gia công</mat-label>
+              <input type="text" matInput [(ngModel)]="searchTermInProgress" (ngModelChange)="searchInProgressQuanDays()" placeholder="Nhập ký hiệu...">
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+          </div>
 
-          <div class="table-section">
-            <table mat-table [dataSource]="pagedCompletedQuanDays" class="quan-day-table">
-              
-              <!-- Ký hiệu -->
+          <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+            <mat-table [dataSource]="pagedInProgressQuanDays" class="table" *ngIf="pagedInProgressQuanDays.length > 0" matSort>
               <ng-container matColumnDef="kyhieuquanday">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Ký hiệu</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.kyhieuquanday}}</td>
+                <mat-header-cell *matHeaderCellDef> Ký hiệu </mat-header-cell>
+                <mat-cell *matCellDef="let d"> <b>{{d.kyhieuquanday}}</b> </mat-cell>
               </ng-container>
-
-              <!-- Công suất -->
               <ng-container matColumnDef="congsuat">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Công suất</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.congsuat}}</td>
+                <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.congsuat}} </mat-cell>
               </ng-container>
-
-              <!-- Thiết bị kỹ thuật -->
               <ng-container matColumnDef="tbkt">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">TBKT</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.tbkt}}</td>
+                <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.tbkt}} </mat-cell>
               </ng-container>
-
-              <!-- Điện áp -->
               <ng-container matColumnDef="dienap">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Điện áp</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.dienap}}</td>
+                <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
               </ng-container>
-
-              <!-- Ngày hoàn thành -->
-              <ng-container matColumnDef="completed_date">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Ngày hoàn thành</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">{{element.completed_date | date:'dd/MM/yyyy'}}</td>
+              <ng-container matColumnDef="created_at">
+                <mat-header-cell *matHeaderCellDef> Ngày tạo </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.created_at | date:'dd/MM/yyyy'}} </mat-cell>
               </ng-container>
-
-              <!-- Actions -->
+              <ng-container matColumnDef="trang_thai">
+                <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
+                <mat-cell *matCellDef="let d">
+                  <span [ngClass]="getStatusClass(d.trang_thai)">{{ getStatusText(d.trang_thai) }}</span>
+                </mat-cell>
+              </ng-container>
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="header-cell">Thao tác</th>
-                <td mat-cell *matCellDef="let element" class="data-cell">
-                  <button mat-icon-button [matMenuTriggerFor]="menuCompleted" class="action-menu-button">
+                <mat-header-cell *matHeaderCellDef> Thao tác </mat-header-cell>
+                <mat-cell *matCellDef="let d">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-button">
                     <mat-icon>more_vert</mat-icon>
                   </button>
-                  <mat-menu #menuCompleted="matMenu">                    
-                    <button mat-menu-item disabled (click)="openDialog('Xem chi tiết: ' + element.kyhieuquanday)">
+                  <mat-menu #menu="matMenu">                    
+                    <button mat-menu-item 
+                            *ngIf="canShowGiaCongHa(d)" 
+                            (click)="onGiaCongHa(d)"
+                            class="gia-cong-ha-button">
+                      <mat-icon>build</mat-icon>
+                      <span>Quấn dây hạ</span>
+                    </button>
+                    
+                    <button mat-menu-item 
+                            *ngIf="canShowGiaCongCao(d)" 
+                            (click)="onGiaCongCao(d)"
+                            class="gia-cong-cao-button">
+                      <mat-icon>build</mat-icon>
+                      <span>Quấn dây cao</span>
+                    </button>
+                  </mat-menu>
+                </mat-cell>
+              </ng-container>
+
+              <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+            </mat-table>
+
+            <div class="pagination-section" *ngIf="filteredInProgressQuanDays.length > 0">
+              <mat-paginator 
+                [length]="filteredInProgressQuanDays.length"
+                [pageSize]="pageSize"
+                [pageIndex]="pageIndex"
+                [pageSizeOptions]="[5, 10, 25, 50]"
+                (page)="onPageChangeInProgress($event)"
+                showFirstLastButtons
+                class="right-aligned-paginator">
+              </mat-paginator>
+            </div>
+
+            <div class="no-data" *ngIf="filteredInProgressQuanDays.length === 0">
+              <p>Không có dữ liệu</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Quấn dây đã xử lý -->
+      <mat-tab label="Quấn dây đã xử lý">
+        <div class="tab-content">
+          <div class="table-wrapper mat-elevation-z2" style="background: #fff; border-radius: 8px; margin-top: 24px; overflow-x: auto;">
+            <mat-table [dataSource]="pagedCompletedQuanDays" class="table" *ngIf="pagedCompletedQuanDays.length > 0" matSort>
+              <ng-container matColumnDef="kyhieuquanday">
+                <mat-header-cell *matHeaderCellDef> Ký hiệu </mat-header-cell>
+                <mat-cell *matCellDef="let d"> <b>{{d.kyhieuquanday}}</b> </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="congsuat">
+                <mat-header-cell *matHeaderCellDef> Công suất </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.congsuat}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="tbkt">
+                <mat-header-cell *matHeaderCellDef> TBKT </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.tbkt}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="dienap">
+                <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="created_at">
+                <mat-header-cell *matHeaderCellDef> Ngày tạo </mat-header-cell>
+                <mat-cell *matCellDef="let d"> {{d.created_at | date:'dd/MM/yyyy'}} </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="trang_thai">
+                <mat-header-cell *matHeaderCellDef> Trạng thái </mat-header-cell>
+                <mat-cell *matCellDef="let d">
+                  <span [ngClass]="getStatusClass(d.trang_thai)">{{ getStatusText(d.trang_thai) }}</span>
+                </mat-cell>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <mat-header-cell *matHeaderCellDef> Thao tác </mat-header-cell>
+                <mat-cell *matCellDef="let d">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" class="action-menu-button">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">                    
+                    <button mat-menu-item disabled (click)="openDialog('Xem chi tiết: ' + d.kyhieuquanday)">
                       <mat-icon>visibility</mat-icon>
                       <span>Xem chi tiết</span>
                     </button>
-                    <button mat-menu-item disabled (click)="openDialog('Xuất báo cáo: ' + element.kyhieuquanday)">
+                    <button mat-menu-item disabled (click)="openDialog('Xuất báo cáo: ' + d.kyhieuquanday)">
                       <mat-icon>download</mat-icon>
                       <span>Xuất báo cáo</span>
                     </button>
                   </mat-menu>
-                </td>
+                </mat-cell>
               </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="displayedColumnsCompleted" class="header-row"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumnsCompleted;" class="data-row"></tr>
-            </table>
+              <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+            </mat-table>
 
             <div class="pagination-section" *ngIf="filteredCompletedQuanDays.length > 0">
               <mat-paginator 

@@ -35,11 +35,16 @@ const cspConfig = {
       https://accounts.google.com 
       https://www.gstatic.com 
       https://firebaseapp.com 
+      https://*.firebaseapp.com
       https://*.googleapis.com
       https://*.google.com
       https://www.googletagmanager.com
       https://www.google-analytics.com
       https://accounts.google.com/gsi
+      https://firestore.googleapis.com
+      https://identitytoolkit.googleapis.com
+      https://localhost:7190
+      http://localhost:7190
       ws://localhost:* 
       http://localhost:*;
     frame-src 'self' 
@@ -85,11 +90,16 @@ const cspConfig = {
       https://accounts.google.com 
       https://www.gstatic.com 
       https://firebaseapp.com 
+      https://*.firebaseapp.com
       https://*.googleapis.com
       https://*.google.com
       https://www.googletagmanager.com
       https://www.google-analytics.com
-      https://accounts.google.com/gsi;
+      https://accounts.google.com/gsi
+      https://firestore.googleapis.com
+      https://identitytoolkit.googleapis.com
+      https://localhost:7190
+      http://localhost:7190;
     frame-src 'self' 
       https://accounts.google.com 
       https://www.gstatic.com

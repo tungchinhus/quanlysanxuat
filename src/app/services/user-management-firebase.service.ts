@@ -21,6 +21,23 @@ export class UserManagementFirebaseService {
     this.initializeData();
   }
 
+  /**
+   * Tạo user với document ID cụ thể (Firebase UID)
+   * @param userData Dữ liệu user cần tạo
+   * @param documentId Document ID cụ thể (thường là Firebase UID)
+   * @returns Observable<User>
+   */
+  createUserWithDocumentId(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, documentId: string): Observable<User> {
+    return new Observable(observer => {
+      this.firebaseUserService.createUserWithDocumentId(userData, documentId).then(user => {
+        observer.next(user);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
   private initializeData(): void {
     // Subscribe to Firebase data
     this.firebaseUserService.users$.subscribe(users => {
@@ -47,6 +64,17 @@ export class UserManagementFirebaseService {
         const user = users.find(u => u.id === id);
         observer.next(user);
         observer.complete();
+      });
+    });
+  }
+
+  getUserByEmail(email: string): Observable<User | null> {
+    return new Observable(observer => {
+      this.firebaseUserService.getUserByEmail(email).then(user => {
+        observer.next(user);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
       });
     });
   }

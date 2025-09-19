@@ -134,6 +134,16 @@ export class DataInitializationService {
       { name: PREDEFINED_PERMISSIONS.DASHBOARD_VIEW, displayName: 'Xem dashboard', module: Module.DASHBOARD, action: Action.VIEW, isActive: true }
     ];
 
+    // Bảng vẽ permissions
+    const bangVePermissions = [
+      { name: PREDEFINED_PERMISSIONS.DRAWING_VIEW, displayName: 'Xem bảng vẽ', module: Module.BANG_VE, action: Action.VIEW, isActive: true },
+      { name: PREDEFINED_PERMISSIONS.DRAWING_CREATE, displayName: 'Tạo bảng vẽ', module: Module.BANG_VE, action: Action.CREATE, isActive: true },
+      { name: PREDEFINED_PERMISSIONS.DRAWING_UPDATE, displayName: 'Sửa bảng vẽ', module: Module.BANG_VE, action: Action.UPDATE, isActive: true },
+      { name: PREDEFINED_PERMISSIONS.DRAWING_DELETE, displayName: 'Xóa bảng vẽ', module: Module.BANG_VE, action: Action.DELETE, isActive: true },
+      { name: PREDEFINED_PERMISSIONS.DRAWING_EXPORT, displayName: 'Xuất bảng vẽ', module: Module.BANG_VE, action: Action.EXPORT, isActive: true },
+      { name: PREDEFINED_PERMISSIONS.DRAWING_IMPORT, displayName: 'Nhập bảng vẽ', module: Module.BANG_VE, action: Action.IMPORT, isActive: true }
+    ];
+
     const allPermissions = [
       ...dashboardPermissions,
       ...dangKyXePermissions,
@@ -143,7 +153,8 @@ export class DataInitializationService {
       ...userPermissions,
       ...rolePermissions,
       ...reportPermissions,
-      ...settingsPermissions
+      ...settingsPermissions,
+      ...bangVePermissions
     ];
 
     // Tạo permissions trong Firebase
@@ -231,7 +242,22 @@ export class DataInitializationService {
       isActive: true
     };
 
-    const roleDefinitions = [superAdminRole, adminRole, managerRole, userRole, viewerRole];
+    // Tổ trưởng - quyền quản lý bảng vẽ và dashboard
+    const totruongPermissions = permissions.filter(p => 
+      p.module === Module.DASHBOARD ||
+      (p.module === Module.BANG_VE && (p.action === Action.VIEW || p.action === Action.CREATE || p.action === Action.UPDATE)) ||
+      (p.module === Module.BAO_CAO && p.action === Action.VIEW)
+    );
+    
+    const totruongRole = {
+      name: PREDEFINED_ROLES.TOTRUONG,
+      displayName: 'Tổ trưởng',
+      description: 'Quyền quản lý tổ sản xuất',
+      permissions: totruongPermissions,
+      isActive: true
+    };
+
+    const roleDefinitions = [superAdminRole, adminRole, managerRole, userRole, viewerRole, totruongRole];
 
     // Tạo roles trong Firebase
     for (const role of roleDefinitions) {

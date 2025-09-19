@@ -1,12 +1,12 @@
 export enum STATUS {
-  PENDING = 0,
-  APPROVED = 1,
-  REJECTED = 2,
-  PROCESSING = 3,
-  COMPLETED = 4,
-  CANCELLED = 5,
-  NEW = 6,
-  PROCESSED = 7
+  NEW = 0,           // Mới
+  PROCESSING = 1,    // Đang xử lý
+  COMPLETED = 2,     // Đã hoàn thành
+  PENDING = 3,       // Chờ duyệt
+  APPROVED = 4,      // Đã duyệt
+  REJECTED = 5,      // Từ chối
+  CANCELLED = 6,     // Hủy bỏ
+  PROCESSED = 7      // Đã xử lý (legacy)
 }
 
 export enum DRAWING_STATUS {
@@ -23,5 +23,12 @@ export enum USER_ROLE {
   ADMIN = 'admin',
   MANAGER = 'manager',
   USER = 'user',
-  VIEWER = 'viewer'
+  VIEWER = 'viewer',
+  QUANDAYCAO = 'quandaycao',
+  BOIDAYCAO = 'boidaycao',
+  QUANDAYHA = 'quandayha',
+  BOIDAYHA = 'boidayha',
+  EPBOIDAY = 'epboiday',
+  TOTRUONG = 'totruong',
+  KCS = 'kcs'
 }

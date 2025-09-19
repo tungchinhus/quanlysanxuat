@@ -28,6 +28,13 @@ service cloud.firestore {
              'manager' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
+    function isTotruong() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'totruong' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
     function hasRole(role) {
       return isAuthenticated() && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -42,7 +49,7 @@ service cloud.firestore {
     // Rules cho collection xeDuaDon
     match /xeDuaDon/{document} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (isAdmin() || isManager());
+      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
     }
     
     // Rules cho collection lichTrinhXe
@@ -129,6 +136,24 @@ service cloud.firestore {
       allow write: if isAdmin() || isSuperAdmin();
     }
     
+    // Rules cho collection bangve (bảng vẽ)
+    match /bangve/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
+    }
+
+    // Rules cho collection drawings (bảng vẽ - alternative collection)
+    match /drawings/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
+    }
+
+    // Rules cho collection user_bangve (gán bảng vẽ cho user)
+    match /user_bangve/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
+    }
+
     // Rules cho audit logs (nếu có)
     match /auditLogs/{logId} {
       // Only admins can read audit logs

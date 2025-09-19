@@ -45,7 +45,7 @@ export class DangNhapComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      username: ['', [Validators.required, this.usernameOrEmailValidator]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
     });
@@ -54,7 +54,10 @@ export class DangNhapComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is already logged in
     if (this.authService.isAuthenticated()) {
+      console.log('User is already authenticated, redirecting to dashboard');
       this.router.navigate(['/dashboard']);
+    } else {
+      console.log('User is not authenticated, showing login form');
     }
   }
 
@@ -81,8 +84,8 @@ export class DangNhapComponent implements OnInit {
             localStorage.removeItem('rememberMe');
           }
           
-          // Redirect to main page
-          this.router.navigate(['/dashboard']);
+          // Redirect based on user role
+          this.redirectBasedOnRole(result.user);
         } else {
           this.snackBar.open(result.message, 'Đóng', {
             duration: 5000,
@@ -119,7 +122,33 @@ export class DangNhapComponent implements OnInit {
       const requiredLength = field.errors?.['minlength'].requiredLength;
       return `Tối thiểu ${requiredLength} ký tự`;
     }
+    if (field?.hasError('invalidFormat')) {
+      return 'Vui lòng nhập tên đăng nhập hoặc email hợp lệ';
+    }
     return '';
+  }
+
+  // Custom validator for username or email
+  private usernameOrEmailValidator(control: any) {
+    if (!control.value) {
+      return null;
+    }
+    
+    const value = control.value.trim();
+    
+    // Check if it's a valid email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(value)) {
+      return null; // Valid email
+    }
+    
+    // Check if it's a valid username (at least 3 characters, alphanumeric and some special chars)
+    const usernameRegex = /^[a-zA-Z0-9._-]{3,}$/;
+    if (usernameRegex.test(value)) {
+      return null; // Valid username
+    }
+    
+    return { invalidFormat: true };
   }
 
   private markFormGroupTouched(): void {
@@ -129,12 +158,62 @@ export class DangNhapComponent implements OnInit {
     });
   }
 
+  // Redirect user based on their role
+  private redirectBasedOnRole(user: any): void {
+    if (!user || !user.roles) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    const roles = Array.isArray(user.roles) ? user.roles : [user.roles];
+    const roleNames = roles.map((role: any) => typeof role === 'string' ? role : role.name || role.role_name);
+
+    // Check for bối dây cao role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('quandaycao') || 
+      role?.toLowerCase().includes('boidaycao') ||
+      role?.toLowerCase().includes('cao')
+    )) {
+      this.router.navigate(['/ds-quan-day']);
+      return;
+    }
+
+    // Check for bối dây hạ role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('quandayha') || 
+      role?.toLowerCase().includes('boidayha') ||
+      role?.toLowerCase().includes('ha')
+    )) {
+      this.router.navigate(['/ds-quan-day']);
+      return;
+    }
+
+    // Check for ép bối dây role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('epboiday') || 
+      role?.toLowerCase().includes('boidayep') ||
+      role?.toLowerCase().includes('ep')
+    )) {
+      this.router.navigate(['/ds-quan-day']);
+      return;
+    }
+
+    // Default redirect to dashboard
+    this.router.navigate(['/dashboard']);
+  }
+
   // Demo accounts for testing
-  fillDemoAccount(accountType: 'admin' | 'manager' | 'user'): void {
+  fillDemoAccount(accountType: 'admin' | 'manager' | 'user' | 'email' | 'totruong' | 'quandayha' | 'quandaycao' | 'epboiday' | 'kcs'): void {
     const accounts = {
       admin: { username: 'admin', password: 'admin123' },
       manager: { username: 'manager1', password: 'manager123' },
-      user: { username: 'user1', password: 'user123' }
+      user: { username: 'user1', password: 'user123' },
+      email: { username: 'user@example.com', password: 'user123' },
+      totruong: { username: 'totruongquanday@thibidi.com', password: 'Ab!123456' },
+      quandayha: { username: 'quandayha1@thibidi.com', password: 'Ab!123456' },
+      quandaycao: { username: 'quandaycao1@thibidi.com', password: 'Ab!123456' },
+      epboiday: { username: 'epboiday1@thibidi.com', password: 'Ab!123456' },
+      kcs: { username: 'kcs1@thibidi.com', password: 'Ab!123456' }
     };
     
     const account = accounts[accountType];

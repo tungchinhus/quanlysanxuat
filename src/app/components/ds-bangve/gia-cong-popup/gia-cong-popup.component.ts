@@ -3,6 +3,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AuthService } from '../../../services/auth.service';
 import { CommonService } from '../../../services/common.service';
+import { UserBangVeService, UserBangVeData } from '../../../services/user-bangve.service';
+import { FirebaseUserBangVeService } from '../../../services/firebase-user-bangve.service';
+import { FirebaseBangVeService } from '../../../services/firebase-bangve.service';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { UserManagementFirebaseService } from '../../../services/user-management-firebase.service';
@@ -63,7 +66,10 @@ export class GiaCongPopupComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     private authService: AuthService,
     private commonService: CommonService,
-    private userManagementService: UserManagementFirebaseService
+    private userManagementService: UserManagementFirebaseService,
+    private userBangVeService: UserBangVeService,
+    private firebaseUserBangVeService: FirebaseUserBangVeService,
+    private firebaseBangVeService: FirebaseBangVeService
   ) {
     this.giaCongForm = this.fb.group({
       boiDayHa: ['', Validators.required],
@@ -76,7 +82,7 @@ export class GiaCongPopupComponent implements OnInit {
     this.hasPermission = this.hasAdminOrManagerRole();
     
     if (!this.hasPermission) {
-      this.commonService.thongbao('Bạn không có quyền thực hiện chức năng này. Chỉ admin hoặc manager mới được phép.', 'Đóng', 'error');
+      this.commonService.thongbao('Bạn không có quyền thực hiện chức năng này. Chỉ admin, manager hoặc tổ trưởng mới được phép.', 'Đóng', 'error');
       this.dialogRef.close();
       return;
     }
@@ -115,7 +121,8 @@ export class GiaCongPopupComponent implements OnInit {
       return roles.some((role: string) => 
         role.toLowerCase() === 'admin' || 
         role.toLowerCase() === 'manager' ||
-        role.toLowerCase() === 'administrator'
+        role.toLowerCase() === 'administrator' ||
+        role.toLowerCase() === 'totruong'
       );
     }
     
@@ -123,7 +130,8 @@ export class GiaCongPopupComponent implements OnInit {
     if (userRole) {
       return userRole.toLowerCase() === 'admin' || 
              userRole.toLowerCase() === 'manager' ||
-             userRole.toLowerCase() === 'administrator';
+             userRole.toLowerCase() === 'administrator' ||
+             userRole.toLowerCase() === 'totruong';
     }
     
     return false;
@@ -236,14 +244,8 @@ export class GiaCongPopupComponent implements OnInit {
         displayName: this.getWorkerDisplayName(formValue.boiDayCao)
       });
       
-      const closeData = {
-        confirmed: true,
-        boiDayHa: formValue.boiDayHa,
-        boiDayCao: formValue.boiDayCao
-      };
-      
-      console.log('Closing popup with data:', closeData);
-      this.dialogRef.close(closeData);
+      // Gọi API để thêm dữ liệu vào user_bangve
+      this.addUserBangVeRecords(formValue.boiDayHa, formValue.boiDayCao);
     } else {
       console.log('Form validation failed, showing error messages');
       // Kiểm tra từng trường hợp lỗi để hiển thị thông báo phù hợp
@@ -541,6 +543,158 @@ export class GiaCongPopupComponent implements OnInit {
       const areDifferent = this.areUsersDifferent(testUser1, testUser2);
       console.log('Test validation result:', areDifferent);
       console.log('========================');
+    }
+  }
+
+  /**
+   * Thêm dữ liệu vào bảng user_bangve cho cả hai user
+   * @param boiDayHa User thực hiện bối dây hạ
+   * @param boiDayCao User thực hiện bối dây cao
+   */
+  private async addUserBangVeRecords(boiDayHa: Worker, boiDayCao: Worker): Promise<void> {
+    console.log('=== addUserBangVeRecords called ===');
+    console.log('boiDayHa:', boiDayHa);
+    console.log('boiDayCao:', boiDayCao);
+    console.log('data.drawing:', this.data.drawing);
+    console.log('data.drawing.id:', this.data.drawing?.id, 'Type:', typeof this.data.drawing?.id);
+
+    if (!this.data.drawing || !this.data.drawing.id) {
+      console.error('No drawing data available');
+      this.commonService.thongbao('Không có dữ liệu bảng vẽ', 'Đóng', 'error');
+      return;
+    }
+
+    // Kiểm tra và xử lý bangveId một cách an toàn (Firebase sử dụng string ID)
+    let bangveId: string;
+    if (typeof this.data.drawing.id === 'string') {
+      bangveId = this.data.drawing.id;
+    } else if (typeof this.data.drawing.id === 'number') {
+      bangveId = this.data.drawing.id.toString();
+    } else {
+      console.error('Invalid bangve ID:', this.data.drawing.id);
+      this.commonService.thongbao('ID bảng vẽ không hợp lệ', 'Đóng', 'error');
+      return;
+    }
+
+    // Kiểm tra bangveId có hợp lệ không (không rỗng và có độ dài hợp lý)
+    if (!bangveId || bangveId.trim().length === 0) {
+      console.error('Invalid bangve ID after conversion:', bangveId, 'Original:', this.data.drawing.id);
+      this.commonService.thongbao('ID bảng vẽ không hợp lệ', 'Đóng', 'error');
+      return;
+    }
+
+    console.log('Valid bangve ID:', bangveId, 'Type:', typeof bangveId);
+    const currentUser = this.authService.getUserInfo();
+    const currentUserEmail = currentUser?.email;
+    
+    if (!currentUserEmail) {
+      console.error('Cannot get current user email');
+      this.commonService.thongbao('Không thể lấy thông tin user', 'Đóng', 'error');
+      return;
+    }
+
+    try {
+      // 1. Lấy user ID từ Firestore users collection dựa vào email
+      console.log('Getting user by email from Firestore:', currentUserEmail);
+      const currentUserFromFirestore = await this.userManagementService.getUserByEmail(currentUserEmail).pipe(take(1)).toPromise();
+      if (!currentUserFromFirestore) {
+        console.error('User not found in Firestore users collection');
+        this.commonService.thongbao('User không tồn tại trong hệ thống', 'Đóng', 'error');
+        return;
+      }
+      const currentUserId = parseInt(currentUserFromFirestore.id);
+      console.log('Current user ID from Firestore:', currentUserId);
+
+      // 2. Cập nhật trang_thai = 1 trong tbl_bangve (đang thi công)
+      console.log('Updating bangve status to 1 (in progress)...');
+      await this.updateBangVeStatus(bangveId, 1);
+
+      // 3. Tạo dữ liệu cho user bối dây hạ với đầy đủ các trường theo thiết kế database
+      const userBangVeHa: UserBangVeData = {
+        user_id: boiDayHa.userId || boiDayHa.id,
+        firebase_uid: undefined, // Firebase Authentication UID - sẽ được cập nhật sau
+        bangve_id: bangveId,
+        bd_ha_id: boiDayHa.userId || boiDayHa.id, // Foreign Key to tbl_bd_ha
+        bd_cao_id: undefined, // Không có bd_cao_id cho user bối dây hạ
+        bd_ep_id: undefined, // Không có bd_ep_id cho user bối dây hạ
+        permission_type: 'gia_cong',
+        status: true,
+        trang_thai_bv: 1, // Bảng vẽ đang thi công
+        trang_thai_bd_ha: 0, // 0 = chỉ mới gán chưa thi công
+        trang_thai_bd_cao: undefined, // Không áp dụng cho user bối dây hạ
+        trang_thai_bd_ep: undefined, // Không áp dụng cho user bối dây hạ
+        assigned_at: new Date(),
+        assigned_by_user_id: currentUserId,
+        created_at: new Date(),
+        created_by: currentUserId,
+        // Legacy fields for backward compatibility
+        khau_sx: 'bd_ha',
+        trang_thai: 0 // 0 = chỉ mới gán chưa thi công
+      };
+
+      // 4. Tạo dữ liệu cho user bối dây cao với đầy đủ các trường theo thiết kế database
+      const userBangVeCao: UserBangVeData = {
+        user_id: boiDayCao.userId || boiDayCao.id,
+        firebase_uid: undefined, // Firebase Authentication UID - sẽ được cập nhật sau
+        bangve_id: bangveId,
+        bd_ha_id: undefined, // Không có bd_ha_id cho user bối dây cao
+        bd_cao_id: boiDayCao.userId || boiDayCao.id, // Foreign Key to tbl_bd_cao
+        bd_ep_id: undefined, // Không có bd_ep_id cho user bối dây cao
+        permission_type: 'gia_cong',
+        status: true,
+        trang_thai_bv: 1, // Bảng vẽ đang thi công
+        trang_thai_bd_ha: undefined, // Không áp dụng cho user bối dây cao
+        trang_thai_bd_cao: 0, // 0 = chỉ mới gán chưa thi công
+        trang_thai_bd_ep: undefined, // Không áp dụng cho user bối dây cao
+        assigned_at: new Date(),
+        assigned_by_user_id: currentUserId,
+        created_at: new Date(),
+        created_by: currentUserId,
+        // Legacy fields for backward compatibility
+        khau_sx: 'bd_cao',
+        trang_thai: 0 // 0 = chỉ mới gán chưa thi công
+      };
+
+      console.log('userBangVeHa:', userBangVeHa);
+      console.log('userBangVeCao:', userBangVeCao);
+
+      // 5. Lưu 2 dòng dữ liệu vào Firebase user_bangve
+      const docIds = await this.firebaseUserBangVeService.createMultipleUserBangVe([userBangVeHa, userBangVeCao]);
+      console.log('UserBangVe records added successfully to Firebase:', docIds);
+      
+      this.commonService.thongbao('Đã gán bảng vẽ cho người gia công thành công!', 'Đóng', 'success');
+      
+      // Đóng popup với dữ liệu
+      const closeData = {
+        confirmed: true,
+        boiDayHa: boiDayHa,
+        boiDayCao: boiDayCao,
+        userBangVeAdded: true
+      };
+      
+      this.dialogRef.close(closeData);
+    } catch (error) {
+      console.error('Error in addUserBangVeRecords:', error);
+      this.commonService.thongbao('Có lỗi xảy ra khi gán bảng vẽ cho người gia công', 'Đóng', 'error');
+    }
+  }
+
+  /**
+   * Cập nhật trạng thái bảng vẽ trong Firebase
+   * @param bangveId ID của bảng vẽ (string)
+   * @param trangThai Trạng thái mới
+   */
+  private async updateBangVeStatus(bangveId: string, trangThai: number): Promise<void> {
+    try {
+      console.log(`Updating bangve ${bangveId} status to ${trangThai}`);
+      
+      // Cập nhật trạng thái trong Firebase bangve collection
+      await this.firebaseBangVeService.updateBangVeStatus(bangveId, trangThai);
+      
+      console.log(`Bangve ${bangveId} status updated successfully to ${trangThai}`);
+    } catch (error) {
+      console.error('Error updating bangve status:', error);
+      throw error;
     }
   }
 }

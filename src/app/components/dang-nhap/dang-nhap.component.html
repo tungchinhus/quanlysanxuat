@@ -12,10 +12,10 @@
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
         <div class="form-fields">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tên đăng nhập</mat-label>
+            <mat-label>Tên đăng nhập hoặc Email</mat-label>
             <input matInput 
                    formControlName="username" 
-                   placeholder="Nhập tên đăng nhập"
+                   placeholder="Nhập tên đăng nhập hoặc email"
                    autocomplete="username">
             <mat-icon matSuffix>person</mat-icon>
             <mat-error>{{getErrorMessage('username')}}</mat-error>
@@ -77,19 +77,42 @@
             <mat-icon>admin_panel_settings</mat-icon>
             Admin
           </button>
-          
+        </div>
+        
+        <div class="demo-buttons">
           <button mat-stroked-button 
-                  (click)="fillDemoAccount('manager')"
-                  class="demo-button manager">
-            <mat-icon>supervisor_account</mat-icon>
-            Manager
+                  (click)="fillDemoAccount('totruong')"
+                  class="demo-button totruong">
+            <mat-icon>engineering</mat-icon>
+            Tổ trưởng
           </button>
           
           <button mat-stroked-button 
-                  (click)="fillDemoAccount('user')"
-                  class="demo-button user">
-            <mat-icon>person</mat-icon>
-            User
+                  (click)="fillDemoAccount('quandayha')"
+                  class="demo-button quandayha">
+            <mat-icon>build</mat-icon>
+            Quấn dây hạ
+          </button>
+          
+          <button mat-stroked-button 
+                  (click)="fillDemoAccount('quandaycao')"
+                  class="demo-button quandaycao">
+            <mat-icon>build</mat-icon>
+            Quấn dây cao
+          </button>
+          
+          <button mat-stroked-button 
+                  (click)="fillDemoAccount('epboiday')"
+                  class="demo-button epboiday">
+            <mat-icon>precision_manufacturing</mat-icon>
+            Ép bối dây
+          </button>
+          
+          <button mat-stroked-button 
+                  (click)="fillDemoAccount('kcs')"
+                  class="demo-button kcs">
+            <mat-icon>verified</mat-icon>
+            KCS
           </button>
         </div>
         
@@ -102,6 +125,24 @@
           </div>
           <div class="credential-item">
             <strong>User:</strong> user1 / user123
+          </div>
+          <div class="credential-item">
+            <strong>Email:</strong> user@example.com / user123
+          </div>
+          <div class="credential-item">
+            <strong>Tổ trưởng:</strong> totruongquanday@thibidi.com / Ab!123456
+          </div>
+          <div class="credential-item">
+            <strong>Quấn dây hạ:</strong> quandayha1@thibidi.com / Ab!123456
+          </div>
+          <div class="credential-item">
+            <strong>Quấn dây cao:</strong> quandaycao1@thibidi.com / Ab!123456
+          </div>
+          <div class="credential-item">
+            <strong>Ép bối dây:</strong> epboiday1@thibidi.com / Ab!123456
+          </div>
+          <div class="credential-item">
+            <strong>KCS:</strong> kcs1@thibidi.com / Ab!123456
           </div>
         </div>
       </div>

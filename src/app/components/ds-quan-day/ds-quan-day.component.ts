@@ -9,8 +9,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonService } from '../../services/common.service';
 import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, take } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
+import { FirebaseUserBangVeService } from '../../services/firebase-user-bangve.service';
+import { FirebaseBangVeService } from '../../services/firebase-bangve.service';
+import { UserManagementFirebaseService } from '../../services/user-management-firebase.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { EpBoiDayPopupComponent } from './ep-boi-day-popup/ep-boi-day-popup.component';
 import { CommonModule } from '@angular/common';
@@ -26,9 +29,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 export interface QuanDayData {
-  id: number;
+  id: string; // Firebase document ID (string)
   kyhieuquanday: string;
   congsuat: number;
   tbkt: string;
@@ -102,12 +106,14 @@ export interface GetUserAssignedDrawingsResponse {
     MatMenuModule,
     MatTabsModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatToolbarModule
 ]
 })
 export class DsQuanDayComponent implements OnInit {
   quanDays: QuanDayData[] = [];
   completedQuanDays: CompletedQuanDayData[] = [];
+  inProgressQuanDays: QuanDayData[] = []; // Thêm dữ liệu cho tab "Đang gia công"
    
   isAuthenticated: boolean = false;
   currentUser: any = null;
@@ -116,8 +122,8 @@ export class DsQuanDayComponent implements OnInit {
   isGiaCongCao: boolean = false;
   isGiaCongEp: boolean = false; 
 
-  displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
-  displayedColumnsCompleted: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'completed_date', 'actions'];
+  displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'bd_ha_trong', 'bd_ha_ngoai', 'bd_cao', 'bd_ep', 'bung_bd', 'user_create', 'created_at', 'trang_thai', 'actions'];
+  displayedColumnsCompleted: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
   
   searchTerm: string = '';
   filteredQuanDays: QuanDayData[] = [];
@@ -126,6 +132,10 @@ export class DsQuanDayComponent implements OnInit {
   searchTermCompleted: string = '';
   filteredCompletedQuanDays: CompletedQuanDayData[] = [];
   pagedCompletedQuanDays: CompletedQuanDayData[] = [];
+
+  searchTermInProgress: string = '';
+  filteredInProgressQuanDays: QuanDayData[] = [];
+  pagedInProgressQuanDays: QuanDayData[] = [];
 
   pageSize = 5;
   pageIndex = 0;
@@ -143,7 +153,10 @@ export class DsQuanDayComponent implements OnInit {
     private commonService: CommonService,
     private http: HttpClient,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private firebaseUserBangVeService: FirebaseUserBangVeService,
+    private firebaseBangVeService: FirebaseBangVeService,
+    private userManagementService: UserManagementFirebaseService
   ) {}
 
   ngOnInit(): void {
@@ -195,8 +208,16 @@ export class DsQuanDayComponent implements OnInit {
             console.log('checkAuthentication: User ID valid, proceeding with role determination and data loading');
             // Xác định loại user và quyền
             this.determineUserRole();
-            console.log('checkAuthentication: User role determined, loading quan day data...');
-            this.loadQuanDayData();
+            
+            // Kiểm tra xem user có quyền truy cập trang quấn dây không
+            if (this.hasQuanDayAccess()) {
+              console.log('checkAuthentication: User has quan day access, loading data...');
+              this.loadQuanDayData();
+            } else {
+              console.log('checkAuthentication: User does not have quan day access, redirecting to unauthorized');
+              this.showError('Bạn không có quyền truy cập trang quản lý quấn dây');
+              this.router.navigate(['/unauthorized']);
+            }
           } else {
             console.error('User không có thông tin user_id hợp lệ:', userId);
             this.debugUserIdIssue();
@@ -249,191 +270,233 @@ export class DsQuanDayComponent implements OnInit {
 
   async loadQuanDayData(): Promise<void> {
     try {
-      // Lấy dữ liệu từ API với filter theo user_id của user hiện tại
-      const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetUserAssignedDrawings`;
-      const token = this.authService.getToken();
+      console.log('=== LOAD QUAN DAY DATA FROM FIREBASE START ===');
+      console.log('Current user:', this.currentUser);
+      console.log('User role:', this.userRole);
+      console.log('Is gia cong ha:', this.isGiaCongHa);
+      console.log('Is gia cong cao:', this.isGiaCongCao);
+      console.log('Is gia cong ep:', this.isGiaCongEp);
       
-      if (!token) {
-        throw new Error('Không có token xác thực');
+      // Lấy email từ currentUser để map với users collection
+      const userEmail = this.currentUser?.email;
+      console.log('User email for Firestore query:', userEmail);
+      console.log('Current user object:', this.currentUser);
+      
+      if (!userEmail) {
+        console.error('Cannot get user email, skipping data load');
+        this.quanDays = [];
+        this.filteredQuanDays = [];
+        this.pagedNewQuanDays = [];
+        this.completedQuanDays = [];
+        this.filteredCompletedQuanDays = [];
+        this.pagedCompletedQuanDays = [];
+        return;
       }
 
-      const headers = new HttpHeaders({
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+      // Lấy dữ liệu từ Firebase
+      console.log('=== FIREBASE DATA LOADING ===');
+      
+      // 1. Lấy user từ email để có user ID từ Firestore users collection
+      console.log('Getting user by email from Firestore:', userEmail);
+      const user = await this.userManagementService.getUserByEmail(userEmail).pipe(take(1)).toPromise();
+      if (!user) {
+        console.error('User not found in Firestore users collection, skipping data load');
+        this.quanDays = [];
+        this.filteredQuanDays = [];
+        this.pagedNewQuanDays = [];
+        this.completedQuanDays = [];
+        this.filteredCompletedQuanDays = [];
+        this.pagedCompletedQuanDays = [];
+        return;
+      }
+      console.log('Found user in Firestore:', user);
+      
+      // 2. Lấy user_bangve assignments cho user hiện tại bằng user ID từ Firestore
+      console.log('Loading user_bangve assignments for user ID:', user.id);
+      const userAssignments = await this.firebaseUserBangVeService.getUserBangVeByUserId(parseInt(user.id));
+      console.log('User assignments loaded:', userAssignments.length, 'items');
+      
+      // 2. Filter assignments theo role của user (hỗ trợ cả trường mới và legacy)
+      let relevantAssignments = userAssignments;
+      if (this.isGiaCongHa) {
+        relevantAssignments = userAssignments.filter(assignment => 
+          // Sử dụng trường mới nếu có, fallback về legacy
+          (assignment.bd_ha_id !== undefined && assignment.bd_ha_id !== null) ||
+          (assignment.khau_sx === 'bd_ha' || assignment.khau_sx === 'boidayha')
+        );
+        console.log('Filtered assignments for boidayha:', relevantAssignments.length, 'items');
+        console.log('Sample assignments:', relevantAssignments.slice(0, 2));
+      } else if (this.isGiaCongCao) {
+        relevantAssignments = userAssignments.filter(assignment => 
+          // Sử dụng trường mới nếu có, fallback về legacy
+          (assignment.bd_cao_id !== undefined && assignment.bd_cao_id !== null) ||
+          (assignment.khau_sx === 'bd_cao' || assignment.khau_sx === 'boidaycao')
+        );
+        console.log('Filtered assignments for boidaycao:', relevantAssignments.length, 'items');
+        console.log('Sample assignments:', relevantAssignments.slice(0, 2));
+      } else if (this.isGiaCongEp) {
+        relevantAssignments = userAssignments.filter(assignment => 
+          // Sử dụng trường mới nếu có, fallback về legacy
+          (assignment.bd_ep_id !== undefined && assignment.bd_ep_id !== null) ||
+          (assignment.khau_sx === 'bd_ep' || assignment.khau_sx === 'epboiday')
+        );
+        console.log('Filtered assignments for epboiday:', relevantAssignments.length, 'items');
+        console.log('Sample assignments:', relevantAssignments.slice(0, 2));
+      }
+      
+      if (relevantAssignments.length === 0) {
+        console.log('No relevant assignments found for user role, showing empty data');
+        this.quanDays = [];
+        this.filteredQuanDays = [];
+        this.pagedNewQuanDays = [];
+        this.completedQuanDays = [];
+        this.filteredCompletedQuanDays = [];
+        this.pagedCompletedQuanDays = [];
+        return;
+      }
+      
+      // 3. Lấy danh sách bangve_id từ assignments
+      const assignedBangVeIds = relevantAssignments.map(assignment => assignment.bangve_id);
+      console.log('Assigned bangve IDs:', assignedBangVeIds);
+      
+      // 4. Lấy chỉ những bảng vẽ được gán cho user
+      console.log('Loading assigned bangve from Firebase...');
+      const allBangVe = await this.firebaseBangVeService.getAllBangVe();
+      const assignedBangVe = allBangVe.filter(bangVe => 
+        assignedBangVeIds.includes(String(bangVe.id)) // Đảm bảo cả hai đều là string
+      );
+      console.log('Assigned bangve loaded:', assignedBangVe.length, 'items');
+      
+      // 5. Tạo map của assignments để dễ lookup
+      const assignmentMap = new Map();
+      relevantAssignments.forEach(assignment => {
+        assignmentMap.set(assignment.bangve_id, assignment);
+      });
+      console.log('Assignment map created with', assignmentMap.size, 'entries');
+      
+      // 6. Map dữ liệu từ Firebase sang QuanDayData format
+      const mappedData = assignedBangVe.map(bangVe => {
+        const assignment = assignmentMap.get(String(bangVe.id)); // Đảm bảo cả hai đều là string
+        return {
+          id: String(bangVe.id), // Đảm bảo ID là string
+          kyhieuquanday: bangVe.kyhieubangve || '',
+          congsuat: bangVe.congsuat || 0,
+          tbkt: bangVe.tbkt || '',
+          dienap: bangVe.dienap || '',
+          soboiday: bangVe.soboiday || '',
+          bd_ha_trong: bangVe.bd_ha_trong || '',
+          bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
+          bd_cao: bangVe.bd_cao || '',
+          bd_ep: bangVe.bd_ep || '',
+          bung_bd: bangVe.bung_bd || 0,
+          user_create: bangVe.user_create || '',
+          trang_thai: bangVe.trang_thai || 0,
+          trang_thai_bv: bangVe.trang_thai || 0, // Map to trang_thai as fallback
+          trang_thai_bd_cao: assignment?.trang_thai_bd_cao !== undefined ? assignment.trang_thai_bd_cao : (assignment?.trang_thai || 0),
+          trang_thai_bd_ha: assignment?.trang_thai_bd_ha !== undefined ? assignment.trang_thai_bd_ha : (assignment?.trang_thai || 0),
+          trang_thai_bd_ep: assignment?.trang_thai_bd_ep !== undefined ? assignment.trang_thai_bd_ep : (assignment?.trang_thai || 0),
+          bd_ha_id: assignment?.bd_ha_id || null,
+          bd_cao_id: assignment?.bd_cao_id || null,
+          bd_ep_id: assignment?.bd_ep_id || null,
+          created_at: bangVe.created_at || new Date(),
+          username: bangVe.username || bangVe.user_create || '',
+          email: bangVe.email || '',
+          role_name: bangVe.role_name || 'user',
+          khau_sx: assignment?.khau_sx || ''
+        };
       });
       
-             // Lấy user_id từ thông tin user hiện tại
-       const userId = this.getUserId();
-       if (userId === null) {
-         throw new Error('Không thể lấy user_id');
-       }
-       
-       if (!this.isValidUserId(userId)) {
-         throw new Error(`User ID không hợp lệ: ${userId}. User ID phải là UUID hợp lệ hoặc số dương > 0`);
-       }
+      console.log('Mapped data length:', mappedData.length);
+      console.log('Sample mapped data:', mappedData.slice(0, 2));
       
-      // Lấy chỉ những bảng vẽ được assign cho user này từ bảng tbl_user_bangve
-      const requestBody = {
-        user_id: userId
-      };
-      console.log('Request body for user assigned drawings:', requestBody);
+      // 5. Filter dữ liệu theo quyền của user
+      const filteredData = await this.filterDataByUserPermission(mappedData);
+      console.log('Data after permission filter:', filteredData.length);
+      console.log('Sample filtered data:', filteredData.slice(0, 2));
+          
+      // 6. Phân loại dữ liệu dựa trên trạng thái trong user_bangve
+      console.log('=== DEBUG DATA FILTERING ===');
+      console.log('Filtered data before role filtering:', filteredData.length, 'items');
+      console.log('Sample filtered data:', filteredData.slice(0, 2));
+      console.log('User role flags:', {
+        isGiaCongHa: this.isGiaCongHa,
+        isGiaCongCao: this.isGiaCongCao,
+        isGiaCongEp: this.isGiaCongEp
+      });
+      
+      // Tab "Mới" - hiển thị bảng vẽ được gán cho user nhưng chưa bắt đầu (trang_thai = 0)
+      this.quanDays = filteredData.filter(item => {
+        let result = false;
+        if (this.isGiaCongHa) {
+          // Sử dụng trường mới nếu có, fallback về legacy
+          result = (item.trang_thai_bd_ha === 0) || (item.trang_thai === 0 && item.khau_sx === 'bd_ha');
+        } else if (this.isGiaCongCao) {
+          result = (item.trang_thai_bd_cao === 0) || (item.trang_thai === 0 && item.khau_sx === 'bd_cao');
+        } else if (this.isGiaCongEp) {
+          result = (item.trang_thai_bd_ep === 0) || (item.trang_thai === 0 && item.khau_sx === 'bd_ep');
+        }
+        console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in new tab: ${result}`);
+        return result;
+      });
 
-      // Gọi API để lấy chỉ những bảng vẽ được assign
-      this.http.post<GetUserAssignedDrawingsResponse>(apiUrl, requestBody, { headers })
-        .pipe(
-          catchError(error => {
-            console.error('Lỗi API lấy dữ liệu được assign:', error);
-            // Không sử dụng mock data, để API thực tế xử lý
-            console.log('Main catch block - API error, clearing data arrays');
-            this.quanDays = [];
-            this.filteredQuanDays = [];
-            this.pagedNewQuanDays = [];
-            this.completedQuanDays = [];
-            this.filteredCompletedQuanDays = [];
-            this.pagedCompletedQuanDays = [];
-            return of([]);
-          })
-        )
-        .subscribe(async data => {
-          console.log('Raw assigned data from API:', data);
-          console.log('Raw data type:', typeof data);
-          console.log('Raw data is array:', Array.isArray(data));
-          console.log('Raw data keys:', data ? Object.keys(data) : 'No data');
+      // Tab "Đang gia công" - hiển thị bảng vẽ đang được thi công (trang_thai = 1)
+      this.inProgressQuanDays = filteredData.filter(item => {
+        let result = false;
+        if (this.isGiaCongHa) {
+          // Sử dụng trường mới nếu có, fallback về legacy
+          result = (item.trang_thai_bd_ha === 1) || (item.trang_thai === 1 && item.khau_sx === 'bd_ha');
+        } else if (this.isGiaCongCao) {
+          result = (item.trang_thai_bd_cao === 1) || (item.trang_thai === 1 && item.khau_sx === 'bd_cao');
+        } else if (this.isGiaCongEp) {
+          result = (item.trang_thai_bd_ep === 1) || (item.trang_thai === 1 && item.khau_sx === 'bd_ep');
+        }
+        console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in in-progress tab: ${result}`);
+        return result;
+      });
+      
+      console.log('Filtered results:');
+      console.log('- New tab (quanDays):', this.quanDays.length, 'items');
+      console.log('- In-progress tab (inProgressQuanDays):', this.inProgressQuanDays.length, 'items');
+      console.log('=== END DEBUG DATA FILTERING ===');
           
-          // Sử dụng helper method để lấy drawings data một cách an toàn
-          const drawingsData = this.extractDrawingsFromResponse(data);
-          
-          // Kiểm tra xem API response có thành công không
-          if (!this.isApiResponseSuccessful(data)) {
-            console.warn('API response indicates failure, not processing data');
-            this.quanDays = [];
-            this.completedQuanDays = [];
-            this.filteredQuanDays = [];
-            this.pagedNewQuanDays = [];
-            this.filteredCompletedQuanDays = [];
-            this.pagedCompletedQuanDays = [];
-            return;
-          }
-          
-          console.log('Drawings data to process:', drawingsData.length, 'items');
-          
-          // Loại bỏ dữ liệu trùng lặp dựa trên id
-          const uniqueData = this.removeDuplicateData(drawingsData);
-          console.log('Assigned data length after deduplication:', uniqueData.length);
-          
-          // Map dữ liệu
-          const mappedData = uniqueData.map(item => this.mapBangVeToQuanDay(item));
-          console.log('Mapped data length:', mappedData.length);
-          console.log('Sample mapped data:', mappedData.slice(0, 2));
-          
-          // Filter dữ liệu theo quyền của user
-          const filteredData = await this.filterDataByUserPermission(mappedData);
-          console.log('Data after permission filter:', filteredData.length);
-          console.log('Sample filtered data:', filteredData.slice(0, 2));
-          
-          // Phân loại dữ liệu dựa trên cấu trúc database thực tế
-          // Tab "Mới" - hiển thị bảng vẽ đang được thi công (có bd_ha_id/bd_cao_id nhưng chưa hoàn thành)
-          this.quanDays = filteredData.filter(item => {
-            if (this.isGiaCongHa) {
-              // User là boidayha - hiển thị bảng vẽ có bd_ha_id nhưng trang_thai_bd_ha chưa = 2
-              return item.trang_thai_bd_ha !== 2;
-            } else if (this.isGiaCongCao) {
-              // User là boidaycao - hiển thị bảng vẽ có bd_cao_id nhưng trang_thai_bd_cao chưa = 2
-              return item.trang_thai_bd_cao !== 2;
-            }
-            return false;
-          });
-          
-          // Tab "Đã hoàn thành" - hiển thị bảng vẽ đã hoàn thành (có bd_ha_id/bd_cao_id và trang_thai = 2)
-          let completedData: any[] = [];
-          
-          if (this.isGiaCongHa) {
-            // User là boidayha - lấy những item có bd_ha_id và trang_thai_bd_ha = 2
-            const completedHa = filteredData.filter(item => 
-              item.bd_ha_id && item.trang_thai_bd_ha === 2
-            ).map(item => ({
-              ...item,
-              completed_date: item.created_at,
-              completed_by: item.user_create || 'Unknown',
-              completion_notes: 'Hoàn thành bối dây hạ'
-            }));
-            completedData = [...completedData, ...completedHa];
-          }
-          
-          if (this.isGiaCongCao) {
-            // User là boidaycao - lấy những item có bd_cao_id và trang_thai_bd_cao = 2
-            const completedCao = filteredData.filter(item => 
-              item.bd_cao_id && item.trang_thai_bd_cao === 2
-            ).map(item => ({
-              ...item,
-              completed_date: item.created_at,
-              completed_by: item.user_create || 'Unknown',
-              completion_notes: 'Hoàn thành bối dây cao'
-            }));
-            completedData = [...completedData, ...completedCao];
-          }
-          
-          // Loại bỏ trùng lặp dựa trên id
-          this.completedQuanDays = this.removeDuplicateCompletedData(completedData);
-          
-          console.log('Completed data processing:', {
-            completedDataCount: completedData.length,
-            finalCompletedCount: this.completedQuanDays.length
-          });
-          
-          console.log('Final quanDays length:', this.quanDays.length);
-          console.log('Final completedQuanDays length:', this.completedQuanDays.length);
-          console.log('Final quanDays data:', this.quanDays);
-          console.log('Final completedQuanDays data:', this.completedQuanDays);
-          
-          // Debug toàn bộ quá trình xử lý data
-          this.debugDataFlow(drawingsData, mappedData, filteredData, this.quanDays, this.completedQuanDays);
-          
-          // Debug chi tiết dữ liệu đã hoàn thành
-          console.log('=== DEBUG COMPLETED DATA ===');
-          console.log('completedQuanDays length:', this.completedQuanDays.length);
-          if (this.completedQuanDays.length > 0) {
-            console.log('Sample completed item:', this.completedQuanDays[0]);
-            console.log('Sample completed item trang_thai_bd_ha:', this.completedQuanDays[0].trang_thai_bd_ha);
-            console.log('Sample completed item trang_thai_bd_cao:', this.completedQuanDays[0].trang_thai_bd_cao);
-          }
-          console.log('=== END DEBUG COMPLETED DATA ===');
-          
-          // Cập nhật filtered data và paged data
-          this.filteredQuanDays = [...this.quanDays];
-          this.pagedNewQuanDays = this.getPaginatedData(this.filteredQuanDays, 0, this.pageSize);
-          
-          this.filteredCompletedQuanDays = [...this.completedQuanDays];
-          this.pagedCompletedQuanDays = this.getPaginatedData(this.filteredCompletedQuanDays, 0, this.pageSizeCompleted);
-          
-          console.log('Filtered data - New:', this.quanDays.length, 'Completed:', this.completedQuanDays.length);
-          console.log('Paged data - New:', this.pagedNewQuanDays.length, 'Completed:', this.pagedCompletedQuanDays.length);
-          
-          // Hiển thị thông báo nếu không có dữ liệu được assign
-          this.showNoDataMessage();
-          
-          // Kiểm tra và hiển thị thông báo cho tab đã hoàn thành
-          this.checkCompletedTabData();
-          
-          // Kiểm tra trạng thái data source
-          this.checkDataSourceStatus();
-          
-          // Kiểm tra trạng thái hiển thị UI
-          this.checkUIDisplayStatus();
-          
-          this.cdr.detectChanges();
-        });
-
+      // Tab "Đã hoàn thành" - hiển thị bảng vẽ đã hoàn thành (có bd_ha_id/bd_cao_id và trang_thai = 2)
+      let completedData: any[] = [];
+      
+      if (this.isGiaCongHa) {
+        completedData = filteredData.filter(item => item.bd_ha_id && item.trang_thai_bd_ha === 2);
+      } else if (this.isGiaCongCao) {
+        completedData = filteredData.filter(item => item.bd_cao_id && item.trang_thai_bd_cao === 2);
+      } else if (this.isGiaCongEp) {
+        completedData = filteredData.filter(item => item.bd_ep_id && item.trang_thai_bd_ep === 2);
+      }
+      
+      this.completedQuanDays = completedData;
+      console.log('Completed data length:', this.completedQuanDays.length);
+      
+      // Cập nhật filtered data cho từng tab
+      this.filteredQuanDays = [...this.quanDays];
+      this.filteredCompletedQuanDays = [...this.completedQuanDays];
+      this.filteredInProgressQuanDays = [...this.inProgressQuanDays];
+      
+      // Cập nhật paginated data
+      this.updatePagedNewQuanDays();
+      this.updatePagedCompletedQuanDays();
+      this.updatePagedInProgressQuanDays();
+      
+      // Trigger change detection
+      this.cdr.detectChanges();
+      
+      console.log('=== LOAD QUAN DAY DATA FROM FIREBASE END ===');
+      console.log('Final data counts:');
+      console.log('- New tab:', this.quanDays.length);
+      console.log('- In-progress tab:', this.inProgressQuanDays.length);
+      console.log('- Completed tab:', this.completedQuanDays.length);
+      console.log('- Paged new:', this.pagedNewQuanDays.length);
+      console.log('- Paged in-progress:', this.pagedInProgressQuanDays.length);
+      console.log('- Paged completed:', this.pagedCompletedQuanDays.length);
+      
     } catch (error) {
-      console.error('loadQuanDayData: Lỗi tải dữ liệu được assign:', error);
-      console.error('loadQuanDayData: Error details:', {
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        name: error instanceof Error ? error.name : 'Unknown'
-      });
-      
-      // Không sử dụng mock data, để API thực tế xử lý
-      console.log('loadQuanDayData: Main catch block - API error, clearing data arrays');
+      console.error('Error in loadQuanDayData from Firebase:', error);
       this.quanDays = [];
       this.filteredQuanDays = [];
       this.pagedNewQuanDays = [];
@@ -564,9 +627,9 @@ export class DsQuanDayComponent implements OnInit {
       return false;
     }
     
-    // Nếu userId là string, kiểm tra xem có phải UUID hợp lệ không
+    // Nếu userId là string, kiểm tra xem có phải UUID, Firebase UID, hoặc số hợp lệ không
     if (typeof userId === 'string') {
-      console.log('isValidUserId: userId is string, checking if valid UUID or numeric');
+      console.log('isValidUserId: userId is string, checking if valid UUID, Firebase UID, or numeric');
       
       // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -575,7 +638,14 @@ export class DsQuanDayComponent implements OnInit {
         return true;
       }
       
-      // Nếu không phải UUID, kiểm tra xem có phải số hợp lệ không
+      // Firebase UID format: alphanumeric string, typically 28 characters
+      const firebaseUidRegex = /^[a-zA-Z0-9]{20,30}$/;
+      if (firebaseUidRegex.test(userId)) {
+        console.log('isValidUserId: Valid Firebase UID userId:', userId);
+        return true;
+      }
+      
+      // Nếu không phải UUID hoặc Firebase UID, kiểm tra xem có phải số hợp lệ không
       const numUserId = Number(userId);
       if (!isNaN(numUserId) && numUserId > 0) {
         console.log('isValidUserId: Valid numeric userId:', userId);
@@ -625,6 +695,9 @@ export class DsQuanDayComponent implements OnInit {
 
   // Helper method để lấy userId một cách nhất quán
   private getUserId(): string | number | null {
+    console.log('=== DEBUG GET USER ID ===');
+    console.log('Current user object:', this.currentUser);
+    
     if (!this.currentUser) {
       console.log('getUserId: currentUser is null');
       return null;
@@ -648,6 +721,13 @@ export class DsQuanDayComponent implements OnInit {
       console.log('getUserId: No userId in currentUser, trying localStorage directly...');
       userId = localStorage.getItem('userId') || localStorage.getItem('id');
       console.log('getUserId: userId from localStorage:', userId);
+      console.log('getUserId: localStorage contents:', {
+        userId: localStorage.getItem('userId'),
+        id: localStorage.getItem('id'),
+        accessToken: localStorage.getItem('accessToken'),
+        email: localStorage.getItem('email'),
+        username: localStorage.getItem('username')
+      });
     }
     
     if (userId !== undefined && userId !== null) {
@@ -656,12 +736,14 @@ export class DsQuanDayComponent implements OnInit {
       // Xử lý trường hợp userId = "0" - chuyển thành số 0
       if (userId === "0") {
         console.log('getUserId: Converting "0" to number 0');
+        console.log('=== END DEBUG GET USER ID ===');
         return 0;
       }
       
       // Nếu userId là UUID string, giữ nguyên
       if (typeof userId === 'string' && this.isValidUserId(userId)) {
         console.log('getUserId: Valid userId (UUID or numeric):', userId);
+        console.log('=== END DEBUG GET USER ID ===');
         return userId;
       }
       
@@ -669,10 +751,12 @@ export class DsQuanDayComponent implements OnInit {
       if (typeof userId === 'string' && !isNaN(Number(userId))) {
         const numUserId = Number(userId);
         console.log('getUserId: Converting string userId to number:', numUserId);
+        console.log('=== END DEBUG GET USER ID ===');
         return numUserId;
       }
       
       console.log('getUserId: Returning userId as is:', userId);
+      console.log('=== END DEBUG GET USER ID ===');
       return userId;
     }
     
@@ -683,6 +767,7 @@ export class DsQuanDayComponent implements OnInit {
       Id: this.currentUser.Id,
       UserId: this.currentUser.UserId
     });
+    console.log('=== END DEBUG GET USER ID ===');
     return null;
   }
 
@@ -705,59 +790,202 @@ export class DsQuanDayComponent implements OnInit {
     return numUserId;
   }
 
+  // Kiểm tra xem user có quyền truy cập trang quấn dây không
+  private hasQuanDayAccess(): boolean {
+    console.log('=== DEBUG HAS QUAN DAY ACCESS ===');
+    console.log('Current user:', this.currentUser);
+    
+    if (!this.currentUser) {
+      console.log('hasQuanDayAccess: No current user');
+      return false;
+    }
+
+    // Kiểm tra roles array
+    const userRoles = this.currentUser?.roles || [];
+    const rolesString = userRoles.join(',').toLowerCase();
+    
+    // Kiểm tra role_name
+    const roleName = (this.currentUser?.role || this.currentUser?.role_name || '').toLowerCase();
+    
+    // Kiểm tra khau_sx
+    const khauSx = (this.currentUser?.khau_sx || '').toLowerCase();
+    
+    // Kiểm tra username
+    const username = (this.currentUser?.username || '').toLowerCase();
+    
+    console.log('hasQuanDayAccess: Checking access with:', {
+      userRoles,
+      rolesString,
+      roleName,
+      khauSx,
+      username
+    });
+
+    // Kiểm tra các role có quyền truy cập trang quấn dây
+    const hasAccess = 
+      // Kiểm tra roles array
+      rolesString.includes('boidayha') ||
+      rolesString.includes('boidaycao') ||
+      rolesString.includes('quandayha') ||
+      rolesString.includes('quandaycao') ||
+      rolesString.includes('epboiday') ||
+      rolesString.includes('boidayep') ||
+      // Kiểm tra role_name
+      roleName.includes('boidayha') ||
+      roleName.includes('boidaycao') ||
+      roleName.includes('quandayha') ||
+      roleName.includes('quandaycao') ||
+      roleName.includes('epboiday') ||
+      roleName.includes('boidayep') ||
+      // Kiểm tra khau_sx
+      khauSx.includes('boidayha') ||
+      khauSx.includes('boidaycao') ||
+      khauSx.includes('quandayha') ||
+      khauSx.includes('quandaycao') ||
+      khauSx.includes('epboiday') ||
+      khauSx.includes('boidayep') ||
+      khauSx.includes('ha') ||
+      khauSx.includes('cao') ||
+      khauSx.includes('ep') ||
+      // Kiểm tra username
+      username.includes('boidayha') ||
+      username.includes('boidaycao') ||
+      username.includes('quandayha') ||
+      username.includes('quandaycao') ||
+      username.includes('epboiday') ||
+      username.includes('boidayep') ||
+      // Admin và manager có quyền truy cập tất cả
+      rolesString.includes('admin') ||
+      rolesString.includes('manager') ||
+      roleName.includes('admin') ||
+      roleName.includes('manager');
+
+    console.log('hasQuanDayAccess: Access result:', hasAccess);
+    console.log('hasQuanDayAccess: Detailed checks:', {
+      rolesStringIncludes: {
+        boidayha: rolesString.includes('boidayha'),
+        boidaycao: rolesString.includes('boidaycao'),
+        quandayha: rolesString.includes('quandayha'),
+        quandaycao: rolesString.includes('quandaycao'),
+        epboiday: rolesString.includes('epboiday'),
+        boidayep: rolesString.includes('boidayep'),
+        admin: rolesString.includes('admin'),
+        manager: rolesString.includes('manager')
+      },
+      roleNameIncludes: {
+        boidayha: roleName.includes('boidayha'),
+        boidaycao: roleName.includes('boidaycao'),
+        quandayha: roleName.includes('quandayha'),
+        quandaycao: roleName.includes('quandaycao'),
+        epboiday: roleName.includes('epboiday'),
+        boidayep: roleName.includes('boidayep'),
+        admin: roleName.includes('admin'),
+        manager: roleName.includes('manager')
+      },
+      khauSxIncludes: {
+        boidayha: khauSx.includes('boidayha'),
+        boidaycao: khauSx.includes('boidaycao'),
+        quandayha: khauSx.includes('quandayha'),
+        quandaycao: khauSx.includes('quandaycao'),
+        epboiday: khauSx.includes('epboiday'),
+        boidayep: khauSx.includes('boidayep'),
+        ha: khauSx.includes('ha'),
+        cao: khauSx.includes('cao'),
+        ep: khauSx.includes('ep')
+      },
+      usernameIncludes: {
+        boidayha: username.includes('boidayha'),
+        boidaycao: username.includes('boidaycao'),
+        quandayha: username.includes('quandayha'),
+        quandaycao: username.includes('quandaycao'),
+        epboiday: username.includes('epboiday'),
+        boidayep: username.includes('boidayep')
+      }
+    });
+    console.log('=== END DEBUG HAS QUAN DAY ACCESS ===');
+    return hasAccess;
+  }
+
   // Xác định loại user và quyền
   private determineUserRole(): void {
+    console.log('=== DEBUG DETERMINE USER ROLE ===');
+    console.log('Current user object:', this.currentUser);
+    
     if (this.currentUser) {
       this.userRole = {
         id: this.getUserId() || 0,
         username: this.currentUser?.username || '',
         email: this.currentUser?.email || '',
-        role_name: this.currentUser?.role || '', // Changed from role_name to role
+        role_name: this.currentUser?.role || this.currentUser?.role_name || '', // Check both role and role_name
         khau_sx: this.currentUser?.khau_sx || ''
       };
       
-      // Xác định loại gia công dựa trên khau_sx và role_name
+      // Xác định loại gia công dựa trên khau_sx, role_name và roles array
       const khauSx = this.userRole.khau_sx?.toLowerCase() || '';
       const roleName = this.userRole.role_name?.toLowerCase() || '';
+      const userRoles = this.currentUser?.roles || [];
+      const rolesString = userRoles.join(',').toLowerCase();
       
-      console.log('determineUserRole: Raw values - khau_sx:', khauSx, 'role_name:', roleName);
+      console.log('determineUserRole: Raw values - khau_sx:', khauSx, 'role_name:', roleName, 'roles:', userRoles);
+      console.log('determineUserRole: User role object:', this.userRole);
       
-      // Kiểm tra quyền gia công hạ
+      // Kiểm tra quyền gia công hạ - kiểm tra cả role_name và roles array
       this.isGiaCongHa = khauSx.includes('quandayha') || 
                          khauSx.includes('boidayha') || 
                          khauSx.includes('ha') ||
                          roleName.includes('boidayha') ||
-                         roleName.includes('quandayha');
+                         roleName.includes('quandayha') ||
+                         rolesString.includes('boidayha') ||
+                         rolesString.includes('quandayha');
       
-      // Kiểm tra quyền gia công cao
+      // Kiểm tra quyền gia công cao - kiểm tra cả role_name và roles array
       this.isGiaCongCao = khauSx.includes('quandaycao') || 
                           khauSx.includes('boidaycao') || 
                           khauSx.includes('cao') ||
                           roleName.includes('boidaycao') ||
-                          roleName.includes('quandaycao');
+                          roleName.includes('quandaycao') ||
+                          rolesString.includes('boidaycao') ||
+                          rolesString.includes('quandaycao');
 
       this.isGiaCongEp = khauSx.includes('epboiday') || 
                           khauSx.includes('boidayep') || 
                           khauSx.includes('ep') ||
                           roleName.includes('epboiday') ||
-                          roleName.includes('boidayep');  
+                          roleName.includes('boidayep') ||
+                          rolesString.includes('epboiday') ||
+                          rolesString.includes('boidayep');  
       
       console.log('determineUserRole: User role determined:', this.userRole);
       console.log('determineUserRole: Is gia cong ha:', this.isGiaCongHa);
       console.log('determineUserRole: Is gia cong cao:', this.isGiaCongCao);
+      console.log('determineUserRole: Is gia cong ep:', this.isGiaCongEp);
       console.log('determineUserRole: Permission check details:', {
         khauSx: khauSx,
         roleName: roleName,
+        roles: userRoles,
+        rolesString: rolesString,
         khauSxIncludes: {
           quandayha: khauSx.includes('quandayha'),
           boidayha: khauSx.includes('boidayha'),
-          ha: khauSx.includes('ha')
+          ha: khauSx.includes('ha'),
+          quandaycao: khauSx.includes('quandaycao'),
+          boidaycao: khauSx.includes('boidaycao'),
+          cao: khauSx.includes('cao')
         },
         roleNameIncludes: {
           boidayha: roleName.includes('boidayha'),
-          quandayha: roleName.includes('quandayha')
+          quandayha: roleName.includes('quandayha'),
+          boidaycao: roleName.includes('boidaycao'),
+          quandaycao: roleName.includes('quandaycao')
+        },
+        rolesIncludes: {
+          boidayha: rolesString.includes('boidayha'),
+          quandayha: rolesString.includes('quandayha'),
+          boidaycao: rolesString.includes('boidaycao'),
+          quandaycao: rolesString.includes('quandaycao')
         }
       });
+      console.log('=== END DEBUG DETERMINE USER ROLE ===');
       
       // Log thông tin user để debug
       console.log('Current user info:', {
@@ -767,7 +995,9 @@ export class DsQuanDayComponent implements OnInit {
         Id: this.currentUser?.Id,
         UserId: this.currentUser?.UserId,
         username: this.currentUser?.username,
+        role: this.currentUser?.role,
         role_name: this.currentUser?.role_name,
+        roles: this.currentUser?.roles,
         khau_sx: this.currentUser?.khau_sx
       });
     }
@@ -912,7 +1142,7 @@ export class DsQuanDayComponent implements OnInit {
     
     const mockData = [
              {
-         id: 1, 
+         id: '1', 
          kyhieuquanday: 'QD001', 
          congsuat: 212, 
          tbkt: 'Máy biến áp 1', 
@@ -939,7 +1169,7 @@ export class DsQuanDayComponent implements OnInit {
          khau_sx: 'Khâu 1'
        },
        {
-         id: 2, 
+         id: '2', 
          kyhieuquanday: 'QD002', 
          congsuat: 234, 
          tbkt: 'Máy biến áp 2', 
@@ -980,7 +1210,7 @@ export class DsQuanDayComponent implements OnInit {
     
     const mockCompletedData = [
              {
-         id: 3, 
+         id: '3', 
          kyhieuquanday: 'QD003', 
          congsuat: 100, 
          tbkt: 'Máy biến áp 3', 
@@ -1010,7 +1240,7 @@ export class DsQuanDayComponent implements OnInit {
          completion_notes: 'Hoàn thành đúng tiến độ'
        },
        {
-         id: 4, 
+         id: '4', 
          kyhieuquanday: 'QD004', 
          congsuat: 150, 
          tbkt: 'Máy biến áp 4', 
@@ -1061,6 +1291,14 @@ export class DsQuanDayComponent implements OnInit {
     console.log('onPageChangeCompleted: Updated paged data length:', this.pagedCompletedQuanDays.length);
   }
 
+  onPageChangeInProgress(event: PageEvent): void {
+    console.log('onPageChangeInProgress: Page change event:', event);
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.pagedInProgressQuanDays = this.getPaginatedData(this.filteredInProgressQuanDays, this.pageIndex, this.pageSize);
+    console.log('onPageChangeInProgress: Updated paged data length:', this.pagedInProgressQuanDays.length);
+  }
+
   onTabChange(event: MatTabChangeEvent): void {
     console.log('onTabChange: Tab change event:', event);
     this.currentTabIndex = event.index;
@@ -1072,6 +1310,10 @@ export class DsQuanDayComponent implements OnInit {
       this.pageIndex = 0;
       this.updatePagedNewQuanDays();
     } else if (this.currentTabIndex === 1) {
+      // Tab "Đang gia công"
+      this.pageIndex = 0;
+      this.updatePagedInProgressQuanDays();
+    } else if (this.currentTabIndex === 2) {
       // Tab "Đã hoàn thành"
       this.pageIndexCompleted = 0;
       this.updatePagedCompletedQuanDays();
@@ -1087,6 +1329,12 @@ export class DsQuanDayComponent implements OnInit {
   private updatePagedNewQuanDays(): void {
     this.pagedNewQuanDays = this.getPaginatedData(this.filteredQuanDays, this.pageIndex, this.pageSize);
     console.log('updatePagedNewQuanDays: Updated paged data length:', this.pagedNewQuanDays.length);
+  }
+
+  // Method để cập nhật paged data cho tab "Đang gia công"
+  private updatePagedInProgressQuanDays(): void {
+    this.pagedInProgressQuanDays = this.getPaginatedData(this.filteredInProgressQuanDays, this.pageIndex, this.pageSize);
+    console.log('updatePagedInProgressQuanDays: Updated paged data length:', this.pagedInProgressQuanDays.length);
   }
 
   // Method để cập nhật paged data cho tab "Đã hoàn thành"
@@ -1113,6 +1361,26 @@ export class DsQuanDayComponent implements OnInit {
     this.pageIndex = 0;
     this.pagedNewQuanDays = this.getPaginatedData(this.filteredQuanDays, 0, this.pageSize);
     console.log('searchQuanDays: Paged data length:', this.pagedNewQuanDays.length);
+  }
+
+  searchInProgressQuanDays(): void {
+    console.log('searchInProgressQuanDays: Starting search with term:', this.searchTermInProgress);
+    console.log('searchInProgressQuanDays: Original inProgressQuanDays length:', this.inProgressQuanDays.length);
+    
+    if (!this.searchTermInProgress.trim()) {
+      this.filteredInProgressQuanDays = [...this.inProgressQuanDays];
+      console.log('searchInProgressQuanDays: Empty search term, showing all data');
+    } else {
+      this.filteredInProgressQuanDays = this.inProgressQuanDays.filter(item =>
+        item.kyhieuquanday.toLowerCase().includes(this.searchTermInProgress.toLowerCase()) ||
+        item.tbkt.toLowerCase().includes(this.searchTermInProgress.toLowerCase())
+      );
+      console.log('searchInProgressQuanDays: Filtered data length:', this.filteredInProgressQuanDays.length);
+    }
+    
+    this.pageIndex = 0;
+    this.pagedInProgressQuanDays = this.getPaginatedData(this.filteredInProgressQuanDays, 0, this.pageSize);
+    console.log('searchInProgressQuanDays: Paged data length:', this.pagedInProgressQuanDays.length);
   }
 
   searchCompletedQuanDays(): void {
@@ -1349,7 +1617,7 @@ export class DsQuanDayComponent implements OnInit {
     });
   }
 
-  private updateBoiDayEpStatus(bangveId: number, status: number): void {
+  private updateBoiDayEpStatus(bangveId: string, status: number): void {
     console.log(`updateBoiDayEpStatus: Updating bối dây ép status for bangveId: ${bangveId} to status: ${status}`);
     
     try {
@@ -1482,10 +1750,13 @@ export class DsQuanDayComponent implements OnInit {
   private logDataStatusAfterRefresh(): void {
     console.log('=== DATA STATUS AFTER REFRESH ===');
     console.log('quanDays (tab mới):', this.quanDays.length, 'items');
+    console.log('inProgressQuanDays (tab đang gia công):', this.inProgressQuanDays.length, 'items');
     console.log('completedQuanDays (tab hoàn thành):', this.completedQuanDays.length, 'items');
     console.log('filteredQuanDays:', this.filteredQuanDays.length, 'items');
+    console.log('filteredInProgressQuanDays:', this.filteredInProgressQuanDays.length, 'items');
     console.log('filteredCompletedQuanDays:', this.filteredCompletedQuanDays.length, 'items');
     console.log('pagedNewQuanDays:', this.pagedNewQuanDays.length, 'items');
+    console.log('pagedInProgressQuanDays:', this.pagedInProgressQuanDays.length, 'items');
     console.log('pagedCompletedQuanDays:', this.pagedCompletedQuanDays.length, 'items');
     
     if (this.completedQuanDays.length > 0) {
@@ -1497,7 +1768,7 @@ export class DsQuanDayComponent implements OnInit {
   }
 
   // Method để cập nhật trạng thái bối dây hạ trong database
-  private updateBoiDayHaStatus(bangveId: number, status: number): void {
+  private updateBoiDayHaStatus(bangveId: string, status: number): void {
     console.log(`updateBoiDayHaStatus: Updating bối dây hạ status for bangveId: ${bangveId} to status: ${status}`);
     
     try {
@@ -1540,7 +1811,7 @@ export class DsQuanDayComponent implements OnInit {
   // Method để kiểm tra xem có nên refresh data không
   private shouldRefreshData(): boolean {
     // Refresh nếu không có data hoặc có lỗi
-    return this.quanDays.length === 0 && this.completedQuanDays.length === 0;
+    return this.quanDays.length === 0 && this.inProgressQuanDays.length === 0 && this.completedQuanDays.length === 0;
   }
 
   // Kiểm tra quyền hiển thị nút gia công
@@ -1963,10 +2234,11 @@ export class DsQuanDayComponent implements OnInit {
 
   // Kiểm tra xem user có dữ liệu được assign không
   hasAssignedData(): boolean {
-    const hasData = this.quanDays.length > 0 || this.completedQuanDays.length > 0;
+    const hasData = this.quanDays.length > 0 || this.inProgressQuanDays.length > 0 || this.completedQuanDays.length > 0;
     
     console.log('hasAssignedData: Check result:', {
       quanDaysLength: this.quanDays.length,
+      inProgressQuanDaysLength: this.inProgressQuanDays.length,
       completedQuanDaysLength: this.completedQuanDays.length,
       hasData: hasData
     });
@@ -1976,11 +2248,11 @@ export class DsQuanDayComponent implements OnInit {
 
   // Method để hiển thị thông báo khi không có data
   private showNoDataMessage(): void {
-    if (this.quanDays.length === 0 && this.completedQuanDays.length === 0) {
+    if (this.quanDays.length === 0 && this.inProgressQuanDays.length === 0 && this.completedQuanDays.length === 0) {
       console.log('showNoDataMessage: No data available, showing message');
       // Có thể hiển thị thông báo cho user ở đây
     } else {
-      console.log('showNoDataMessage: Data available, quanDays:', this.quanDays.length, 'completedQuanDays:', this.completedQuanDays.length);
+      console.log('showNoDataMessage: Data available, quanDays:', this.quanDays.length, 'inProgressQuanDays:', this.inProgressQuanDays.length, 'completedQuanDays:', this.completedQuanDays.length);
     }
   }
 
@@ -1999,14 +2271,32 @@ export class DsQuanDayComponent implements OnInit {
     }
   }
 
+  // Method để kiểm tra và hiển thị thông báo cho tab đang gia công
+  private checkInProgressTabData(): void {
+    console.log('checkInProgressTabData: Checking in progress tab data...');
+    console.log('checkInProgressTabData: inProgressQuanDays length:', this.inProgressQuanDays.length);
+    console.log('checkInProgressTabData: filteredInProgressQuanDays length:', this.filteredInProgressQuanDays.length);
+    console.log('checkInProgressTabData: pagedInProgressQuanDays length:', this.pagedInProgressQuanDays.length);
+    
+    if (this.inProgressQuanDays.length === 0) {
+      console.log('checkInProgressTabData: No in progress data available');
+      // Có thể hiển thị thông báo cho user ở đây
+    } else {
+      console.log('checkInProgressTabData: In progress data available, sample:', this.inProgressQuanDays[0]);
+    }
+  }
+
   // Method để kiểm tra trạng thái data source
   private checkDataSourceStatus(): void {
     console.log('checkDataSourceStatus: Current data status:');
     console.log('- quanDays:', this.quanDays.length);
+    console.log('- inProgressQuanDays:', this.inProgressQuanDays.length);
     console.log('- completedQuanDays:', this.completedQuanDays.length);
     console.log('- filteredQuanDays:', this.filteredQuanDays.length);
-    console.log('- pagedNewQuanDays:', this.pagedNewQuanDays.length);
+    console.log('- filteredInProgressQuanDays:', this.filteredInProgressQuanDays.length);
     console.log('- filteredCompletedQuanDays:', this.filteredCompletedQuanDays.length);
+    console.log('- pagedNewQuanDays:', this.pagedNewQuanDays.length);
+    console.log('- pagedInProgressQuanDays:', this.pagedInProgressQuanDays.length);
     console.log('- pagedCompletedQuanDays:', this.pagedCompletedQuanDays.length);
   }
 
@@ -2017,14 +2307,23 @@ export class DsQuanDayComponent implements OnInit {
     console.log('User role:', this.userRole);
     console.log('Is gia cong ha:', this.isGiaCongHa);
     console.log('Is gia cong cao:', this.isGiaCongCao);
+    console.log('Is gia cong ep:', this.isGiaCongEp);
     console.log('QuanDays array length:', this.quanDays.length);
+    console.log('InProgressQuanDays array length:', this.inProgressQuanDays.length);
     console.log('CompletedQuanDays array length:', this.completedQuanDays.length);
     console.log('FilteredQuanDays array length:', this.filteredQuanDays.length);
+    console.log('FilteredInProgressQuanDays array length:', this.filteredInProgressQuanDays.length);
+    console.log('FilteredCompletedQuanDays array length:', this.filteredCompletedQuanDays.length);
     console.log('PagedNewQuanDays array length:', this.pagedNewQuanDays.length);
+    console.log('PagedInProgressQuanDays array length:', this.pagedInProgressQuanDays.length);
     console.log('PagedCompletedQuanDays array length:', this.pagedCompletedQuanDays.length);
     
     if (this.quanDays.length > 0) {
       console.log('Sample quanDays data:', this.quanDays[0]);
+    }
+    
+    if (this.inProgressQuanDays.length > 0) {
+      console.log('Sample inProgressQuanDays data:', this.inProgressQuanDays[0]);
     }
     
     if (this.completedQuanDays.length > 0) {
@@ -2054,17 +2353,22 @@ export class DsQuanDayComponent implements OnInit {
       sample: filteredData.slice(0, 2)
     });
     
-    console.log('4. Final quanDays:', {
+    console.log('4. Final quanDays (tab mới):', {
       length: finalQuanDays.length,
       sample: finalQuanDays.slice(0, 2)
     });
     
-    console.log('5. Final completedQuanDays:', {
+    console.log('5. Final inProgressQuanDays (tab đang gia công):', {
+      length: this.inProgressQuanDays.length,
+      sample: this.inProgressQuanDays.slice(0, 2)
+    });
+    
+    console.log('6. Final completedQuanDays (tab hoàn thành):', {
       length: finalCompletedQuanDays.length,
       sample: finalCompletedQuanDays.slice(0, 2)
     });
     
-    console.log('6. Current user info:', {
+    console.log('7. Current user info:', {
       username: this.currentUser?.username,
       userId: this.getUserId(),
       khau_sx: this.currentUser?.khau_sx,
@@ -2079,16 +2383,24 @@ export class DsQuanDayComponent implements OnInit {
     console.log('=== CHECK UI DISPLAY STATUS ===');
     console.log('Data arrays status:');
     console.log('- quanDays:', this.quanDays.length, 'items');
+    console.log('- inProgressQuanDays:', this.inProgressQuanDays.length, 'items');
     console.log('- completedQuanDays:', this.completedQuanDays.length, 'items');
     console.log('- filteredQuanDays:', this.filteredQuanDays.length, 'items');
-    console.log('- pagedNewQuanDays:', this.pagedNewQuanDays.length, 'items');
+    console.log('- filteredInProgressQuanDays:', this.filteredInProgressQuanDays.length, 'items');
     console.log('- filteredCompletedQuanDays:', this.filteredCompletedQuanDays.length, 'items');
+    console.log('- pagedNewQuanDays:', this.pagedNewQuanDays.length, 'items');
+    console.log('- pagedInProgressQuanDays:', this.pagedInProgressQuanDays.length, 'items');
     console.log('- pagedCompletedQuanDays:', this.pagedCompletedQuanDays.length, 'items');
     
     // Kiểm tra xem data có được map đúng không
     if (this.quanDays.length > 0) {
       console.log('Sample quanDays item:', this.quanDays[0]);
       console.log('Sample quanDays item keys:', Object.keys(this.quanDays[0]));
+    }
+    
+    if (this.inProgressQuanDays.length > 0) {
+      console.log('Sample inProgressQuanDays item:', this.inProgressQuanDays[0]);
+      console.log('Sample inProgressQuanDays item keys:', Object.keys(this.inProgressQuanDays[0]));
     }
     
     if (this.completedQuanDays.length > 0) {
@@ -2154,4 +2466,78 @@ export class DsQuanDayComponent implements OnInit {
     
     return Boolean(isSuccess);
   }
+
+  goToLogin(): void {
+    this.router.navigate(['/dang-nhap']);
+  }
+
+  openAddQuanDayDialog(): void {
+    // TODO: Implement add quan day dialog
+    console.log('Add quan day dialog');
+  }
+
+  filterQuanDays(): void {
+    if (!this.searchTerm.trim()) {
+      this.filteredQuanDays = [...this.quanDays];
+    } else {
+      this.filteredQuanDays = this.quanDays.filter(item =>
+        item.kyhieuquanday.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.congsuat.toString().includes(this.searchTerm) ||
+        item.tbkt.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        item.dienap.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    }
+    this.updatePagedData();
+  }
+
+  getStatusClass(status: number | null): string {
+    if (status === null || status === undefined) return 'status-new';
+    switch (status) {
+      case 0: return 'status-new';
+      case 1: return 'status-processing';
+      case 2: return 'status-completed';
+      case 3: return 'status-pending';
+      case 4: return 'status-approved';
+      case 5: return 'status-rejected';
+      case 6: return 'status-cancelled';
+      default: return 'status-new';
+    }
+  }
+
+  getStatusText(status: number | null): string {
+    if (status === null || status === undefined) return 'Mới';
+    switch (status) {
+      case 0: return 'Mới';
+      case 1: return 'Đang xử lý';
+      case 2: return 'Đã hoàn thành';
+      case 3: return 'Chờ duyệt';
+      case 4: return 'Đã duyệt';
+      case 5: return 'Từ chối';
+      case 6: return 'Hủy bỏ';
+      default: return 'Mới';
+    }
+  }
+
+  updatePagedData(): void {
+    const startIndex = this.pageIndex * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.pagedNewQuanDays = this.filteredQuanDays.slice(startIndex, endIndex);
+  }
+
+  // Kiểm tra xem user có role admin hoặc manager không
+  hasAdminOrManagerRole(): boolean {
+    if (!this.currentUser) {
+      return false;
+    }
+
+    const userRoles = this.currentUser?.roles || [];
+    const rolesString = userRoles.join(',').toLowerCase();
+    const roleName = (this.currentUser?.role || this.currentUser?.role_name || '').toLowerCase();
+
+    return rolesString.includes('admin') ||
+           rolesString.includes('manager') ||
+           roleName.includes('admin') ||
+           roleName.includes('manager');
+  }
+
 }

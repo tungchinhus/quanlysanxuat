@@ -4,7 +4,7 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/dashboard',
+    redirectTo: '/dang-nhap',
     pathMatch: 'full'
   },
   {
@@ -19,7 +19,7 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'manager', 'user'] }
+    data: { roles: ['admin', 'manager', 'user', 'totruong'] }
   },
   {
     path: 'quan-ly-tuyen-duong',
@@ -86,8 +86,26 @@ export const routes: Routes = [
     loadComponent: () => import('./components/ds-bangve/ds-bangve.component').then(m => m.DsBangveComponent),
     canActivate: [AuthGuard],
     data: { 
-      roles: ['admin', 'manager', 'user'],
+      roles: ['admin', 'manager', 'user', 'totruong'],
       permissions: ['drawing_view']
+    }
+  },
+  {
+    path: 'quan-day',
+    loadComponent: () => import('./components/quan-day/quan-day.component').then(m => m.QuanDayComponent),
+    canActivate: [AuthGuard],
+    data: { 
+      roles: ['quandaycao', 'boidaycao'],
+      permissions: ['quan_day_view']
+    }
+  },
+  {
+    path: 'ds-quan-day',
+    loadComponent: () => import('./components/ds-quan-day/ds-quan-day.component').then(m => m.DsQuanDayComponent),
+    canActivate: [AuthGuard],
+    data: { 
+      roles: ['quandaycao', 'boidaycao', 'quandayha', 'boidayha', 'epboiday', 'boidayep'],
+      permissions: ['quan_day_view']
     }
   },
   {

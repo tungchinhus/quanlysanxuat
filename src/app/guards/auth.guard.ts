@@ -111,11 +111,13 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    // Check if user has any of the required roles
+    // Check if user has any of the required roles (case insensitive)
     const hasRequiredRole = userRoles.some(userRole => {
       const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;
       console.log('Checking role:', roleName, 'against required roles:', roles);
-      return roles.includes(roleName);
+      return roles.some(requiredRole => 
+        roleName.toLowerCase() === requiredRole.toLowerCase()
+      );
     });
 
     console.log('Has required role:', hasRequiredRole);

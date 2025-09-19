@@ -34,7 +34,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 export interface BangVeData {
-  id: number;
+  id: number | string;
   kyhieubangve: string;
   congsuat: number;
   tbkt: string;
@@ -160,9 +160,6 @@ export class DsBangveComponent implements OnInit {
     // Debug authentication
     this.debugAuthentication();
     
-    // Test logic filter
-    this.testFilterLogic();
-    
     // Đảm bảo collection Firebase tồn tại và có dữ liệu mẫu
     await this.ensureFirebaseCollection();
     
@@ -249,7 +246,7 @@ export class DsBangveComponent implements OnInit {
     this.loadDrawings();
   }
 
-  // Method để kiểm tra quyền admin hoặc manager
+  // Method để kiểm tra quyền admin, manager hoặc totruong
   hasAdminOrManagerRole(): boolean {
     const userInfo = this.authService.getUserInfo();
     
@@ -264,10 +261,11 @@ export class DsBangveComponent implements OnInit {
       const hasAdminRole = userInfo.roles.some((role: string) => 
         role.toLowerCase() === 'admin' || 
         role.toLowerCase() === 'manager' ||
-        role.toLowerCase() === 'administrator'
+        role.toLowerCase() === 'administrator' ||
+        role.toLowerCase() === 'totruong'
       );
       if (hasAdminRole) {
-        console.log('Admin/Manager role found in userInfo.roles:', hasAdminRole);
+        console.log('Admin/Manager/Totruong role found in userInfo.roles:', hasAdminRole);
         return true;
       }
     }
@@ -278,8 +276,8 @@ export class DsBangveComponent implements OnInit {
     console.log('Role from localStorage:', role);
     console.log('UserRole from localStorage:', userRole);
     
-    const hasAdminRole = !!(role && (role.toLowerCase() === 'admin' || role.toLowerCase() === 'manager')) ||
-                        !!(userRole && (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'manager'));
+    const hasAdminRole = !!(role && (role.toLowerCase() === 'admin' || role.toLowerCase() === 'manager' || role.toLowerCase() === 'totruong')) ||
+                        !!(userRole && (userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'manager' || userRole.toLowerCase() === 'totruong'));
     
     // Kiểm tra thêm từ khau_sx
     const hasAdminKhauSx = !!(this.khau_sx && this.khau_sx.toLowerCase() === 'admin');
@@ -294,7 +292,7 @@ export class DsBangveComponent implements OnInit {
 
   // Method để hiển thị thông báo không có quyền
   showPermissionDeniedMessage(): void {
-    this.thongbao('Bạn không có quyền thực hiện chức năng này. Chỉ admin hoặc manager mới có quyền thêm bảng vẽ mới.', 'Đóng', 'error');
+    this.thongbao('Bạn không có quyền thực hiện chức năng này. Chỉ admin, manager hoặc tổ trưởng mới có quyền thêm bảng vẽ mới.', 'Đóng', 'error');
   }
 
   // Method để debug quyền truy cập của user
@@ -384,89 +382,12 @@ export class DsBangveComponent implements OnInit {
       
       if (existingData.length === 0) {
         console.log('📭 [ensureFirebaseCollection] No data found, creating sample data...');
-        await this.createSampleData();
       } else {
         console.log(`✅ [ensureFirebaseCollection] Found ${existingData.length} existing documents`);
       }
       
     } catch (error) {
       console.error('❌ [ensureFirebaseCollection] Error ensuring collection:', error);
-    }
-  }
-
-  // Method để tạo dữ liệu mẫu
-  private async createSampleData(): Promise<void> {
-    try {
-      console.log('🔄 [createSampleData] Creating sample data...');
-      
-      const sampleData = [
-        {
-          kyhieubangve: 'BV-001',
-          congsuat: 250,
-          tbkt: 'TBKT-01',
-          dienap: '22kV',
-          soboiday: '3',
-          bd_ha_trong: 'OK',
-          bd_ha_ngoai: 'OK',
-          bd_cao: 'OK',
-          bd_ep: 'OK',
-          bung_bd: 1,
-          user_create: 'admin',
-          trang_thai: STATUS.NEW,
-          created_at: new Date(),
-          username: 'admin',
-          email: 'admin@thibidi.com',
-          role_name: 'admin',
-          isActive: true
-        },
-        {
-          kyhieubangve: 'BV-002',
-          congsuat: 400,
-          tbkt: 'TBKT-02',
-          dienap: '35kV',
-          soboiday: '4',
-          bd_ha_trong: 'OK',
-          bd_ha_ngoai: 'Chưa',
-          bd_cao: 'OK',
-          bd_ep: 'Chưa',
-          bung_bd: 0,
-          user_create: 'user1',
-          trang_thai: STATUS.PROCESSING,
-          created_at: new Date(),
-          username: 'user1',
-          email: 'user1@thibidi.com',
-          role_name: 'user',
-          isActive: true
-        },
-        {
-          kyhieubangve: 'BV-003',
-          congsuat: 630,
-          tbkt: 'TBKT-03',
-          dienap: '10kV',
-          soboiday: '5',
-          bd_ha_trong: 'OK',
-          bd_ha_ngoai: 'OK',
-          bd_cao: 'Chưa',
-          bd_ep: 'OK',
-          bung_bd: 1,
-          user_create: 'user2',
-          trang_thai: STATUS.PROCESSED,
-          created_at: new Date(),
-          username: 'user2',
-          email: 'user2@thibidi.com',
-          role_name: 'user',
-          isActive: true
-        }
-      ];
-      
-      for (const data of sampleData) {
-        await this.firebaseBangVeService.createBangVe(data);
-      }
-      
-      console.log('✅ [createSampleData] Sample data created successfully');
-      
-    } catch (error) {
-      console.error('❌ [createSampleData] Error creating sample data:', error);
     }
   }
 
@@ -654,27 +575,23 @@ export class DsBangveComponent implements OnInit {
   private initializeEmptyData(): void {
     console.log('=== Initializing empty data ===');
     
-    // Khởi tạo các mảng chính
+    // Reset all arrays to empty
     this.drawings = [];
     this.inProgressDrawings = [];
     this.processedDrawings = [];
     
-    // Khởi tạo các mảng filtered
     this.filteredDrawings = [];
     this.filteredInProgressDrawings = [];
     this.filteredProcessedDrawings = [];
     
-    // Khởi tạo các mảng paged
     this.pagedNewDrawings = [];
     this.pagedInProgressDrawings = [];
     this.pagedProcessedDrawings = [];
     
-    // Khởi tạo các mảng autocomplete
     this.filteredDrawingsForAutocomplete = [];
     this.filteredProcessedDrawingsForAutocomplete = [];
     
     console.log('=== Empty data initialized ===');
-    console.log('All arrays have been reset to empty');
   }
 
   // Method mới: Filter bảng vẽ mới
@@ -906,7 +823,7 @@ export class DsBangveComponent implements OnInit {
       // Tạo object trả về với ID mới
       const newDrawing: BangVeData = {
         ...firebaseData,
-        id: parseInt(docId) || Date.now(), // Sử dụng docId hoặc timestamp làm ID
+        id: docId, // Sử dụng docId trực tiếp (string)
         created_at: firebaseData.created_at
       };
       
@@ -948,7 +865,8 @@ export class DsBangveComponent implements OnInit {
       console.log('Firebase update data:', updateData);
       
       // Cập nhật document trong Firebase
-      await this.firebaseBangVeService.updateBangVe(drawingData.id.toString(), updateData);
+      const docId = typeof drawingData.id === 'string' ? drawingData.id : drawingData.id.toString();
+      await this.firebaseBangVeService.updateBangVe(docId, updateData);
       
       console.log('✅ Drawing updated in Firebase with ID:', drawingData.id);
       return drawingData;
@@ -960,7 +878,7 @@ export class DsBangveComponent implements OnInit {
   }
 
   // Firebase method để xóa bảng vẽ
-  async deleteDrawing(drawingId: number): Promise<void> {
+  async deleteDrawing(drawingId: number | string): Promise<void> {
     try {
       console.log('Deleting drawing in Firebase with ID:', drawingId);
       
@@ -976,127 +894,24 @@ export class DsBangveComponent implements OnInit {
   }
 
   // API method để gia công bảng vẽ - DISABLED, using Firebase only
-  processDrawingApi(drawingId: number, userQuanday1: string, userQuanday2: string): Observable<any> {
+  processDrawingApi(drawingId: number | string, userQuanday1: string, userQuanday2: string): Observable<any> {
     console.log('=== processDrawingApi disabled - using Firebase only ===');
     return of({ success: true, message: 'Using Firebase' });
   }
 
-  // Fallback methods with mock data
+  // Fallback method removed: mock data no longer used
   initializeMockDrawings(): void {
-    this.drawings = [
-      {
-        id: 1,
-        kyhieubangve: 'BV-001',
-        congsuat: 250,
-        tbkt: 'TBKT-01',
-        dienap: '22kV',
-        soboiday: '3',
-        bd_ha_trong: 'OK',
-        bd_ha_ngoai: 'OK',
-        bd_cao: 'OK',
-        bd_ep: 'OK',
-        bung_bd: 1,
-        user_create: 'admin',
-        trang_thai: STATUS.PROCESSING,
-        username: 'boidayha',
-        email: 'quandayha1@thibidi.com',
-        role_name: 'user',
-        created_at: new Date('2024-07-01')
-      },
-      {
-        id: 2,
-        kyhieubangve: 'BV-002',
-        congsuat: 400,
-        tbkt: 'TBKT-02',
-        dienap: '35kV',
-        soboiday: '4',
-        bd_ha_trong: 'OK',
-        bd_ha_ngoai: 'Chưa',
-        bd_cao: 'OK',
-        bd_ep: 'Chưa',
-        bung_bd: 0,
-        user_create: 'user1',
-        trang_thai: null,
-        username: 'boidayha',
-        email: 'quandayha1@thibidi.com',
-        role_name: 'user',
-        created_at: new Date('2024-07-10')
-      },
-      {
-        id: 3,
-        kyhieubangve: 'BV-003',
-        congsuat: 630,
-        tbkt: 'TBKT-03',
-        dienap: '10kV',
-        soboiday: '5',
-        bd_ha_trong: 'OK',
-        bd_ha_ngoai: 'OK',
-        bd_cao: 'Chưa',
-        bd_ep: 'OK',
-        bung_bd: 1,
-        user_create: 'user2',
-        trang_thai: STATUS.PROCESSING,
-        username: 'boidaycao',
-        email: 'quandaycao1@thibidi.com',
-        role_name: 'user',
-        created_at: new Date('2024-07-15')
-      }
-    ];
-    this.filteredDrawings = [...this.drawings];
+    this.drawings = [];
+    this.filteredDrawings = [];
     this.updatePagedNewDrawings();
-    this.filteredDrawingsForAutocomplete = [...this.drawings];
+    this.filteredDrawingsForAutocomplete = [];
   }
 
   initializeMockProcessedDrawings(): void {
-    this.processedDrawings = [
-      {
-        id: 101,
-        kyhieubangve: 'BV-101',
-        congsuat: 250,
-        tbkt: 'TBKT-01',
-        dienap: '22kV',
-        soboiday: '3',
-        bd_ha_trong: 'OK',
-        bd_ha_ngoai: 'OK',
-        bd_cao: 'OK',
-        bd_ep: 'OK',
-        bung_bd: 1,
-        user_create: 'admin',
-        trang_thai: STATUS.PROCESSED,
-        username: 'boidayha',
-        email: 'quandayha1@thibidi.com',
-        role_name: 'user',
-        created_at: new Date('2024-06-01'),
-        user_process: 'worker1',
-        process_date: new Date('2024-06-15'),
-        process_status: 'completed'
-      },
-      {
-        id: 102,
-        kyhieubangve: 'BV-102',
-        congsuat: 400,
-        tbkt: 'TBKT-02',
-        dienap: '35kV',
-        soboiday: '4',
-        bd_ha_trong: 'OK',
-        bd_ha_ngoai: 'OK',
-        bd_cao: 'OK',
-        bd_ep: 'OK',
-        bung_bd: 1,
-        user_create: 'user1',
-        trang_thai: STATUS.PROCESSED,
-        username: 'boidayha',
-        email: 'quandayha1@thibidi.com',
-        role_name: 'user',
-        created_at: new Date('2024-06-05'),
-        user_process: 'worker2',
-        process_date: new Date('2024-06-20'),
-        process_status: 'completed'
-      }
-    ];
-    this.filteredProcessedDrawings = [...this.processedDrawings];
+    this.processedDrawings = [];
+    this.filteredProcessedDrawings = [];
     this.updatePagedProcessedDrawings();
-    this.filteredProcessedDrawingsForAutocomplete = [...this.processedDrawings];
+    this.filteredProcessedDrawingsForAutocomplete = [];
   }
 
   // Tab management
@@ -1274,11 +1089,24 @@ export class DsBangveComponent implements OnInit {
       console.log('Result confirmed:', result?.confirmed);
       console.log('Result boiDayHa:', result?.boiDayHa);
       console.log('Result boiDayCao:', result?.boiDayCao);
+      console.log('Result userBangVeAdded:', result?.userBangVeAdded);
       
       if (result && result.confirmed) {
-        console.log('Calling assignDrawingToUsers...');
-        // Gọi Firebase assign-drawing-to-user khi user xác nhận
-        this.assignDrawingToUsers(drawing, result.boiDayHa, result.boiDayCao);
+        console.log('Processing confirmed result...');
+        
+        // Cập nhật trạng thái bảng vẽ thành 1 (đang xử lý) trong Firebase
+        this.updateDrawingStatusToInProgressInBackend(drawing.id, () => {
+          console.log('✅ Bangve status updated to in-progress successfully');
+          
+          // Cập nhật frontend
+          this.updateDrawingStatusToInProgress(drawing.id);
+          
+          // Reload data để cập nhật UI
+          this.loadDrawings();
+          
+          // Hiển thị thông báo thành công
+          this.thongbao('Bảng vẽ đã được chuyển sang trạng thái đang xử lý!', 'Đóng', 'success');
+        });
       } else {
         console.log('Popup closed without confirmation or invalid result');
       }
@@ -1392,22 +1220,22 @@ export class DsBangveComponent implements OnInit {
   }
 
   // Method để cập nhật trạng thái bảng vẽ
-  private updateDrawingStatus(drawingId: number, isProcessed: boolean): void {
+  private updateDrawingStatus(drawingId: number | string, isProcessed: boolean): void {
     const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
     if (drawingIndex !== -1) {
-      this.drawings[drawingIndex].trang_thai = isProcessed ? 1 : null;
+      this.drawings[drawingIndex].trang_thai = isProcessed ? STATUS.PROCESSING : null;
       
       // Cập nhật filtered lists
       const filteredIndex = this.filteredDrawings.findIndex(d => d.id === drawingId);
       if (filteredIndex !== -1) {
-        this.filteredDrawings[filteredIndex].trang_thai = isProcessed ? 1 : null;
+        this.filteredDrawings[filteredIndex].trang_thai = isProcessed ? STATUS.PROCESSING : null;
       }
     }
   }
 
   // Method mới: Cập nhật trạng thái bảng vẽ thành "đang gia công" (1)
-  private updateDrawingStatusToInProgress(drawingId: number): void {
-          console.log(`🔄 [updateDrawingStatusToInProgress] Updating drawing ${drawingId} to trang_thai = ${STATUS.PROCESSING} in frontend`);
+  private updateDrawingStatusToInProgress(drawingId: number | string): void {
+    console.log(`🔄 [updateDrawingStatusToInProgress] Updating drawing ${drawingId} to trang_thai = ${STATUS.PROCESSING} in frontend`);
     
     // Tìm bảng vẽ trong danh sách mới
     const drawingIndex = this.drawings.findIndex(d => d.id === drawingId);
@@ -1415,7 +1243,7 @@ export class DsBangveComponent implements OnInit {
       const drawing = this.drawings[drawingIndex];
       console.log(`🔄 [updateDrawingStatusToInProgress] Found drawing in new drawings list:`, drawing);
       
-      drawing.trang_thai = STATUS.PROCESSING;
+      drawing.trang_thai = STATUS.PROCESSING; // 1 = đang xử lý
       
       // Cập nhật filtered lists
       const filteredIndex = this.filteredDrawings.findIndex(d => d.id === drawingId);
@@ -1435,6 +1263,9 @@ export class DsBangveComponent implements OnInit {
       this.updatePagedNewDrawings();
       this.updatePagedInProgressDrawings();
       
+      // Cập nhật trạng thái trong Firebase
+      this.updateDrawingStatusToInProgressInBackend(drawingId);
+      
       console.log(`✅ [updateDrawingStatusToInProgress] Successfully moved drawing ${drawingId} from new to in-progress`);
       console.log(`  - New drawings count: ${this.drawings.length}`);
       console.log(`  - In progress drawings count: ${this.inProgressDrawings.length}`);
@@ -1444,7 +1275,7 @@ export class DsBangveComponent implements OnInit {
   }
 
   // Method mới: Cập nhật trạng thái bảng vẽ thành "đang gia công" (1) trong backend
-  private async updateDrawingStatusToInProgressInBackend(drawingId: number, onSuccess?: () => void): Promise<void> {
+  private async updateDrawingStatusToInProgressInBackend(drawingId: number | string, onSuccess?: () => void): Promise<void> {
     // Tìm bảng vẽ trong danh sách để lấy thông tin hiện tại
     const drawing = this.drawings.find(d => d.id === drawingId) || 
                    this.inProgressDrawings.find(d => d.id === drawingId) || 
@@ -1485,7 +1316,7 @@ export class DsBangveComponent implements OnInit {
   }
 
   // Method mới: Kiểm tra xem bảng vẽ đã được cập nhật trạng thái đúng chưa
-  private verifyDrawingStatusUpdate(drawingId: number): void {
+  private verifyDrawingStatusUpdate(drawingId: number | string): void {
     console.log(`🔍 [verifyDrawingStatusUpdate] Verifying drawing ${drawingId} status update...`);
     
     // Kiểm tra trong từng danh sách
@@ -1519,7 +1350,7 @@ export class DsBangveComponent implements OnInit {
   }
 
   // Method mới: Di chuyển bảng vẽ từ tab mới sang tab đang gia công
-  private moveDrawingToInProgress(drawingId: number): void {
+  private moveDrawingToInProgress(drawingId: number | string): void {
     console.log(`🔄 [moveDrawingToInProgress] Moving drawing ${drawingId} to in-progress...`);
     
     // Tìm bảng vẽ trong danh sách mới
@@ -1579,7 +1410,7 @@ export class DsBangveComponent implements OnInit {
     
     // Kiểm tra bảng vẽ hoàn thành
     if (this.processedDrawings.length > 0) {
-      console.log('🔍 [logBoidayInfo] Processed drawings (trang_thai = 2):');
+      console.log(`🔍 [logBoidayInfo] Processed drawings (trang_thai = ${STATUS.COMPLETED}):`);
       this.processedDrawings.forEach((drawing, index) => {
         console.log(`  ${index + 1}. ID: ${drawing.id}, Ký hiệu: ${drawing.kyhieubangve}, Trạng thái: ${drawing.trang_thai}`);
         // Log thông tin về boiday nếu có
@@ -1961,7 +1792,7 @@ export class DsBangveComponent implements OnInit {
   // Method để transform dữ liệu từ API response an toàn
   private transformDrawingData(item: any): BangVeData {
     return {
-      id: item.Id || 0,
+      id: item.Id || item.id || 0,
       kyhieubangve: item.kyhieubangve || '',
       congsuat: item.congsuat || 0,
       tbkt: item.tbkt || '',
@@ -2120,58 +1951,6 @@ export class DsBangveComponent implements OnInit {
     console.log('Filtered data for user:', userAssignedData);
     return userAssignedData;
   }
-
-  // Method để test logic filter với dữ liệu mẫu
-  private testFilterLogic(): void {
-    console.log('=== Testing Filter Logic ===');
-    const mockData = [
-      { id: 1, kyhieubangve: 'BV-001', user_create: 'user1', trang_thai: null, assigned_users: [{ user_id: 'user1', permission_type: 'read' }, { user_id: 'user2', permission_type: 'read' }] },
-      { id: 2, kyhieubangve: 'BV-002', user_create: 'user2', trang_thai: STATUS.PROCESSING, assigned_users: [{ user_id: 'user2', permission_type: 'read' }] },
-      { id: 3, kyhieubangve: 'BV-003', user_create: 'manager1', trang_thai: STATUS.PROCESSED, assigned_users: [{ user_id: 'user3', permission_type: 'read' }] }
-    ];
-    console.log('Mock data for testing:', mockData);
-    
-    // Test với role khác nhau
-    console.log('=== Testing with different roles ===');
-    
-    // Test user thường
-    this.userRole = 'user';
-    const user1Filtered = this.filterDataByUser(mockData, 'user1');
-    console.log('Filtered for regular user (user1):', user1Filtered);
-    console.log('Expected: Should see BV-001 (assigned)');
-    
-    const user2Filtered = this.filterDataByUser(mockData, 'user2');
-    console.log('Filtered for regular user (user2):', user2Filtered);
-    console.log('Expected: Should see BV-001 (assigned) and BV-002 (assigned)');
-    
-    // Test manager
-    this.userRole = 'manager';
-    const managerFiltered = this.filterDataByUser(mockData, 'manager1');
-    console.log('Filtered for manager:', managerFiltered);
-    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
-    
-    // Test admin
-    this.userRole = 'admin';
-    const adminFiltered = this.filterDataByUser(mockData, 'admin1');
-    console.log('Filtered for admin:', adminFiltered);
-    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
-    
-    // Test case variations
-    this.userRole = 'Manager';
-    const managerUpperFiltered = this.filterDataByUser(mockData, 'manager1');
-    console.log('Filtered for Manager (capital M):', managerUpperFiltered);
-    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
-    
-    this.userRole = 'ADMIN';
-    const adminUpperFiltered = this.filterDataByUser(mockData, 'admin1');
-    console.log('Filtered for ADMIN (all caps):', adminUpperFiltered);
-    console.log('Expected: Should see ALL drawings (BV-001, BV-002, BV-003)');
-    
-    // Reset về role thực tế
-    this.userRole = localStorage.getItem('role') || localStorage.getItem('userRole') || 'user';
-    console.log('Reset userRole to:', this.userRole);
-  }
-
   // Test API connectivity đơn giản hơn - DISABLED, using Firebase only
   private testSimpleApiConnectivity(): void {
     console.log('=== API test disabled - using Firebase only ===');
