@@ -643,15 +643,15 @@ export class GiaCongPopupComponent implements OnInit {
         user_id: parseInt(boiDayHaUser.id), // Sử dụng Firestore user ID
         firebase_uid: boiDayHaUser.uid || boiDayHaUser.id, // Sử dụng Firebase UID thực tế
         bangve_id: bangveId,
-        bd_ha_id: undefined, // Sẽ được cập nhật sau khi tạo bd_ha record
-        bd_cao_id: undefined, // Không có bd_cao_id cho user bối dây hạ
-        bd_ep_id: undefined, // Không có bd_ep_id cho user bối dây hạ
+        bd_ha_id: '', // String rỗng, sẽ được cập nhật sau khi tạo bd_ha record
+        bd_cao_id: '', // String rỗng cho user bối dây hạ
+        bd_ep_id: '', // String rỗng cho user bối dây hạ
         permission_type: 'gia_cong',
         status: true,
         trang_thai_bv: 1, // Bảng vẽ đang thi công
-        trang_thai_bd_ha: 0, // 0 = chỉ mới gán chưa thi công
-        trang_thai_bd_cao: undefined, // Không áp dụng cho user bối dây hạ
-        trang_thai_bd_ep: undefined, // Không áp dụng cho user bối dây hạ
+        trang_thai_bd_ha: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
+        trang_thai_bd_cao: 0, // 0 = chưa bắt đầu cho user bối dây hạ
+        trang_thai_bd_ep: 0, // 0 = chưa bắt đầu cho user bối dây hạ
         assigned_at: new Date(),
         assigned_by_user_id: currentUserId,
         created_at: new Date(),
@@ -666,15 +666,15 @@ export class GiaCongPopupComponent implements OnInit {
         user_id: parseInt(boiDayCaoUser.id), // Sử dụng Firestore user ID
         firebase_uid: boiDayCaoUser.uid || boiDayCaoUser.id, // Sử dụng Firebase UID thực tế
         bangve_id: bangveId,
-        bd_ha_id: undefined, // Không có bd_ha_id cho user bối dây cao
-        bd_cao_id: undefined, // Sẽ được cập nhật sau khi tạo bd_cao record
-        bd_ep_id: undefined, // Không có bd_ep_id cho user bối dây cao
+        bd_ha_id: '', // String rỗng cho user bối dây cao
+        bd_cao_id: '', // String rỗng, sẽ được cập nhật sau khi tạo bd_cao record
+        bd_ep_id: '', // String rỗng cho user bối dây cao
         permission_type: 'gia_cong',
         status: true,
         trang_thai_bv: 1, // Bảng vẽ đang thi công
-        trang_thai_bd_ha: undefined, // Không áp dụng cho user bối dây cao
-        trang_thai_bd_cao: 0, // 0 = chỉ mới gán chưa thi công
-        trang_thai_bd_ep: undefined, // Không áp dụng cho user bối dây cao
+        trang_thai_bd_ha: 0, // 0 = chưa bắt đầu cho user bối dây cao
+        trang_thai_bd_cao: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
+        trang_thai_bd_ep: 0, // 0 = chưa bắt đầu cho user bối dây cao
         assigned_at: new Date(),
         assigned_by_user_id: currentUserId,
         created_at: new Date(),

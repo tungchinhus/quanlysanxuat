@@ -517,7 +517,7 @@ export class DsQuanDayComponent implements OnInit {
         isGiaCongEp: this.isGiaCongEp
       });
       
-      // Tab "Mới" - hiển thị bảng vẽ được gán cho user nhưng chưa bắt đầu (trang_thai = 0)
+      // Tab "Quấn dây mới" - hiển thị bảng vẽ được gán cho user nhưng chưa bắt đầu (trang_thai = 0)
       this.quanDays = filteredData.filter(item => {
         let result = false;
         if (this.isGiaCongHa) {
@@ -531,51 +531,40 @@ export class DsQuanDayComponent implements OnInit {
         console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in new tab: ${result}`);
         return result;
       });
-
-      // Tab "Đang gia công" - hiển thị bảng vẽ đang được thi công (trang_thai = 1)
-      // Chỉ hiển thị khi có bd_ha_id/bd_cao_id/bd_ep_id (đã bắt đầu thi công) và đang thi công (trang_thai = 1)
-      this.inProgressQuanDays = filteredData.filter(item => {
-        let result = false;
-        if (this.isGiaCongHa) {
-          // Chỉ hiển thị khi có bd_ha_id và đang thi công (trang_thai_bd_ha = 1)
-          result = (item.bd_ha_id && item.trang_thai_bd_ha === 1);
-        } else if (this.isGiaCongCao) {
-          result = (item.bd_cao_id && item.trang_thai_bd_cao === 1);
-        } else if (this.isGiaCongEp) {
-          result = (item.bd_ep_id && item.trang_thai_bd_ep === 1);
-        }
-        console.log(`Item ${item.kyhieuquanday}: bd_ha_id=${item.bd_ha_id}, bd_cao_id=${item.bd_cao_id}, bd_ep_id=${item.bd_ep_id}, trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in in-progress tab: ${result}`);
-        return result;
-      });
+      
+      // Tab "Quấn dây đã xử lý" - hiển thị bảng vẽ đang thi công (trang_thai = 1) và đã hoàn thành (trang_thai = 2)
+      let processedData: any[] = [];
+      
+      if (this.isGiaCongHa) {
+        // Bao gồm cả đang thi công (trang_thai_bd_ha = 1) và đã hoàn thành (trang_thai_bd_ha = 2)
+        processedData = filteredData.filter(item => 
+          item.bd_ha_id && (item.trang_thai_bd_ha === 1 || item.trang_thai_bd_ha === 2)
+        );
+      } else if (this.isGiaCongCao) {
+        processedData = filteredData.filter(item => 
+          item.bd_cao_id && (item.trang_thai_bd_cao === 1 || item.trang_thai_bd_cao === 2)
+        );
+      } else if (this.isGiaCongEp) {
+        processedData = filteredData.filter(item => 
+          item.bd_ep_id && (item.trang_thai_bd_ep === 1 || item.trang_thai_bd_ep === 2)
+        );
+      }
+      
+      this.completedQuanDays = processedData;
+      console.log('Processed data length (in progress + completed):', this.completedQuanDays.length);
       
       console.log('Filtered results:');
       console.log('- New tab (quanDays):', this.quanDays.length, 'items');
-      console.log('- In-progress tab (inProgressQuanDays):', this.inProgressQuanDays.length, 'items');
+      console.log('- Processed tab (completedQuanDays):', this.completedQuanDays.length, 'items');
       console.log('=== END DEBUG DATA FILTERING ===');
-          
-      // Tab "Đã hoàn thành" - hiển thị bảng vẽ đã hoàn thành (có bd_ha_id/bd_cao_id và trang_thai = 2)
-      let completedData: any[] = [];
-      
-      if (this.isGiaCongHa) {
-        completedData = filteredData.filter(item => item.bd_ha_id && item.trang_thai_bd_ha === 2);
-      } else if (this.isGiaCongCao) {
-        completedData = filteredData.filter(item => item.bd_cao_id && item.trang_thai_bd_cao === 2);
-      } else if (this.isGiaCongEp) {
-        completedData = filteredData.filter(item => item.bd_ep_id && item.trang_thai_bd_ep === 2);
-      }
-      
-      this.completedQuanDays = completedData;
-      console.log('Completed data length:', this.completedQuanDays.length);
       
       // Cập nhật filtered data cho từng tab
       this.filteredQuanDays = [...this.quanDays];
       this.filteredCompletedQuanDays = [...this.completedQuanDays];
-      this.filteredInProgressQuanDays = [...this.inProgressQuanDays];
       
       // Cập nhật paginated data
       this.updatePagedNewQuanDays();
       this.updatePagedCompletedQuanDays();
-      this.updatePagedInProgressQuanDays();
       
       // Trigger change detection
       this.cdr.detectChanges();
@@ -583,11 +572,9 @@ export class DsQuanDayComponent implements OnInit {
       console.log('=== LOAD QUAN DAY DATA FROM FIREBASE END ===');
       console.log('Final data counts:');
       console.log('- New tab:', this.quanDays.length);
-      console.log('- In-progress tab:', this.inProgressQuanDays.length);
-      console.log('- Completed tab:', this.completedQuanDays.length);
+      console.log('- Processed tab (in progress + completed):', this.completedQuanDays.length);
       console.log('- Paged new:', this.pagedNewQuanDays.length);
-      console.log('- Paged in-progress:', this.pagedInProgressQuanDays.length);
-      console.log('- Paged completed:', this.pagedCompletedQuanDays.length);
+      console.log('- Paged processed:', this.pagedCompletedQuanDays.length);
       
     } catch (error) {
       console.error('Error in loadQuanDayData from Firebase:', error);
@@ -1402,15 +1389,11 @@ export class DsQuanDayComponent implements OnInit {
     
     // Reset pagination về trang đầu tiên khi chuyển tab
     if (this.currentTabIndex === 0) {
-      // Tab "Mới"
+      // Tab "Quấn dây mới"
       this.pageIndex = 0;
       this.updatePagedNewQuanDays();
     } else if (this.currentTabIndex === 1) {
-      // Tab "Đang gia công"
-      this.pageIndex = 0;
-      this.updatePagedInProgressQuanDays();
-    } else if (this.currentTabIndex === 2) {
-      // Tab "Đã hoàn thành"
+      // Tab "Quấn dây đã xử lý"
       this.pageIndexCompleted = 0;
       this.updatePagedCompletedQuanDays();
     }
@@ -1579,14 +1562,14 @@ export class DsQuanDayComponent implements OnInit {
             trang_thai_bd_ha: element.trang_thai_bd_ha
           });
           
-          // Force refresh dữ liệu để đảm bảo cập nhật đúng
-          this.forceRefreshData();
-          
-          // Chuyển sang tab "Đã hoàn thành" để user thấy kết quả
+          // Chuyển sang tab "Quấn dây đã xử lý" trước khi reload data
           this.currentTabIndex = 1;
           
           // Đảm bảo tab được chọn đúng
-          this.onTabChange({ index: 1, tab: { textLabel: 'Đã hoàn thành' } } as MatTabChangeEvent);
+          this.onTabChange({ index: 1, tab: { textLabel: 'Quấn dây đã xử lý' } } as MatTabChangeEvent);
+          
+          // Force refresh dữ liệu sau khi đã chuyển tab
+          this.forceRefreshData();
           
           this.cdr.detectChanges();
         } else {
@@ -1634,7 +1617,13 @@ export class DsQuanDayComponent implements OnInit {
           console.log('Reload data sau khi lưu bối dây cao thành công');
           this.showSuccess(result.message || 'Thông tin bối dây cao đã được lưu thành công!');
           
-          // Reload data và chuyển sang tab "Đã hoàn thành"
+          // Chuyển sang tab "Quấn dây đã xử lý" trước khi reload data
+          this.currentTabIndex = 1;
+          
+          // Đảm bảo tab được chọn đúng
+          this.onTabChange({ index: 1, tab: { textLabel: 'Quấn dây đã xử lý' } } as MatTabChangeEvent);
+          
+          // Reload data sau khi đã chuyển tab
           this.loadQuanDayData();
           // Lấy userId và headers để gọi loadCompletedQuanDayData
           const userId = this.getUserId();
@@ -1647,8 +1636,6 @@ export class DsQuanDayComponent implements OnInit {
             this.loadCompletedQuanDayData(userId, headers);
           }
           
-          // Chuyển sang tab "Đã hoàn thành" để user thấy kết quả
-          this.currentTabIndex = 1;
           this.cdr.detectChanges();
         } else {
           // Fallback cho trường hợp cũ
@@ -1702,14 +1689,14 @@ export class DsQuanDayComponent implements OnInit {
             trang_thai_bd_ep: element.trang_thai_bd_ep
           });
           
-          // Force refresh dữ liệu để đảm bảo cập nhật đúng
-          this.forceRefreshData();
-          
-          // Chuyển sang tab "Đã hoàn thành" để user thấy kết quả
+          // Chuyển sang tab "Quấn dây đã xử lý" trước khi reload data
           this.currentTabIndex = 1;
           
           // Đảm bảo tab được chọn đúng
-          this.onTabChange({ index: 1, tab: { textLabel: 'Đã hoàn thành' } } as MatTabChangeEvent);
+          this.onTabChange({ index: 1, tab: { textLabel: 'Quấn dây đã xử lý' } } as MatTabChangeEvent);
+          
+          // Force refresh dữ liệu sau khi đã chuyển tab
+          this.forceRefreshData();
           
           this.cdr.detectChanges();
         } else {

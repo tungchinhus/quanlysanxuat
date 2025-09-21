@@ -459,6 +459,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       // Đóng popup và trả về data
       this.dialogRef.close({
         success: true,
+        reloadData: true,
         data: { bdHaId, bdHaData },
         message: 'Lưu thông tin bối dây hạ thành công!'
       });

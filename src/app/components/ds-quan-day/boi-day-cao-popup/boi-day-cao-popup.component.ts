@@ -88,6 +88,9 @@ export class BoiDayCaoPopupComponent implements OnInit {
       ngay_san_xuat: [new Date(), Validators.required],
       
       // Các field kỹ thuật
+      chu_vi_khuon: [0, [Validators.min(0)]],
+      kt_bung_bd_truoc: [0, [Validators.min(0)]],
+      bung_bd_sau: [0, [Validators.min(0)]],
       chieu_quan_day: [true],
       may_quan_day: [''],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
@@ -108,6 +111,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       dien_tro_cao_ra: [0, [Validators.min(0)]],
       dien_tro_cao_rb: [0, [Validators.min(0)]],
       dien_tro_cao_rc: [0, [Validators.min(0)]],
+      do_lech_dien_tro_giua_cac_pha: [0, [Validators.min(0), Validators.max(2)]],
       
       ghi_chu: ['']
     });
@@ -134,6 +138,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
   canSubmitForm(): boolean {
     if (this.isLoading) return false;
     
+    // Chỉ kiểm tra các field thực sự cần thiết cho business logic
     const requiredFields = [
       'quy_cach_day',
       'so_soi_day', 
@@ -141,6 +146,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       'ngay_san_xuat'
     ];
     
+    // Kiểm tra các field bắt buộc
     for (const fieldName of requiredFields) {
       const control = this.boiDayCaoForm.get(fieldName);
       if (!control || !control.valid || !control.value) {
@@ -149,6 +155,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       }
     }
     
+    // Kiểm tra nhà sản xuất khác nếu chọn "OTHER"
     const nhaSanXuat = this.boiDayCaoForm.get('nha_san_xuat')?.value;
     if (nhaSanXuat === 'OTHER') {
       const nhaSanXuatOther = this.boiDayCaoForm.get('nha_san_xuat_other')?.value;
@@ -249,6 +256,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       // Đóng popup và trả về data
       this.dialogRef.close({
         success: true,
+        reloadData: true,
         data: { bdCaoId, bdCaoData },
         message: 'Lưu thông tin bối dây cao thành công!'
       });

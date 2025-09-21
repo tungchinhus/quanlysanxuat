@@ -98,15 +98,15 @@ export class TestAssignmentComponent implements OnInit {
         user_id: parseInt(selectedUser.id),
         firebase_uid: selectedUser.uid || selectedUser.id,
         bangve_id: String(selectedBangVe.id),
-        bd_ha_id: undefined, // Sẽ được cập nhật sau khi tạo bd_ha record
-        bd_cao_id: undefined, // Sẽ được cập nhật sau khi tạo bd_cao record
-        bd_ep_id: undefined, // Sẽ được cập nhật sau khi tạo bd_ep record
+        bd_ha_id: '', // String rỗng, sẽ được cập nhật sau khi tạo bd_ha record
+        bd_cao_id: '', // String rỗng, sẽ được cập nhật sau khi tạo bd_cao record
+        bd_ep_id: '', // String rỗng, sẽ được cập nhật sau khi tạo bd_ep record
         permission_type: 'gia_cong',
         status: true,
         trang_thai_bv: 1,
-        trang_thai_bd_ha: formValue.khauSx === 'bd_ha' ? 0 : undefined,
-        trang_thai_bd_cao: formValue.khauSx === 'bd_cao' ? 0 : undefined,
-        trang_thai_bd_ep: formValue.khauSx === 'bd_ep' ? 0 : undefined,
+        trang_thai_bd_ha: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
+        trang_thai_bd_cao: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
+        trang_thai_bd_ep: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
         assigned_at: new Date(),
         assigned_by_user_id: 1,
         created_at: new Date(),

@@ -34,7 +34,7 @@ export class FirebaseUserBangVeService {
 
   /**
    * Remove undefined fields from object to prevent Firebase errors
-   * Keep important fields like bd_ha_id, bd_cao_id, bd_ep_id even if undefined or null
+   * Keep important fields like bd_ha_id, bd_cao_id, bd_ep_id even if undefined or empty string
    * @param obj - Object to clean
    * @returns Cleaned object without undefined fields (except important ones)
    */
@@ -116,13 +116,13 @@ export class FirebaseUserBangVeService {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const userBangVe: UserBangVeData = {
-          id: parseInt(doc.id) || 0,
+          id: doc.id, // Keep as string since it's Firebase document ID
           user_id: data['user_id'] || 0,
           firebase_uid: data['firebase_uid'] || undefined,
           bangve_id: data['bangve_id'] || '', // String ID from Firebase
-          bd_ha_id: data['bd_ha_id'] || undefined,
-          bd_cao_id: data['bd_cao_id'] || undefined,
-          bd_ep_id: data['bd_ep_id'] || undefined,
+          bd_ha_id: data['bd_ha_id'] || '', // String ID from Firebase
+          bd_cao_id: data['bd_cao_id'] || '', // String ID from Firebase
+          bd_ep_id: data['bd_ep_id'] || '', // String ID from Firebase
           permission_type: data['permission_type'] || 'gia_cong',
           status: data['status'] !== undefined ? data['status'] : true,
           trang_thai_bv: data['trang_thai_bv'] || 0,
@@ -170,13 +170,13 @@ export class FirebaseUserBangVeService {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const userBangVe: UserBangVeData = {
-          id: parseInt(doc.id) || 0,
+          id: doc.id, // Keep as string since it's Firebase document ID
           user_id: data['user_id'] || 0,
           firebase_uid: data['firebase_uid'] || undefined,
           bangve_id: data['bangve_id'] || '', // String ID from Firebase
-          bd_ha_id: data['bd_ha_id'] || undefined,
-          bd_cao_id: data['bd_cao_id'] || undefined,
-          bd_ep_id: data['bd_ep_id'] || undefined,
+          bd_ha_id: data['bd_ha_id'] || '', // String ID from Firebase
+          bd_cao_id: data['bd_cao_id'] || '', // String ID from Firebase
+          bd_ep_id: data['bd_ep_id'] || '', // String ID from Firebase
           permission_type: data['permission_type'] || 'gia_cong',
           status: data['status'] !== undefined ? data['status'] : true,
           trang_thai_bv: data['trang_thai_bv'] || 0,
@@ -224,13 +224,13 @@ export class FirebaseUserBangVeService {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const userBangVe: UserBangVeData = {
-          id: parseInt(doc.id) || 0,
+          id: doc.id, // Keep as string since it's Firebase document ID
           user_id: data['user_id'] || 0,
           firebase_uid: data['firebase_uid'] || undefined,
           bangve_id: data['bangve_id'] || '', // String ID from Firebase
-          bd_ha_id: data['bd_ha_id'] || undefined,
-          bd_cao_id: data['bd_cao_id'] || undefined,
-          bd_ep_id: data['bd_ep_id'] || undefined,
+          bd_ha_id: data['bd_ha_id'] || '', // String ID from Firebase
+          bd_cao_id: data['bd_cao_id'] || '', // String ID from Firebase
+          bd_ep_id: data['bd_ep_id'] || '', // String ID from Firebase
           permission_type: data['permission_type'] || 'gia_cong',
           status: data['status'] !== undefined ? data['status'] : true,
           trang_thai_bv: data['trang_thai_bv'] || 0,
@@ -278,13 +278,13 @@ export class FirebaseUserBangVeService {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const userBangVe: UserBangVeData = {
-          id: parseInt(doc.id) || 0,
+          id: doc.id, // Keep as string since it's Firebase document ID
           user_id: data['user_id'] || 0,
           firebase_uid: data['firebase_uid'] || undefined,
           bangve_id: data['bangve_id'] || '', // String ID from Firebase
-          bd_ha_id: data['bd_ha_id'] || undefined,
-          bd_cao_id: data['bd_cao_id'] || undefined,
-          bd_ep_id: data['bd_ep_id'] || undefined,
+          bd_ha_id: data['bd_ha_id'] || '', // String ID from Firebase
+          bd_cao_id: data['bd_cao_id'] || '', // String ID from Firebase
+          bd_ep_id: data['bd_ep_id'] || '', // String ID from Firebase
           permission_type: data['permission_type'] || 'gia_cong',
           status: data['status'] !== undefined ? data['status'] : true,
           trang_thai_bv: data['trang_thai_bv'] || 0,
@@ -357,9 +357,9 @@ export class FirebaseUserBangVeService {
           user_id: data['user_id'] || 0,
           firebase_uid: data['firebase_uid'] || '',
           bangve_id: data['bangve_id'] || '',
-          bd_ha_id: data['bd_ha_id'] || undefined,
-          bd_cao_id: data['bd_cao_id'] || undefined,
-          bd_ep_id: data['bd_ep_id'] || undefined,
+          bd_ha_id: data['bd_ha_id'] || '', // String ID from Firebase
+          bd_cao_id: data['bd_cao_id'] || '', // String ID from Firebase
+          bd_ep_id: data['bd_ep_id'] || '', // String ID from Firebase
           permission_type: data['permission_type'] || '',
           status: data['status'] || false,
           trang_thai_bv: data['trang_thai_bv'] || 0,
