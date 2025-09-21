@@ -112,4 +112,49 @@ export const routes: Routes = [
     path: 'debug-admin',
     loadComponent: () => import('./debug-admin.component').then(m => m.DebugAdminComponent)
   },
+  {
+    path: 'debug-quan-day-assignment',
+    loadComponent: () => import('./components/debug-quan-day-assignment/debug-quan-day-assignment.component').then(m => m.DebugQuanDayAssignmentComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'test-quan-day-assignment',
+    loadComponent: () => import('./components/test-quan-day-assignment/test-quan-day-assignment.component').then(m => m.TestQuanDayAssignmentComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'simple-debug',
+    loadComponent: () => import('./components/simple-debug/simple-debug.component').then(m => m.SimpleDebugComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'step-by-step-debug',
+    loadComponent: () => import('./components/step-by-step-debug/step-by-step-debug.component').then(m => m.StepByStepDebugComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'assignment-debug',
+    loadComponent: () => import('./components/assignment-debug/assignment-debug.component').then(m => m.AssignmentDebugComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'data-flow-debug',
+    loadComponent: () => import('./components/data-flow-debug/data-flow-debug.component').then(m => m.DataFlowDebugComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'ui-debug',
+    loadComponent: () => import('./components/ui-debug/ui-debug.component').then(m => m.UiDebugComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'debug-user-bangve',
+    loadComponent: () => import('./components/debug-user-bangve/debug-user-bangve.component').then(m => m.DebugUserBangVeComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'test-assignment',
+    loadComponent: () => import('./components/test-assignment/test-assignment.component').then(m => m.TestAssignmentComponent),
+    canActivate: [AuthGuard]
+  },
 ];

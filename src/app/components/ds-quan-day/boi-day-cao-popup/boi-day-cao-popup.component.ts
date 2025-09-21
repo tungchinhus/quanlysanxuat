@@ -12,146 +12,18 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import { Constant } from '../../../constant/constant';
-import { DialogComponent } from '../../../components/shared/dialogs/dialog/dialog.component';
-import { KcsQualityService, KcsQualityCheckFailure } from '../../../services/kcs-quality.service';
+import { MatRadioModule } from '@angular/material/radio';
 import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
-import { STATUS } from '../../../models/common.enum';
-
-
-export interface BoiDayCaoData {
-  id?: number;
-  quan_day_id: number;
-  ky_hieu_bv: string;
-  cong_suat: number;
-  tbkt: string;
-  dien_ap: string;
-  so_boi_day: string;
-  quy_cach_day: string;
-  so_soi_day: number;
-  nha_san_xuat: string;
-  nha_san_xuat_name?: string; // Tên hiển thị của nhà sản xuất
-  ngay_san_xuat: Date;
-  chu_vi_khuon: number;
-  nguoi_gia_cong: string;
-  ngay_gia_cong: Date;
-  ghi_chu?: string;
-  trang_thai: number;
-  // Thêm các field đặc biệt cho bối dây cao
-  chieu_cao_day?: number;
-  so_lop_day?: number;
-  khoang_cach_day?: number;
-  chat_lieu_cach_dien?: string;
-  // Bổ sung thêm các field kỹ thuật
-  do_day_cach_dien?: number;
-  nhiet_do_lam_viec?: number;
-  do_am_moi_truong?: number;
-  ap_luc_lam_viec?: number;
-  toc_do_quay?: number;
-  thoi_gian_quay?: number;
-  loai_may_quay?: string;
-  // Bổ sung thêm các field theo hình
-  kt_bung_bd_truoc?: number;
-  bung_bd_sau?: number;
-  chieu_quan_day?: boolean; // true = trái, false = phải
-  may_quan_day?: string;
-  xung_quanh_day?: number; // 2, 3, 4, 6
-  hai_dau_day?: number; // 2, 3, 4, 6
-  kt_bd_ha_trong_bv?: string;
-  chu_vi_bd_ha_trong_1p?: number;
-  chu_vi_bd_ha_trong_2p?: number;
-  chu_vi_bd_ha_trong_3p?: number;
-  kt_bd_ha_ngoai_bv?: string;
-  kt_bd_ha_ngoai_bv_1p?: number;
-  kt_bd_ha_ngoai_bv_2p?: number;
-  kt_bd_ha_ngoai_bv_3p?: number;
-  dien_tro_ha_ra?: number;
-  dien_tro_ha_rb?: number;
-  dien_tro_ha_rc?: number;
-  do_lech_dien_tro_giua_cac_pha?: number;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-// Interface cho việc submit data lên API (không bao gồm timestamp fields)
-export interface BoiDayCaoSubmitData {
-  quan_day_id: number;
-  ky_hieu_bv: string;
-  cong_suat: number;
-  tbkt: string;
-  dien_ap: string;
-  so_boi_day: string;
-  quy_cach_day: string;
-  so_soi_day: number;
-  nha_san_xuat: string;
-  nha_san_xuat_name?: string;
-  ngay_san_xuat: string; // ISO date string
-  chu_vi_khuon: number;
-  ghi_chu?: string;
-  trang_thai: number;
-  chieu_cao_day?: number;
-  so_lop_day?: number;
-  khoang_cach_day?: number;
-  chat_lieu_cach_dien?: string;
-  do_day_cach_dien?: number;
-  nhiet_do_lam_viec?: number;
-  do_am_moi_truong?: number;
-  ap_luc_lam_viec?: number;
-  toc_do_quay?: number;
-  thoi_gian_quay?: number;
-  loai_may_quay?: string;
-  kt_bung_bd_truoc?: number;
-  bung_bd_sau?: number;
-  chieu_quan_day?: boolean;
-  may_quan_day?: string;
-  xung_quanh_day?: number;
-  hai_dau_day?: number;
-  kt_bd_ha_trong_bv?: string;
-  chu_vi_bd_ha_trong_1p?: number;
-  chu_vi_bd_ha_trong_2p?: number;
-  chu_vi_bd_ha_trong_3p?: number;
-  kt_bd_ha_ngoai_bv?: string;
-  kt_bd_ha_ngoai_bv_1p?: number;
-  kt_bd_ha_ngoai_bv_2p?: number;
-  kt_bd_ha_ngoai_bv_3p?: number;
-  dien_tro_ha_ra?: number;
-  dien_tro_ha_rb?: number;
-  dien_tro_ha_rc?: number;
-  do_lech_dien_tro_giua_cac_pha?: number;
-}
-
-// Interface mới cho API save-bd-cao theo specification
-export interface BoiDayCaoApiRequest {
-  masothe_bd_cao: string;
-  kyhieubangve: string;
-  ngaygiacong: string; // ISO date string
-  nguoigiacong: string;
-  quycachday: string;
-  sosoiday: number;
-  ngaysanxuat: string; // ISO date string
-  nhasanxuat: string;
-  chuvikhuon: number;
-  kt_bung_bd: number;
-  chieuquanday: boolean; // Changed from number to boolean
-  mayquanday: string;
-  xungquanh: number;
-  haidau: number;
-  kt_boiday_trong: string;
-  chuvi_bd_trong: number;
-  kt_bd_ngoai: string;
-  bd_tt: string; // Changed from number to string - API expects string
-  chuvi_bd_tt: string; // Changed from number to string - API expects string
-  dientroRa: number;
-  dientroRb: number;
-  dientroRc: number;
-  dolechdientro: number;
-  //user_update: string;
-  trang_thai: number;
-  khau_sx: string;
-}
+import { QuanDayData } from '../ds-quan-day.component';
+import { Constant } from '../../../constant/constant';
+import { DialogComponent } from '../../shared/dialogs/dialog/dialog.component';
+import { KcsQualityService, KcsQualityCheckFailure } from '../../../services/kcs-quality.service';
+import { FirebaseBdCaoService, BdCaoData } from '../../../services/firebase-bd-cao.service';
+import { FirebaseUserBangVeService } from '../../../services/firebase-user-bangve.service';
+import { UserManagementFirebaseService } from '../../../services/user-management-firebase.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-boi-day-cao-popup',
@@ -171,22 +43,26 @@ export interface BoiDayCaoApiRequest {
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatRadioModule,
-    MatSelectModule
+    MatSelectModule,
+    MatRadioModule
   ]
 })
 export class BoiDayCaoPopupComponent implements OnInit {
-  boiDayCaoForm!: FormGroup;
-  manufacturers = [
-    { value: 'VAN_THANG', name: 'Văn Thắng' },
-    { value: 'OTHER', name: 'Khác' }
-  ];
+  boiDayCaoForm: FormGroup;
   isLoading = false;
   currentUser: any;
   authToken: string = '';
-  currentDate: Date = new Date();
-  showKcsFailureForm = false; // Hiển thị form KCS failure
-  kcsFailureForm: FormGroup; // Form cho KCS failure
+  currentDate = new Date();
+  showKcsFailureForm = false;
+  kcsFailureForm: FormGroup;
+
+  // Danh sách nhà sản xuất
+  manufacturers = [
+    { value: 'nha_sx1', name: 'Nha sx 1' },
+    { value: 'nha_sx2', name: 'Nha sx 2' },
+    { value: 'nha_sx3', name: 'Nha sx 3' },
+    { value: 'OTHER', name: 'Khác' }
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -198,34 +74,21 @@ export class BoiDayCaoPopupComponent implements OnInit {
     private authService: AuthService,
     private changeDetectorRef: ChangeDetectorRef,
     private kcsQualityService: KcsQualityService,
+    private firebaseBdCaoService: FirebaseBdCaoService,
+    private firebaseUserBangVeService: FirebaseUserBangVeService,
+    private userManagementService: UserManagementFirebaseService,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     this.boiDayCaoForm = this.fb.group({
-      // Chỉ giữ lại các field thực sự cần thiết cho business logic
-      quy_cach_day: ['', Validators.required], // Quy cách dây - cần thiết
-      so_soi_day: [1, [Validators.required, Validators.min(1)]], // Số sợi dây - cần thiết
-      nha_san_xuat: ['VAN_THANG', Validators.required], // Nhà sản xuất - cần thiết
-      nha_san_xuat_other: [''], // Tên nhà sản xuất khác (optional)
-      ngay_san_xuat: [new Date(), Validators.required], // Ngày sản xuất - cần thiết
+      // Các field bắt buộc
+      quy_cach_day: ['', Validators.required],
+      so_soi_day: [1, [Validators.required, Validators.min(1)]],
+      nha_san_xuat: ['nha_sx1', Validators.required],
+      nha_san_xuat_other: [''],
+      ngay_san_xuat: [new Date(), Validators.required],
       
-      // Các field kỹ thuật - có thể để trống hoặc có giá trị mặc định
-      chu_vi_khuon: [0, [Validators.min(0)]],
-      chieu_cao_day: [0, [Validators.min(0)]],
-      so_lop_day: [1, [Validators.min(1)]],
-      khoang_cach_day: [0, [Validators.min(0)]],
-      chat_lieu_cach_dien: [''],
-      do_day_cach_dien: [0, [Validators.min(0)]],
-      nhiet_do_lam_viec: [25, [Validators.min(-40), Validators.max(200)]],
-      do_am_moi_truong: [60, [Validators.min(0), Validators.max(100)]],
-      ap_luc_lam_viec: [1, [Validators.min(0)]],
-      toc_do_quay: [0, [Validators.min(0)]],
-      thoi_gian_quay: [0, [Validators.min(0)]],
-      loai_may_quay: [''],
-      
-      // Các field theo hình - có thể để trống
-      kt_bung_bd_truoc: [0, [Validators.min(0)]],
-      bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: [true], // Changed from 'trái' to true (true = trái, false = phải)
+      // Các field kỹ thuật
+      chieu_quan_day: [true],
       may_quan_day: [''],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
@@ -235,18 +98,17 @@ export class BoiDayCaoPopupComponent implements OnInit {
       hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
-      kt_bd_ha_trong_bv: [''],
-      chu_vi_bd_ha_trong_1p: [0, [Validators.min(0)]],
-      chu_vi_bd_ha_trong_2p: [0, [Validators.min(0)]],
-      chu_vi_bd_ha_trong_3p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv: [''],
-      kt_bd_ha_ngoai_bv_1p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv_2p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv_3p: [0, [Validators.min(0)]],
-      dien_tro_ha_ra: [0, [Validators.min(0)]],
-      dien_tro_ha_rb: [0, [Validators.min(0)]],
-      dien_tro_ha_rc: [0, [Validators.min(0)]],
-      do_lech_dien_tro_giua_cac_pha: [0, [Validators.min(0), Validators.max(2)]],
+      
+      // Chu vi bối dây cao
+      chu_vi_bd_cao_1p: [0, [Validators.min(0)]],
+      chu_vi_bd_cao_2p: [0, [Validators.min(0)]],
+      chu_vi_bd_cao_3p: [0, [Validators.min(0)]],
+      
+      // Điện trở cao
+      dien_tro_cao_ra: [0, [Validators.min(0)]],
+      dien_tro_cao_rb: [0, [Validators.min(0)]],
+      dien_tro_cao_rc: [0, [Validators.min(0)]],
+      
       ghi_chu: ['']
     });
 
@@ -260,115 +122,18 @@ export class BoiDayCaoPopupComponent implements OnInit {
   ngOnInit() {
     console.log('BoiDayCaoPopup initialized with data:', this.data);
     
-    // Khởi tạo form với giá trị mặc định
-    this.boiDayCaoForm = this.fb.group({
-      // Chỉ giữ lại các field thực sự cần thiết cho business logic
-      quy_cach_day: ['', Validators.required], // Quy cách dây - cần thiết
-      so_soi_day: [1, [Validators.required, Validators.min(1)]], // Số sợi dây - cần thiết
-      nha_san_xuat: ['VAN_THANG', Validators.required], // Nhà sản xuất - cần thiết
-      nha_san_xuat_other: [''], // Tên nhà sản xuất khác (optional)
-      ngay_san_xuat: [new Date(), Validators.required], // Ngày sản xuất - cần thiết
-      
-      // Các field kỹ thuật - có thể để trống hoặc có giá trị mặc định
-      chu_vi_khuon: [0, [Validators.min(0)]],
-      chieu_cao_day: [0, [Validators.min(0)]],
-      so_lop_day: [1, [Validators.min(1)]],
-      khoang_cach_day: [0, [Validators.min(0)]],
-      chat_lieu_cach_dien: [''],
-      do_day_cach_dien: [0, [Validators.min(0)]],
-      nhiet_do_lam_viec: [25, [Validators.min(-40), Validators.max(200)]],
-      do_am_moi_truong: [60, [Validators.min(0), Validators.max(100)]],
-      ap_luc_lam_viec: [1, [Validators.min(0)]],
-      toc_do_quay: [0, [Validators.min(0)]],
-      thoi_gian_quay: [0, [Validators.min(0)]],
-      loai_may_quay: [''],
-      
-      // Các field theo hình - có thể để trống
-      kt_bung_bd_truoc: [0, [Validators.min(0)]],
-      bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: [true], // Changed from 'trái' to true (true = trái, false = phải)
-      may_quan_day: [''],
-      xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_6: [6, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
-      kt_bd_ha_trong_bv: [''],
-      chu_vi_bd_ha_trong_1p: [0, [Validators.min(0)]],
-      chu_vi_bd_ha_trong_2p: [0, [Validators.min(0)]],
-      chu_vi_bd_ha_trong_3p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv: [''],
-      kt_bd_ha_ngoai_bv_1p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv_2p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv_3p: [0, [Validators.min(0)]],
-      dien_tro_ha_ra: [0, [Validators.min(0)]],
-      dien_tro_ha_rb: [0, [Validators.min(0)]],
-      dien_tro_ha_rc: [0, [Validators.min(0)]],
-      do_lech_dien_tro_giua_cac_pha: [0, [Validators.min(0), Validators.max(2)]],
-      ghi_chu: ['']
-    });
-    
     // Lấy thông tin user hiện tại
-    this.currentUser = this.authService.getUserInfo();
+    this.currentUser = this.authService.getCurrentUser();
     this.authToken = this.authService.getToken() || '';
     
     console.log('Current user:', this.currentUser);
     console.log('Auth token:', this.authToken ? 'Available' : 'Not available');
-    
-    // Kiểm tra validation ban đầu
-    this.onFormValueChange();
-  }
-
-  // Debug validation form
-  debugFormValidation() {
-    console.log('=== DEBUG FORM VALIDATION ===');
-    console.log('Form valid:', this.boiDayCaoForm.valid);
-    console.log('Form dirty:', this.boiDayCaoForm.dirty);
-    console.log('Form touched:', this.boiDayCaoForm.touched);
-    
-    // Kiểm tra từng field bắt buộc
-    const requiredFields = [
-      'quy_cach_day',
-      'so_soi_day', 
-      'nha_san_xuat',
-      'ngay_san_xuat'
-    ];
-    
-    requiredFields.forEach(fieldName => {
-      const control = this.boiDayCaoForm.get(fieldName);
-      console.log(`${fieldName}:`, {
-        value: control?.value,
-        valid: control?.valid,
-        errors: control?.errors,
-        touched: control?.touched,
-        dirty: control?.dirty
-      });
-    });
-    
-    // Kiểm tra nhà sản xuất khác nếu cần
-    const nhaSanXuat = this.boiDayCaoForm.get('nha_san_xuat')?.value;
-    if (nhaSanXuat === 'OTHER') {
-      const otherField = this.boiDayCaoForm.get('nha_san_xuat_other');
-      console.log('nha_san_xuat_other:', {
-        value: otherField?.value,
-        valid: otherField?.valid,
-        errors: otherField?.errors,
-        touched: otherField?.touched
-      });
-    }
-    
-    console.log('Can submit form:', this.canSubmitForm());
-    console.log('=== END DEBUG ===');
   }
 
   // Kiểm tra form có thể submit được không
   canSubmitForm(): boolean {
     if (this.isLoading) return false;
     
-    // Chỉ kiểm tra các field thực sự cần thiết cho business logic
     const requiredFields = [
       'quy_cach_day',
       'so_soi_day', 
@@ -376,7 +141,6 @@ export class BoiDayCaoPopupComponent implements OnInit {
       'ngay_san_xuat'
     ];
     
-    // Kiểm tra các field bắt buộc
     for (const fieldName of requiredFields) {
       const control = this.boiDayCaoForm.get(fieldName);
       if (!control || !control.valid || !control.value) {
@@ -385,7 +149,6 @@ export class BoiDayCaoPopupComponent implements OnInit {
       }
     }
     
-    // Kiểm tra nhà sản xuất khác nếu chọn "OTHER"
     const nhaSanXuat = this.boiDayCaoForm.get('nha_san_xuat')?.value;
     if (nhaSanXuat === 'OTHER') {
       const nhaSanXuatOther = this.boiDayCaoForm.get('nha_san_xuat_other')?.value;
@@ -399,404 +162,324 @@ export class BoiDayCaoPopupComponent implements OnInit {
     return true;
   }
 
-  // Trigger validation check khi form thay đổi
-  onFormValueChange() {
-    // Trigger change detection để cập nhật UI
-    this.changeDetectorRef.detectChanges();
-    
-    // Log trạng thái validation để debug
-    console.log('Form validation status:', {
-      canSubmit: this.canSubmitForm(),
-      formValid: this.boiDayCaoForm.valid,
-      requiredFields: {
-        quy_cach_day: this.boiDayCaoForm.get('quy_cach_day')?.valid,
-        so_soi_day: this.boiDayCaoForm.get('so_soi_day')?.valid,
-        nha_san_xuat: this.boiDayCaoForm.get('nha_san_xuat')?.valid,
-        ngay_san_xuat: this.boiDayCaoForm.get('ngay_san_xuat')?.valid
-      }
-    });
-  }
-
   // Xử lý khi thay đổi nhà sản xuất
   onManufacturerChange(event: any) {
     const selectedValue = event.value;
     const otherField = this.boiDayCaoForm.get('nha_san_xuat_other');
     
     if (selectedValue === 'OTHER') {
-      // Nếu chọn "Khác", thêm validation required cho field nhà sản xuất khác
       otherField?.setValidators([Validators.required]);
-      otherField?.markAsUntouched(); // Reset trạng thái touched
+      otherField?.markAsUntouched();
     } else {
-      // Nếu chọn nhà sản xuất có sẵn, bỏ validation required
       otherField?.clearValidators();
-      otherField?.setValue(''); // Xóa giá trị cũ
+      otherField?.setValue('');
       otherField?.markAsUntouched();
     }
     
     otherField?.updateValueAndValidity();
-    
-    // Trigger validation check để cập nhật trạng thái nút submit
-    this.onFormValueChange();
   }
 
-  // Validate dữ liệu trước khi gửi API
-  private validateSubmitData(data: BoiDayCaoSubmitData | BoiDayCaoApiRequest): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-    
-    console.log('validateSubmitData: Validating data:', data);
-    
-    // Type guard để kiểm tra loại data
-    const isSubmitData = (data: any): data is BoiDayCaoSubmitData => {
-      return 'quy_cach_day' in data;
-    };
-    
-    const isApiRequest = (data: any): data is BoiDayCaoApiRequest => {
-      return 'quycachday' in data;
-    };
-    
-    // Kiểm tra các field bắt buộc
-    if (isSubmitData(data)) {
-      if (!data.quy_cach_day) {
-        errors.push('Quy cách dây là bắt buộc');
-      }
-      if (!data.so_soi_day || data.so_soi_day <= 0) {
-        errors.push('Số sợi dây phải lớn hơn 0');
-      }
-      if (!data.nha_san_xuat) {
-        errors.push('Nhà sản xuất là bắt buộc');
-      }
-      if (!data.ngay_san_xuat) {
-        errors.push('Ngày sản xuất là bắt buộc');
-      }
-    } else if (isApiRequest(data)) {
-      if (!data.quycachday) {
-        errors.push('Quy cách dây là bắt buộc');
-      }
-      if (!data.sosoiday || data.sosoiday <= 0) {
-        errors.push('Số sợi dây phải lớn hơn 0');
-      }
-      if (!data.nhasanxuat) {
-        errors.push('Nhà sản xuất là bắt buộc');
-      }
-      if (!data.ngaysanxuat) {
-        errors.push('Ngày sản xuất là bắt buộc');
-      }
-    }
-    
-    const isValid = errors.length === 0;
-    console.log('validateSubmitData: Validation result:', { isValid, errors });
-    
-    return { isValid, errors };
-  }
-
-  // Log chi tiết dữ liệu để debug
-  private logSubmitData(data: BoiDayCaoSubmitData | BoiDayCaoApiRequest): void {
-    console.log('=== SUBMIT DATA DETAILS ===');
-    
-    // Type guard để kiểm tra loại data
-    const isSubmitData = (data: any): data is BoiDayCaoSubmitData => {
-      return 'quy_cach_day' in data;
-    };
-    
-    const isApiRequest = (data: any): data is BoiDayCaoApiRequest => {
-      return 'quycachday' in data;
-    };
-    
-    if (isSubmitData(data)) {
-      console.log('Data type: BoiDayCaoSubmitData');
-      console.log('Key fields:', {
-        quy_cach_day: data.quy_cach_day,
-        so_soi_day: data.so_soi_day,
-        nha_san_xuat: data.nha_san_xuat,
-        ngay_san_xuat: data.ngay_san_xuat
-      });
-    } else if (isApiRequest(data)) {
-      console.log('Data type: BoiDayCaoApiRequest');
-      console.log('Key fields:', {
-        quycachday: data.quycachday,
-        sosoiday: data.sosoiday,
-        nhasanxuat: data.nhasanxuat,
-        ngaysanxuat: data.ngaysanxuat
-      });
-    } else {
-      console.log('Data type: Unknown');
-    }
-    
-    console.log('Full data object:', data);
-    console.log('=== END SUBMIT DATA DETAILS ===');
-  }
-
-  onSubmit(): void {
-    console.log('Bắt đầu submit form...');
-    
-    // Kiểm tra form có thể submit được không
+  // Submit form
+  async onSubmit() {
     if (!this.canSubmitForm()) {
-      console.log('Form không thể submit - kiểm tra validation');
-      this.debugFormValidation();
-      return;
-    }
-
-    // Lấy dữ liệu từ form
-    const formData = this.boiDayCaoForm.value;
-    
-    // Map data sang API request format
-    const apiRequest = this.mapToApiRequest(formData, this.data.quanDay);
-    
-    console.log('API Request data:', apiRequest);
-
-    // Log chi tiết dữ liệu để debug
-    this.logSubmitData(apiRequest);
-
-    // Validate dữ liệu trước khi gửi API
-    const validation = this.validateSubmitData(apiRequest);
-    if (!validation.isValid) {
-      console.error('Dữ liệu không hợp lệ:', validation.errors);
-      this.snackBar.open(`Dữ liệu không hợp lệ: ${validation.errors.join(', ')}`, 'Đóng', {
-        duration: 5000,
-        horizontalPosition: 'center',
-        verticalPosition: 'top',
-        panelClass: ['error-snackbar']
-      });
+      console.log('Form không hợp lệ, không thể submit');
       return;
     }
 
     this.isLoading = true;
+    
+    try {
+      const formData = this.boiDayCaoForm.value;
+      console.log('Form data to submit:', formData);
+      
+      // Lấy thông tin user hiện tại từ Firebase
+      const currentUser = this.authService.getUserInfo();
+      if (!currentUser?.email) {
+        throw new Error('Không thể lấy thông tin user hiện tại');
+      }
 
-    // Gọi API để lưu dữ liệu
-    this.http.post<any>(`${this.commonService.getServerAPIURL()}api/ProductionData/save-bd-cao`, apiRequest, {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.authToken}`
-      })
-    }).subscribe({
-      next: (response) => {
-        console.log('Lưu thành công:', response);
-        this.isLoading = false;
+      // Lấy user từ Firestore để có user ID
+      const userFromFirestore = await this.userManagementService.getUserByEmail(currentUser.email).pipe(take(1)).toPromise();
+      if (!userFromFirestore) {
+        throw new Error('Không tìm thấy user trong hệ thống');
+      }
+
+      // Tạo data cho bd_cao
+      const bdCaoData: Omit<BdCaoData, 'id'> = {
+        masothe_bd_cao: `${this.data.quanDay.kyhieuquanday}-066`,
+        kyhieubangve: this.data.quanDay.kyhieuquanday,
+        ngaygiacong: new Date(),
+        nguoigiacong: currentUser.fullName || currentUser.username || currentUser.email || 'Unknown',
+        quycachday: formData.quy_cach_day,
+        sosoiday: formData.so_soi_day,
+        ngaysanxuat: formData.ngay_san_xuat,
+        nhasanxuat: formData.nha_san_xuat === 'OTHER' ? formData.nha_san_xuat_other : formData.nha_san_xuat,
+        chieuquanday: formData.chieu_quan_day,
+        mayquanday: formData.may_quan_day,
+        xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
+        haidau: this.getSelectedThickness(formData, 'hai_dau'),
+        bd_tt: `${formData.chu_vi_bd_cao_1p},${formData.chu_vi_bd_cao_2p},${formData.chu_vi_bd_cao_3p}`,
+        chuvi_bd_tt: formData.chu_vi_bd_cao_1p,
+        dientroRa: formData.dien_tro_cao_ra,
+        dientroRb: formData.dien_tro_cao_rb,
+        dientroRc: formData.dien_tro_cao_rc,
+        trang_thai: 1, // Trạng thái hoàn thành
+        user_update: currentUser.email,
+        created_at: new Date(),
+        khau_sx: 'bd_cao'
+      };
+
+      console.log('BdCao data to save:', bdCaoData);
+
+      // 1. Lưu data vào tbl_bd_cao
+      const bdCaoId = await this.firebaseBdCaoService.createBdCao(bdCaoData);
+      console.log('BdCao created with ID:', bdCaoId);
+
+      // 2. Cập nhật trạng thái trong user_bangve với bd_cao_id mới
+      await this.updateUserBangVeStatus(userFromFirestore.id, this.data.quanDay.id, bdCaoId);
+      
+      // Hiển thị thông báo thành công
+      this.snackBar.open('Lưu thông tin bối dây cao thành công!', '×', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        panelClass: ['success-snackbar', 'compact-snackbar']
+      });
+      
+      // Đóng popup và trả về data
+      this.dialogRef.close({
+        success: true,
+        data: { bdCaoId, bdCaoData },
+        message: 'Lưu thông tin bối dây cao thành công!'
+      });
+      
+    } catch (error: any) {
+      console.error('Error submitting form:', error);
+      
+      // Hiển thị thông báo lỗi
+      const errorMessage = error.message || 'Có lỗi xảy ra khi lưu thông tin';
+      this.snackBar.open(errorMessage, '×', {
+        duration: 5000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        panelClass: ['error-snackbar', 'compact-snackbar']
+      });
+      
+      // Hiển thị dialog lỗi chi tiết
+      this.showErrorDialog(errorMessage, error);
+      
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // Cập nhật trạng thái trong user_bangve
+  private async updateUserBangVeStatus(userId: string, bangveId: string, bdCaoId: string): Promise<void> {
+    try {
+      console.log('Updating user_bangve status for user:', userId, 'bangve:', bangveId, 'bdCaoId:', bdCaoId);
+      
+      // Lấy tất cả assignments của user
+      console.log('Getting assignments for userId (string):', userId);
+      console.log('Getting assignments for userId (number):', parseInt(userId));
+      const userAssignments = await this.firebaseUserBangVeService.getUserBangVeByUserId(parseInt(userId));
+      console.log('All user assignments:', userAssignments);
+      console.log('Number of assignments found:', userAssignments.length);
+      console.log('Looking for bangveId:', bangveId, 'userId:', userId);
+      
+      // Tìm assignment có bangve_id tương ứng và có bd_cao_id (nếu đã có) hoặc chưa có bd_cao_id
+      let relevantAssignment = userAssignments.find(assignment => 
+        assignment.bangve_id === String(bangveId) && 
+        assignment.khau_sx === 'bd_cao' &&
+        (assignment.bd_cao_id === undefined || assignment.bd_cao_id === null || String(assignment.bd_cao_id) === '' || String(assignment.bd_cao_id) === 'undefined' || String(assignment.bd_cao_id) === 'null')
+      );
+      
+      console.log('Relevant assignment found (without bd_cao_id):', relevantAssignment);
+      
+      // Nếu không tìm thấy assignment chưa có bd_cao_id, tìm assignment có bd_cao_id tương ứng
+      if (!relevantAssignment) {
+        relevantAssignment = userAssignments.find(assignment => 
+          assignment.bangve_id === String(bangveId) && 
+          assignment.khau_sx === 'bd_cao' &&
+          String(assignment.bd_cao_id) === bdCaoId
+        );
+        console.log('Relevant assignment found (with matching bd_cao_id):', relevantAssignment);
+      }
+      
+      // Nếu vẫn không tìm thấy, tìm assignment có bangve_id và permission_type = 'gia_cong'
+      if (!relevantAssignment) {
+        relevantAssignment = userAssignments.find(assignment => 
+          assignment.bangve_id === String(bangveId) && 
+          assignment.permission_type === 'gia_cong' &&
+          assignment.status === true
+        );
+        console.log('Relevant assignment found (by permission_type):', relevantAssignment);
+      }
+      
+      if (!relevantAssignment) {
+        console.warn('No relevant assignment found for user and bangve');
+        console.log('Available assignments:', userAssignments.map(a => ({
+          id: a.id,
+          bangve_id: a.bangve_id,
+          khau_sx: a.khau_sx,
+          permission_type: a.permission_type,
+          status: a.status,
+          bd_cao_id: a.bd_cao_id
+        })));
         
-        // Hiển thị thông báo thành công
-        this.snackBar.open('Lưu thông tin bối dây cao thành công!', 'Đóng', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top'
+        // Debug: Log each assignment individually
+        console.log('Debugging each assignment:');
+        userAssignments.forEach((assignment, index) => {
+          console.log(`Assignment ${index}:`, {
+            id: assignment.id,
+            bangve_id: assignment.bangve_id,
+            khau_sx: assignment.khau_sx,
+            permission_type: assignment.permission_type,
+            status: assignment.status,
+            user_id: assignment.user_id,
+            bd_cao_id: assignment.bd_cao_id
+          });
+          console.log(`  - bangve_id match: ${assignment.bangve_id} === ${String(bangveId)} = ${assignment.bangve_id === String(bangveId)}`);
+          console.log(`  - khau_sx match: ${assignment.khau_sx} === 'bd_cao' = ${assignment.khau_sx === 'bd_cao'}`);
+          console.log(`  - bd_cao_id match: ${assignment.bd_cao_id} === ${bdCaoId} = ${String(assignment.bd_cao_id) === bdCaoId}`);
         });
         
-        // Hiển thị thông báo thành công
-        this.showSuccess('Lưu thông tin bối dây cao thành công!');
+        throw new Error('Không tìm thấy assignment hợp lệ để cập nhật');
+      }
+      
+      console.log('Found relevant assignment:', relevantAssignment);
+      
+      // Cập nhật bd_cao_id và trạng thái bd_cao thành 2 (đã hoàn thành)
+      if (relevantAssignment.id && relevantAssignment.id !== undefined && relevantAssignment.id !== null) {
+        console.log('Attempting to update assignment with ID:', relevantAssignment.id);
         
-        // Đóng popup và trả về dữ liệu để reload ds-quan-day
-        this.dialogRef.close({
-          success: true,
-          data: apiRequest,
-          reloadData: true,
-          message: 'Lưu thông tin bối dây cao thành công!'
-        });
-      },
-      error: (error) => {
-        console.error('Lỗi khi lưu:', error);
-        this.isLoading = false;
-        
-        let errorMessage = 'Có lỗi xảy ra khi lưu thông tin';
-        
-        // Xử lý các loại lỗi cụ thể
-        if (error.status === 401) {
-          errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-        } else if (error.status === 403) {
-          errorMessage = 'Bạn không có quyền thực hiện thao tác này.';
-        } else if (error.status === 400) {
-          errorMessage = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
-        } else if (error.status === 500) {
-          errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
-        }
-        
-        // Log chi tiết lỗi để debug
-        if (error.error) {
-          console.error('Error details:', error.error);
-          if (error.error.details) {
-            console.error('Error details:', error.error.details);
+        try {
+          // Kiểm tra document có tồn tại không trước khi cập nhật
+          const docExists = await this.firebaseUserBangVeService.getUserBangVeById(relevantAssignment.id.toString());
+          if (!docExists) {
+            console.warn('Document does not exist, trying to find alternative assignment');
+            throw new Error('Document không tồn tại');
           }
-          if (error.error.message) {
-            console.error('Error message:', error.error.message);
+          
+          console.log('Calling updateUserBangVeWithBdCaoId with:', {
+            id: relevantAssignment.id.toString(),
+            bdCaoId: bdCaoId,
+            trang_thai: 2
+          });
+          
+          await this.firebaseUserBangVeService.updateUserBangVeWithBdCaoId(
+            relevantAssignment.id.toString(), 
+            bdCaoId,
+            2 // trang_thai_bd_cao = 2 (đã hoàn thành)
+          );
+          
+          console.log('Successfully updated user_bangve with bd_cao_id and trang_thai_bd_cao = 2');
+        } catch (updateError) {
+          console.warn('Failed to update with current assignment, trying alternative approach:', updateError);
+          
+          // Thử tìm assignment khác với logic khác
+          const alternativeAssignment = userAssignments.find(assignment => 
+            assignment.bangve_id === String(bangveId) && 
+            assignment.permission_type === 'gia_cong' &&
+            assignment.status === true
+          );
+          
+          if (alternativeAssignment && alternativeAssignment.id) {
+            console.log('Found alternative assignment:', alternativeAssignment);
+            console.log('Calling updateUserBangVeWithBdCaoId with alternative assignment:', {
+              id: alternativeAssignment.id.toString(),
+              bdCaoId: bdCaoId,
+              trang_thai: 2
+            });
+            
+            await this.firebaseUserBangVeService.updateUserBangVeWithBdCaoId(
+              alternativeAssignment.id.toString(), 
+              bdCaoId,
+              2 // trang_thai_bd_cao = 2 (đã hoàn thành)
+            );
+            
+            console.log('Successfully updated alternative assignment with bd_cao_id and trang_thai_bd_cao = 2');
+          } else {
+            throw new Error('Không tìm thấy assignment hợp lệ để cập nhật');
           }
         }
-        
-        this.snackBar.open(errorMessage, 'Đóng', {
-          duration: 5000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: ['error-snackbar']
-        });
+      } else {
+        console.warn('Assignment ID is undefined or null:', relevantAssignment);
+        throw new Error('Không tìm thấy assignment hợp lệ để cập nhật');
+      }
+      
+      console.log('User bangve status updated successfully');
+      
+    } catch (error) {
+      console.error('Error updating user bangve status:', error);
+      throw error;
+    }
+  }
+
+  // Cập nhật assignment thay thế
+  private async updateAssignmentWithAlternative(assignment: any, bdCaoId: string): Promise<void> {
+    try {
+      console.log('Updating alternative assignment:', assignment);
+      
+      if (assignment.id) {
+        // Kiểm tra document có tồn tại không
+        const docExists = await this.firebaseUserBangVeService.getUserBangVeById(assignment.id.toString());
+        if (docExists) {
+          await this.firebaseUserBangVeService.updateUserBangVeWithBdCaoId(
+            assignment.id.toString(), 
+            bdCaoId,
+            2 // trang_thai_bd_cao = 2 (đã hoàn thành)
+          );
+          console.log('Alternative assignment updated successfully');
+        } else {
+          throw new Error('Alternative assignment document không tồn tại');
+        }
+      } else {
+        throw new Error('Alternative assignment không có ID');
+      }
+    } catch (error) {
+      console.error('Error updating alternative assignment:', error);
+      throw error;
+    }
+  }
+
+  // Helper to get selected thickness from form data
+  private getSelectedThickness(formData: any, fieldName: string): number {
+    if (fieldName === 'xung_quanh') {
+      if (formData.xung_quanh_day_2 && formData.xung_quanh_day_2 > 0) return 2;
+      if (formData.xung_quanh_day_3 && formData.xung_quanh_day_3 > 0) return 3;
+      if (formData.xung_quanh_day_4 && formData.xung_quanh_day_4 > 0) return 4;
+      if (formData.xung_quanh_day_6 && formData.xung_quanh_day_6 > 0) return 6;
+    } else if (fieldName === 'hai_dau') {
+      if (formData.hai_dau_day_2 && formData.hai_dau_day_2 > 0) return 2;
+      if (formData.hai_dau_day_3 && formData.hai_dau_day_3 > 0) return 3;
+      if (formData.hai_dau_day_4 && formData.hai_dau_day_4 > 0) return 4;
+      if (formData.hai_dau_day_6 && formData.hai_dau_day_6 > 0) return 6;
+    }
+    return 2; // Default value
+  }
+
+  // Hiển thị dialog lỗi chi tiết
+  private showErrorDialog(message: string, error: any) {
+    const dialogRef = this.dialog.open(DialogComponent, {
+      width: '500px',
+      data: {
+        title: 'Lỗi',
+        message: message,
+        type: 'error',
+        details: error.error?.details || error.stack || 'Không có thông tin chi tiết'
       }
     });
+    
+    dialogRef.afterClosed().subscribe(() => {
+      console.log('Error dialog closed');
+    });
   }
 
-  // Method để map data từ form sang API request format
-  private mapToApiRequest(formData: any, quanDayData: any): BoiDayCaoApiRequest {
-    console.log('mapToApiRequest: Mapping form data to API format');
-    
-    // Xử lý nhà sản xuất
-    let nhaSanXuat = formData.nha_san_xuat;
-    if (nhaSanXuat === 'OTHER') {
-      nhaSanXuat = formData.nha_san_xuat_other;
-    }
-    
-    // Xử lý ngày giờ
-    const currentDate = new Date();
-    const ngayGiaCong = currentDate.toISOString();
-    const ngaySanXuat = formData.ngay_san_xuat instanceof Date ? 
-      formData.ngay_san_xuat.toISOString() : 
-      formData.ngay_san_xuat;
-    
-    // Map sang API format
-    const apiRequest: BoiDayCaoApiRequest = {
-      masothe_bd_cao: quanDayData.kyhieuquanday || 'BDC_' + Date.now(), // Mã số thẻ bối dây cao
-      kyhieubangve: quanDayData.kyhieuquanday || '',
-      ngaygiacong: ngayGiaCong,
-      nguoigiacong: this.currentUser?.username || this.currentUser?.email || 'Unknown',
-      quycachday: formData.quy_cach_day || '',
-      sosoiday: formData.so_soi_day || 1,
-      ngaysanxuat: ngaySanXuat,
-      nhasanxuat: nhaSanXuat || '',
-      chuvikhuon: formData.chu_vi_khuon || 0,
-      kt_bung_bd: formData.kt_bung_bd_truoc || 0,
-      chieuquanday: formData.chieu_quan_day, // true = trái, false = phải
-      mayquanday: formData.may_quan_day || '',
-      xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
-      haidau: this.getSelectedThickness(formData, 'hai_dau'),
-      kt_boiday_trong: formData.kt_bd_ha_trong_bv || '',
-      chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p || 0,
-      kt_bd_ngoai: formData.kt_bd_ha_ngoai_bv || '',
-      bd_tt: (formData.kt_bung_bd_truoc || 0).toString(), // Kích thước bụng bối dây trước
-      chuvi_bd_tt: formData.chu_vi_khuon || '0', // Chu vi bối dây theo thiết kế
-      dientroRa: formData.dien_tro_ha_ra || 0,
-      dientroRb: formData.dien_tro_ha_rb || 0,
-      dientroRc: formData.dien_tro_ha_rc || 0,
-      dolechdientro: formData.do_lech_dien_tro_giua_cac_pha || 0,
-      //user_update: this.currentUser?.username || this.currentUser?.email || 'Unknown',
-      trang_thai: STATUS.PROCESSING, // STATUS.PROCESSING = đang làm, STATUS.COMPLETED = hoàn thành
-      khau_sx: 'boidaycao' // Khâu sản xuất: bối dây cao
-    };
-    
-    console.log('mapToApiRequest: Mapped API request:', apiRequest);
-    return apiRequest;
-  }
-
-  // Lấy tên nhà sản xuất từ value
-  getManufacturerName(value: string): string {
-    const manufacturer = this.manufacturers.find(m => m.value === value);
-    return manufacturer ? manufacturer.name : value;
-  }
-
-  // Kiểm tra form có thay đổi gì không
-  hasUnsavedChanges(): boolean {
-    return this.boiDayCaoForm.dirty || this.boiDayCaoForm.touched;
-  }
-
-  // Xử lý khi user muốn hủy
+  // Hủy bỏ
   onCancel() {
-    if (this.hasUnsavedChanges()) {
-      // Nếu có thay đổi chưa lưu, hỏi user có muốn hủy không
-      const confirmDialog = this.dialog.open(DialogComponent, {
-        width: '400px',
-        data: {
-          title: 'Xác nhận hủy',
-          message: 'Bạn có thay đổi chưa lưu. Bạn có chắc muốn hủy?',
-          confirmText: 'Hủy',
-          cancelText: 'Tiếp tục'
-        }
-      });
-
-      confirmDialog.afterClosed().subscribe((result: boolean) => {
-        if (result) {
-          this.dialogRef.close();
-        }
-      });
-    } else {
-      // Nếu không có thay đổi, đóng popup ngay
-      this.dialogRef.close();
-    }
-  }
-
-  // Reset form về trạng thái ban đầu
-  resetForm() {
-    console.log('Reset form về trạng thái ban đầu');
-    
-    // Reset form về giá trị mặc định
-    this.boiDayCaoForm.reset({
-      quy_cach_day: '',
-      so_soi_day: 1,
-      nha_san_xuat: 'VAN_THANG',
-      nha_san_xuat_other: '',
-      ngay_san_xuat: new Date(),
-      chu_vi_khuon: 0,
-      chieu_cao_day: 0,
-      so_lop_day: 1,
-      khoang_cach_day: 0,
-      chat_lieu_cach_dien: '',
-      do_day_cach_dien: 0,
-      nhiet_do_lam_viec: 25,
-      do_am_moi_truong: 60,
-      ap_luc_lam_viec: 1,
-      toc_do_quay: 0,
-      thoi_gian_quay: 0,
-      loai_may_quay: '',
-      kt_bung_bd_truoc: 0,
-      bung_bd_sau: 0,
-      chieu_quan_day: true,
-      may_quan_day: '',
-      xung_quanh_day: 2,
-      hai_dau_day: 2,
-      kt_bd_ha_trong_bv: '',
-      chu_vi_bd_ha_trong_1p: 0,
-      chu_vi_bd_ha_trong_2p: 0,
-      chu_vi_bd_ha_trong_3p: 0,
-      kt_bd_ha_ngoai_bv: '',
-      kt_bd_ha_ngoai_bv_1p: 0,
-      kt_bd_ha_ngoai_bv_2p: 0,
-      kt_bd_ha_ngoai_bv_3p: 0,
-      dien_tro_ha_ra: 0,
-      dien_tro_ha_rb: 0,
-      dien_tro_ha_rc: 0,
-      do_lech_dien_tro_giua_cac_pha: 0,
-      ghi_chu: ''
-    });
-    
-    // Reset validation state
-    this.boiDayCaoForm.markAsUntouched();
-    this.boiDayCaoForm.markAsPristine();
-    
-    // Reset validation cho nhà sản xuất khác
-    const otherField = this.boiDayCaoForm.get('nha_san_xuat_other');
-    otherField?.clearValidators();
-    otherField?.updateValueAndValidity();
-    
-    console.log('Form đã được reset');
-    
-    // Trigger validation check
-    this.onFormValueChange();
-  }
-
-  private markFormGroupTouched(): void {
-    Object.keys(this.boiDayCaoForm.controls).forEach(key => {
-      const control = this.boiDayCaoForm.get(key);
-      control?.markAsTouched();
-    });
-  }
-
-  private showSuccess(message: string): void {
-    this.snackBar.open(message, 'Đóng', {
-      duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['success-snackbar']
-    });
-  }
-
-  private showError(message: string): void {
-    this.snackBar.open(message, 'Đóng', {
-      duration: 5000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['error-snackbar']
+    this.dialogRef.close({
+      success: false,
+      message: 'Đã hủy bỏ'
     });
   }
 
@@ -837,7 +520,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
         bd_id: this.data.quanDay.id || 0
       };
 
-      console.log('Submitting KCS failure for boidaycao:', kcsFailureData);
+      console.log('Submitting KCS failure:', kcsFailureData);
 
       // Gọi API KCS quality check failure
       const response = await this.kcsQualityService.submitQualityCheckFailure(kcsFailureData).toPromise();
@@ -873,22 +556,5 @@ export class BoiDayCaoPopupComponent implements OnInit {
     } finally {
       this.isLoading = false;
     }
-  }
-
-  private getSelectedThickness(formData: any, fieldName: string): number {
-    if (fieldName === 'xung_quanh') {
-      // Check which xung quanh field has a value
-      if (formData.xung_quanh_day_2 && formData.xung_quanh_day_2 > 0) return 2;
-      if (formData.xung_quanh_day_3 && formData.xung_quanh_day_3 > 0) return 3;
-      if (formData.xung_quanh_day_4 && formData.xung_quanh_day_4 > 0) return 4;
-      if (formData.xung_quanh_day_6 && formData.xung_quanh_day_6 > 0) return 6;
-    } else if (fieldName === 'hai_dau') {
-      // Check which hai dau field has a value
-      if (formData.hai_dau_day_2 && formData.hai_dau_day_2 > 0) return 2;
-      if (formData.hai_dau_day_3 && formData.hai_dau_day_3 > 0) return 3;
-      if (formData.hai_dau_day_4 && formData.hai_dau_day_4 > 0) return 4;
-      if (formData.hai_dau_day_6 && formData.hai_dau_day_6 > 0) return 6;
-    }
-    return 2; // Default value
   }
 }

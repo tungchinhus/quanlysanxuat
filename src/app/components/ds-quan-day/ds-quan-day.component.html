@@ -22,8 +22,16 @@
 
   <!-- Main Content -->
   <div class="main-content" *ngIf="isAuthenticated">
+    <!-- Loading Indicator -->
+    <div class="loading-container" *ngIf="isLoading" style="display: flex; justify-content: center; align-items: center; padding: 40px; background: #fff; border-radius: 8px; margin: 24px 0;">
+      <div class="loading-content" style="text-align: center;">
+        <mat-spinner diameter="50" style="margin-bottom: 16px;"></mat-spinner>
+        <p style="color: #666; font-size: 16px; margin: 0;">Đang tải dữ liệu...</p>
+      </div>
+    </div>
+
     <!-- Tab Navigation -->
-    <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;">
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" style="margin-bottom: 24px;" *ngIf="!isLoading">
       <mat-tab label="Quấn dây mới">
         <div class="tab-content">
           <!-- Search Bar -->
@@ -57,30 +65,6 @@
               <ng-container matColumnDef="dienap">
                 <mat-header-cell *matHeaderCellDef> Điện áp </mat-header-cell>
                 <mat-cell *matCellDef="let d"> {{d.dienap}} </mat-cell>
-              </ng-container>
-              <ng-container matColumnDef="bd_ha_trong">
-                <mat-header-cell *matHeaderCellDef> BD Hạ Trong </mat-header-cell>
-                <mat-cell *matCellDef="let d"> {{d.bd_ha_trong}} </mat-cell>
-              </ng-container>
-              <ng-container matColumnDef="bd_ha_ngoai">
-                <mat-header-cell *matHeaderCellDef> BD Hạ Ngoài </mat-header-cell>
-                <mat-cell *matCellDef="let d"> {{d.bd_ha_ngoai}} </mat-cell>
-              </ng-container>
-              <ng-container matColumnDef="bd_cao">
-                <mat-header-cell *matHeaderCellDef> BD Cao </mat-header-cell>
-                <mat-cell *matCellDef="let d"> {{d.bd_cao}} </mat-cell>
-              </ng-container>
-              <ng-container matColumnDef="bd_ep">
-                <mat-header-cell *matHeaderCellDef> BD Ép </mat-header-cell>
-                <mat-cell *matCellDef="let d"> {{d.bd_ep}} </mat-cell>
-              </ng-container>
-              <ng-container matColumnDef="bung_bd">
-                <mat-header-cell *matHeaderCellDef> Bưng BD </mat-header-cell>
-                <mat-cell *matCellDef="let d"> {{d.bung_bd}} </mat-cell>
-              </ng-container>
-              <ng-container matColumnDef="user_create">
-                <mat-header-cell *matHeaderCellDef> Người tạo </mat-header-cell>
-                <mat-cell *matCellDef="let d"> {{d.user_create}} </mat-cell>
               </ng-container>
               <ng-container matColumnDef="created_at">
                 <mat-header-cell *matHeaderCellDef> Ngày tạo </mat-header-cell>
@@ -207,8 +191,8 @@
                 </mat-cell>
               </ng-container>
 
-              <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-              <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+              <mat-header-row *matHeaderRowDef="displayedColumnsInProgress"></mat-header-row>
+              <mat-row *matRowDef="let row; columns: displayedColumnsInProgress;"></mat-row>
             </mat-table>
 
             <div class="pagination-section" *ngIf="filteredInProgressQuanDays.length > 0">

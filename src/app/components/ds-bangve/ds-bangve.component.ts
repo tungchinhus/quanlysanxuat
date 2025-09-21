@@ -1070,18 +1070,37 @@ export class DsBangveComponent implements OnInit {
   }
 
   async onGiaCong(drawing: BangVeData): Promise<void> {
+    console.log('=== onGiaCong called ===');
+    console.log('Drawing:', drawing);
+    console.log('Dialog service available:', !!this.dialog);
+    console.log('GiaCongPopupComponent available:', !!GiaCongPopupComponent);
+    
     // Kiểm tra quyền admin hoặc manager
-    if (!this.hasAdminOrManagerRole()) {
+    const hasPermission = this.hasAdminOrManagerRole();
+    console.log('Has permission:', hasPermission);
+    
+    if (!hasPermission) {
+      console.log('No permission, redirecting based on khau_sx');
       // Nếu không phải admin/manager, tự động chuyển trang dựa trên khau_sx
       this.redirectBasedOnKhauSx(drawing);
       return;
     }
 
-    // Mở popup để user chọn workers
-    const dialogRef = this.dialog.open(GiaCongPopupComponent, {
-      width: '500px',
-      data: { drawing }
-    });
+    console.log('Opening GiaCongPopupComponent...');
+    let dialogRef;
+    try {
+      // Mở popup để user chọn workers
+      dialogRef = this.dialog.open(GiaCongPopupComponent, {
+        width: '500px',
+        data: { drawing }
+      });
+      console.log('Dialog opened successfully');
+    } catch (error) {
+      console.error('Error opening dialog:', error);
+      console.error('Error details:', (error as Error).message);
+      console.error('Error stack:', (error as Error).stack);
+      return;
+    }
 
     dialogRef.afterClosed().subscribe(result => {
       console.log('Popup closed with result:', result);

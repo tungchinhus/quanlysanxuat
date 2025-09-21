@@ -34,13 +34,16 @@ export class FirebaseUserBangVeService {
 
   /**
    * Remove undefined fields from object to prevent Firebase errors
+   * Keep important fields like bd_ha_id, bd_cao_id, bd_ep_id even if undefined or null
    * @param obj - Object to clean
-   * @returns Cleaned object without undefined fields
+   * @returns Cleaned object without undefined fields (except important ones)
    */
   private removeUndefinedFields(obj: any): any {
     const cleaned: any = {};
+    const importantFields = ['bd_ha_id', 'bd_cao_id', 'bd_ep_id', 'trang_thai_bd_ha', 'trang_thai_bd_cao', 'trang_thai_bd_ep'];
+    
     for (const [key, value] of Object.entries(obj)) {
-      if (value !== undefined) {
+      if (value !== undefined || importantFields.includes(key)) {
         cleaned[key] = value;
       }
     }
@@ -313,21 +316,128 @@ export class FirebaseUserBangVeService {
    * Update user_bangve status
    * @param id - The document ID to update
    * @param trangThai - The new status
+   * @param fieldName - The specific field to update (optional, defaults to 'trang_thai')
    * @returns Promise<void>
    */
-  async updateUserBangVeStatus(id: string, trangThai: number): Promise<void> {
+  async updateUserBangVeStatus(id: string, trangThai: number, fieldName: string = 'trang_thai'): Promise<void> {
     try {
-      console.log('Updating user_bangve status for ID:', id, 'to status:', trangThai);
+      console.log('Updating user_bangve status for ID:', id, 'field:', fieldName, 'to status:', trangThai);
       
       const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
-      await updateDoc(docRef, {
-        trang_thai: trangThai,
+      const updateData: any = {
+        [fieldName]: trangThai,
         updated_at: Timestamp.fromDate(new Date())
-      });
+      };
+      
+      await updateDoc(docRef, updateData);
       
       console.log('UserBangVe status updated successfully');
     } catch (error) {
       console.error('Error updating user_bangve status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user_bangve by document ID from Firebase
+   * @param id - The document ID to search for
+   * @returns Promise<UserBangVeData | null>
+   */
+  async getUserBangVeById(id: string): Promise<UserBangVeData | null> {
+    try {
+      console.log('Getting user_bangve by ID from Firebase:', id);
+      
+      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const userBangVeData: UserBangVeData = {
+          id: docSnap.id,
+          user_id: data['user_id'] || 0,
+          firebase_uid: data['firebase_uid'] || '',
+          bangve_id: data['bangve_id'] || '',
+          bd_ha_id: data['bd_ha_id'] || undefined,
+          bd_cao_id: data['bd_cao_id'] || undefined,
+          bd_ep_id: data['bd_ep_id'] || undefined,
+          permission_type: data['permission_type'] || '',
+          status: data['status'] || false,
+          trang_thai_bv: data['trang_thai_bv'] || 0,
+          trang_thai_bd_ha: data['trang_thai_bd_ha'] || 0,
+          trang_thai_bd_cao: data['trang_thai_bd_cao'] || 0,
+          trang_thai_bd_ep: data['trang_thai_bd_ep'] || 0,
+          assigned_at: data['assigned_at']?.toDate() || new Date(),
+          assigned_by_user_id: data['assigned_by_user_id'] || 0,
+          created_at: data['created_at']?.toDate() || new Date(),
+          updated_at: data['updated_at']?.toDate() || new Date(),
+          created_by: data['created_by'] || 0,
+          updated_by: data['updated_by'] || 0,
+          khau_sx: data['khau_sx'] || '',
+          trang_thai: data['trang_thai'] || 0
+        };
+        
+        console.log('Found user_bangve by ID:', userBangVeData);
+        return userBangVeData;
+      } else {
+        console.log('No user_bangve document found with ID:', id);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting user_bangve by ID from Firebase:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user_bangve with bd_ha_id and trang_thai_bd_ha
+   * @param id - The document ID to update
+   * @param bdHaId - The bd_ha_id to set
+   * @param trangThaiBdHa - The trang_thai_bd_ha status
+   * @returns Promise<void>
+   */
+  async updateUserBangVeWithBdHaId(id: string, bdHaId: string, trangThaiBdHa: number): Promise<void> {
+    try {
+      console.log('Updating user_bangve with bd_ha_id for ID:', id, 'bd_ha_id:', bdHaId, 'trang_thai_bd_ha:', trangThaiBdHa);
+      
+      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
+      const updateData: any = {
+        bd_ha_id: bdHaId, // Keep as string since it's Firebase document ID
+        trang_thai_bd_ha: trangThaiBdHa,
+        updated_at: Timestamp.fromDate(new Date())
+      };
+      
+      await updateDoc(docRef, updateData);
+      
+      console.log('UserBangVe updated with bd_ha_id successfully');
+    } catch (error) {
+      console.error('Error updating user_bangve with bd_ha_id:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user_bangve with bd_cao_id and trang_thai_bd_cao
+   * @param id - The document ID to update
+   * @param bdCaoId - The bd_cao_id to set
+   * @param trangThaiBdCao - The trang_thai_bd_cao status
+   * @returns Promise<void>
+   */
+  async updateUserBangVeWithBdCaoId(id: string, bdCaoId: string, trangThaiBdCao: number): Promise<void> {
+    try {
+      console.log('Updating user_bangve with bd_cao_id for ID:', id, 'bd_cao_id:', bdCaoId, 'trang_thai_bd_cao:', trangThaiBdCao);
+      
+      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
+      const updateData: any = {
+        bd_cao_id: bdCaoId, // Keep as string since it's Firebase document ID
+        trang_thai_bd_cao: trangThaiBdCao,
+        updated_at: Timestamp.fromDate(new Date())
+      };
+      
+      await updateDoc(docRef, updateData);
+      
+      console.log('UserBangVe updated with bd_cao_id successfully');
+    } catch (error) {
+      console.error('Error updating user_bangve with bd_cao_id:', error);
       throw error;
     }
   }

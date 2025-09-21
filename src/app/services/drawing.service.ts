@@ -1,5 +1,19 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/compat/firestore';
+import { 
+  collection, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDocs, 
+  onSnapshot, 
+  query, 
+  orderBy,
+  writeBatch,
+  DocumentSnapshot,
+  QuerySnapshot
+} from 'firebase/firestore';
+import { firestore } from '../../firebase.config';
 import { Observable, BehaviorSubject, map } from 'rxjs';
 import { Drawing, DrawingCreate, DrawingUpdate, DrawingStats } from '../models/drawing.model';
 
@@ -7,12 +21,11 @@ import { Drawing, DrawingCreate, DrawingUpdate, DrawingStats } from '../models/d
   providedIn: 'root'
 })
 export class DrawingService {
-  private drawingsCollection: AngularFirestoreCollection<Drawing>;
+  private drawingsCollection = collection(firestore, 'drawings');
   private drawingsSubject = new BehaviorSubject<Drawing[]>([]);
   public drawings$ = this.drawingsSubject.asObservable();
 
-  constructor(private firestore: AngularFirestore) {
-    this.drawingsCollection = this.firestore.collection<Drawing>('drawings');
+  constructor() {
     this.loadDrawings();
   }
 
@@ -20,17 +33,17 @@ export class DrawingService {
    * Tải danh sách bảng vẽ từ Firebase
    */
   private loadDrawings(): void {
-    this.drawingsCollection.snapshotChanges()
-      .pipe(
-        map(actions => actions.map(a => {
-          const data = a.payload.doc.data() as Drawing;
-          const id = a.payload.doc.id;
-          return { id, ...data };
-        }))
-      )
-      .subscribe(drawings => {
-        this.drawingsSubject.next(drawings);
+    const q = query(this.drawingsCollection, orderBy('ngayTao', 'desc'));
+    
+    onSnapshot(q, (querySnapshot: QuerySnapshot) => {
+      const drawings: Drawing[] = [];
+      querySnapshot.forEach((doc: DocumentSnapshot) => {
+        const data = doc.data() as Omit<Drawing, 'id'>;
+        const id = doc.id;
+        drawings.push({ id, ...data });
       });
+      this.drawingsSubject.next(drawings);
+    });
   }
 
   /**
@@ -69,7 +82,7 @@ export class DrawingService {
       ngayCapNhat: new Date()
     };
 
-    await this.drawingsCollection.add(newDrawing);
+    await addDoc(this.drawingsCollection, newDrawing);
   }
 
   /**
@@ -81,24 +94,26 @@ export class DrawingService {
       ngayCapNhat: new Date()
     };
 
-    await this.drawingsCollection.doc(id).update(updateData);
+    const drawingDoc = doc(this.drawingsCollection, id);
+    await updateDoc(drawingDoc, updateData);
   }
 
   /**
    * Xóa bảng vẽ
    */
   async deleteDrawing(id: string): Promise<void> {
-    await this.drawingsCollection.doc(id).delete();
+    const drawingDoc = doc(this.drawingsCollection, id);
+    await deleteDoc(drawingDoc);
   }
 
   /**
    * Xóa nhiều bảng vẽ
    */
   async deleteMultipleDrawings(ids: string[]): Promise<void> {
-    const batch = this.firestore.firestore.batch();
+    const batch = writeBatch(firestore);
     
     ids.forEach(id => {
-      const docRef = this.drawingsCollection.doc(id).ref;
+      const docRef = doc(this.drawingsCollection, id);
       batch.delete(docRef);
     });
 
@@ -208,7 +223,7 @@ export class DrawingService {
     ];
 
     // Check if data already exists
-    const existingDrawings = await this.drawingsCollection.ref.get();
+    const existingDrawings = await getDocs(this.drawingsCollection);
     if (existingDrawings.empty) {
       for (const drawing of sampleDrawings) {
         await this.addDrawing(drawing);

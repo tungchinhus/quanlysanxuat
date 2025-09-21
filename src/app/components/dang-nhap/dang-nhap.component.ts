@@ -209,9 +209,9 @@ export class DangNhapComponent implements OnInit {
       manager: { username: 'manager1', password: 'manager123' },
       user: { username: 'user1', password: 'user123' },
       email: { username: 'user@example.com', password: 'user123' },
-      totruong: { username: 'totruongquanday@thibidi.com', password: 'Ab!123456' },
-      quandayha: { username: 'quandayha1@thibidi.com', password: 'Ab!123456' },
-      quandaycao: { username: 'quandaycao1@thibidi.com', password: 'Ab!123456' },
+      totruong: { username: 'manager@thibidi.com', password: 'Ab!123456' },
+      quandayha: { username: 'boidayha1@thibidi.com', password: 'Ab!123456' },
+      quandaycao: { username: 'boidaycao1@thibidi.com', password: 'Ab!123456' },
       epboiday: { username: 'epboiday1@thibidi.com', password: 'Ab!123456' },
       kcs: { username: 'kcs1@thibidi.com', password: 'Ab!123456' }
     };

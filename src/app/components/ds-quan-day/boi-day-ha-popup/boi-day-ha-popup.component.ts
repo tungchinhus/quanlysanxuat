@@ -20,6 +20,10 @@ import { QuanDayData } from '../ds-quan-day.component';
 import { Constant } from '../../../constant/constant';
 import { DialogComponent } from '../../shared/dialogs/dialog/dialog.component';
 import { KcsQualityService, KcsQualityCheckFailure } from '../../../services/kcs-quality.service';
+import { FirebaseBdHaService, BdHaData } from '../../../services/firebase-bd-ha.service';
+import { FirebaseUserBangVeService } from '../../../services/firebase-user-bangve.service';
+import { UserManagementFirebaseService } from '../../../services/user-management-firebase.service';
+import { take } from 'rxjs/operators';
 
 export interface BoiDayHaData {
   id?: number;
@@ -170,6 +174,9 @@ export class BoiDayHaPopupComponent implements OnInit {
     private authService: AuthService,
     private changeDetectorRef: ChangeDetectorRef,
     private kcsQualityService: KcsQualityService,
+    private firebaseBdHaService: FirebaseBdHaService,
+    private firebaseUserBangVeService: FirebaseUserBangVeService,
+    private userManagementService: UserManagementFirebaseService,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     this.boiDayHaForm = this.fb.group({
@@ -391,32 +398,68 @@ export class BoiDayHaPopupComponent implements OnInit {
       const formData = this.boiDayHaForm.value;
       console.log('Form data to submit:', formData);
       
-      // Chuyển đổi sang API request format
-      const apiRequest = this.convertToApiRequest(formData);
-      console.log('API request:', apiRequest);
-      
-      // Validate dữ liệu
-      const validation = this.validateSubmitData(apiRequest);
-      if (!validation.isValid) {
-        throw new Error(`Dữ liệu không hợp lệ: ${validation.errors.join(', ')}`);
+      // Lấy thông tin user hiện tại từ Firebase
+      const currentUser = this.authService.getUserInfo();
+      if (!currentUser?.email) {
+        throw new Error('Không thể lấy thông tin user hiện tại');
       }
-      
-      // Gọi API save-bd-ha
-      const response = await this.submitToApi(apiRequest);
-      console.log('save-bd-ha API response:', response);
+
+      // Lấy user từ Firestore để có user ID
+      const userFromFirestore = await this.userManagementService.getUserByEmail(currentUser.email).pipe(take(1)).toPromise();
+      if (!userFromFirestore) {
+        throw new Error('Không tìm thấy user trong hệ thống');
+      }
+
+      // Tạo data cho bd_ha
+      const bdHaData: Omit<BdHaData, 'id'> = {
+        masothe_bd_ha: `${this.data.quanDay.kyhieuquanday}-065`,
+        kyhieubangve: this.data.quanDay.kyhieuquanday,
+        ngaygiacong: new Date(),
+        nguoigiacong: currentUser.fullName || currentUser.username || currentUser.email || 'Unknown',
+        quycachday: formData.quy_cach_day,
+        sosoiday: formData.so_soi_day,
+        ngaysanxuat: formData.ngay_san_xuat,
+        nhasanxuat: formData.nha_san_xuat === 'OTHER' ? formData.nha_san_xuat_other : formData.nha_san_xuat,
+        chuvikhuon: formData.chu_vi_khuon,
+        kt_bung_bd: formData.kt_bung_bd_truoc || 0,
+        chieuquanday: formData.chieu_quan_day,
+        mayquanday: formData.may_quan_day,
+        xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
+        haidau: this.getSelectedThickness(formData, 'hai_dau'),
+        kt_boiday_trong: `${formData.chu_vi_bd_ha_trong_1p},${formData.chu_vi_bd_ha_trong_2p},${formData.chu_vi_bd_ha_trong_3p}`,
+        chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p,
+        kt_bd_ngoai: `${formData.kt_bd_ha_ngoai_bv_1p},${formData.kt_bd_ha_ngoai_bv_2p},${formData.kt_bd_ha_ngoai_bv_3p}`,
+        dientroRa: formData.dien_tro_ha_ra,
+        dientroRb: formData.dien_tro_ha_rb,
+        dientroRc: formData.dien_tro_ha_rc,
+        dolechdientro: formData.do_lech_dien_tro_giua_cac_pha,
+        trang_thai: 1, // Trạng thái hoàn thành
+        user_update: currentUser.email,
+        created_at: new Date(),
+        khau_sx: 'bd_ha'
+      };
+
+      console.log('BdHa data to save:', bdHaData);
+
+      // 1. Lưu data vào tbl_bd_ha
+      const bdHaId = await this.firebaseBdHaService.createBdHa(bdHaData);
+      console.log('BdHa created with ID:', bdHaId);
+
+      // 2. Cập nhật trạng thái trong user_bangve với bd_ha_id mới
+      await this.updateUserBangVeStatus(userFromFirestore.id, this.data.quanDay.id, bdHaId);
       
       // Hiển thị thông báo thành công
-      this.snackBar.open('Lưu thông tin bối dây hạ thành công!', 'Đóng', {
+      this.snackBar.open('Lưu thông tin bối dây hạ thành công!', '×', {
         duration: 3000,
-        horizontalPosition: 'center',
+        horizontalPosition: 'right',
         verticalPosition: 'top',
-        panelClass: ['success-snackbar']
+        panelClass: ['success-snackbar', 'compact-snackbar']
       });
       
       // Đóng popup và trả về data
       this.dialogRef.close({
         success: true,
-        data: response,
+        data: { bdHaId, bdHaData },
         message: 'Lưu thông tin bối dây hạ thành công!'
       });
       
@@ -424,12 +467,12 @@ export class BoiDayHaPopupComponent implements OnInit {
       console.error('Error submitting form:', error);
       
       // Hiển thị thông báo lỗi
-      const errorMessage = error.error?.message || error.message || 'Có lỗi xảy ra khi lưu thông tin';
-      this.snackBar.open(errorMessage, 'Đóng', {
+      const errorMessage = error.message || 'Có lỗi xảy ra khi lưu thông tin';
+      this.snackBar.open(errorMessage, '×', {
         duration: 5000,
-        horizontalPosition: 'center',
+        horizontalPosition: 'right',
         verticalPosition: 'top',
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar', 'compact-snackbar']
       });
       
       // Hiển thị dialog lỗi chi tiết
@@ -563,6 +606,175 @@ export class BoiDayHaPopupComponent implements OnInit {
       });
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  // Cập nhật trạng thái trong user_bangve
+  private async updateUserBangVeStatus(userId: string, bangveId: string, bdHaId: string): Promise<void> {
+    try {
+      console.log('Updating user_bangve status for user:', userId, 'bangve:', bangveId, 'bdHaId:', bdHaId);
+      
+      // Lấy tất cả assignments của user
+      console.log('Getting assignments for userId (string):', userId);
+      console.log('Getting assignments for userId (number):', parseInt(userId));
+      const userAssignments = await this.firebaseUserBangVeService.getUserBangVeByUserId(parseInt(userId));
+      console.log('All user assignments:', userAssignments);
+      console.log('Number of assignments found:', userAssignments.length);
+      console.log('Looking for bangveId:', bangveId, 'userId:', userId);
+      
+      // Tìm assignment có bangve_id tương ứng và có bd_ha_id (nếu đã có) hoặc chưa có bd_ha_id
+      let relevantAssignment = userAssignments.find(assignment => 
+        assignment.bangve_id === String(bangveId) && 
+        assignment.khau_sx === 'bd_ha' &&
+        (assignment.bd_ha_id === undefined || assignment.bd_ha_id === null || String(assignment.bd_ha_id) === '' || String(assignment.bd_ha_id) === 'undefined' || String(assignment.bd_ha_id) === 'null')
+      );
+      
+      console.log('Relevant assignment found (without bd_ha_id):', relevantAssignment);
+      
+      // Nếu không tìm thấy assignment chưa có bd_ha_id, tìm assignment có bd_ha_id tương ứng
+      if (!relevantAssignment) {
+        relevantAssignment = userAssignments.find(assignment => 
+          assignment.bangve_id === String(bangveId) && 
+          assignment.khau_sx === 'bd_ha' &&
+          String(assignment.bd_ha_id) === bdHaId
+        );
+        console.log('Relevant assignment found (with matching bd_ha_id):', relevantAssignment);
+      }
+      
+      // Nếu vẫn không tìm thấy, tìm assignment có bangve_id và permission_type = 'gia_cong'
+      if (!relevantAssignment) {
+        relevantAssignment = userAssignments.find(assignment => 
+          assignment.bangve_id === String(bangveId) && 
+          assignment.permission_type === 'gia_cong' &&
+          assignment.status === true
+        );
+        console.log('Relevant assignment found (by permission_type):', relevantAssignment);
+      }
+      
+      if (!relevantAssignment) {
+        console.warn('No relevant assignment found for user and bangve');
+        console.log('Available assignments:', userAssignments.map(a => ({
+          id: a.id,
+          bangve_id: a.bangve_id,
+          khau_sx: a.khau_sx,
+          permission_type: a.permission_type,
+          status: a.status,
+          bd_ha_id: a.bd_ha_id
+        })));
+        
+        // Debug: Log each assignment individually
+        console.log('Debugging each assignment:');
+        userAssignments.forEach((assignment, index) => {
+          console.log(`Assignment ${index}:`, {
+            id: assignment.id,
+            bangve_id: assignment.bangve_id,
+            khau_sx: assignment.khau_sx,
+            permission_type: assignment.permission_type,
+            status: assignment.status,
+            user_id: assignment.user_id,
+            bd_ha_id: assignment.bd_ha_id
+          });
+          console.log(`  - bangve_id match: ${assignment.bangve_id} === ${String(bangveId)} = ${assignment.bangve_id === String(bangveId)}`);
+          console.log(`  - khau_sx match: ${assignment.khau_sx} === 'bd_ha' = ${assignment.khau_sx === 'bd_ha'}`);
+          console.log(`  - bd_ha_id match: ${assignment.bd_ha_id} === ${bdHaId} = ${String(assignment.bd_ha_id) === bdHaId}`);
+        });
+        
+        throw new Error('Không tìm thấy assignment hợp lệ để cập nhật');
+      }
+      
+      console.log('Found relevant assignment:', relevantAssignment);
+      
+      // Cập nhật bd_ha_id và trạng thái bd_ha thành 2 (đã hoàn thành)
+      if (relevantAssignment.id && relevantAssignment.id !== undefined && relevantAssignment.id !== null) {
+        console.log('Attempting to update assignment with ID:', relevantAssignment.id);
+        
+        try {
+          // Kiểm tra document có tồn tại không trước khi cập nhật
+          const docExists = await this.firebaseUserBangVeService.getUserBangVeById(relevantAssignment.id.toString());
+          if (!docExists) {
+            console.warn('Document does not exist, trying to find alternative assignment');
+            throw new Error('Document không tồn tại');
+          }
+          
+          console.log('Calling updateUserBangVeWithBdHaId with:', {
+            id: relevantAssignment.id.toString(),
+            bdHaId: bdHaId,
+            trang_thai: 2
+          });
+          
+          await this.firebaseUserBangVeService.updateUserBangVeWithBdHaId(
+            relevantAssignment.id.toString(), 
+            bdHaId,
+            2 // trang_thai_bd_ha = 2 (đã hoàn thành)
+          );
+          
+          console.log('Successfully updated user_bangve with bd_ha_id and trang_thai_bd_ha = 2');
+        } catch (updateError) {
+          console.warn('Failed to update with current assignment, trying alternative approach:', updateError);
+          
+          // Thử tìm assignment khác với logic khác
+          const alternativeAssignment = userAssignments.find(assignment => 
+            assignment.bangve_id === String(bangveId) && 
+            assignment.permission_type === 'gia_cong' &&
+            assignment.status === true
+          );
+          
+          if (alternativeAssignment && alternativeAssignment.id) {
+            console.log('Found alternative assignment:', alternativeAssignment);
+            console.log('Calling updateUserBangVeWithBdHaId with alternative assignment:', {
+              id: alternativeAssignment.id.toString(),
+              bdHaId: bdHaId,
+              trang_thai: 2
+            });
+            
+            await this.firebaseUserBangVeService.updateUserBangVeWithBdHaId(
+              alternativeAssignment.id.toString(), 
+              bdHaId,
+              2 // trang_thai_bd_ha = 2 (đã hoàn thành)
+            );
+            
+            console.log('Successfully updated alternative assignment with bd_ha_id and trang_thai_bd_ha = 2');
+          } else {
+            throw new Error('Không tìm thấy assignment hợp lệ để cập nhật');
+          }
+        }
+      } else {
+        console.warn('Assignment ID is undefined or null:', relevantAssignment);
+        throw new Error('Không tìm thấy assignment hợp lệ để cập nhật');
+      }
+      
+      console.log('User bangve status updated successfully');
+      
+    } catch (error) {
+      console.error('Error updating user bangve status:', error);
+      throw error;
+    }
+  }
+
+  // Cập nhật assignment thay thế
+  private async updateAssignmentWithAlternative(assignment: any, bdHaId: string): Promise<void> {
+    try {
+      console.log('Updating alternative assignment:', assignment);
+      
+      if (assignment.id) {
+        // Kiểm tra document có tồn tại không
+        const docExists = await this.firebaseUserBangVeService.getUserBangVeById(assignment.id.toString());
+        if (docExists) {
+          await this.firebaseUserBangVeService.updateUserBangVeWithBdHaId(
+            assignment.id.toString(), 
+            bdHaId,
+            2 // trang_thai_bd_ha = 2 (đã hoàn thành)
+          );
+          console.log('Alternative assignment updated successfully');
+        } else {
+          throw new Error('Alternative assignment document không tồn tại');
+        }
+      } else {
+        throw new Error('Alternative assignment không có ID');
+      }
+    } catch (error) {
+      console.error('Error updating alternative assignment:', error);
+      throw error;
     }
   }
 

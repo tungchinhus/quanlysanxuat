@@ -1,0 +1,80 @@
+<div class="test-container">
+  <h2>Test Assignment Component</h2>
+  
+  <mat-card class="test-card">
+    <mat-card-header>
+      <mat-card-title>Create Test Assignment</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="testForm" (ngSubmit)="createTestAssignment()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select User</mat-label>
+          <mat-select formControlName="userId">
+            <mat-option *ngFor="let user of allUsers" [value]="user.id">
+              {{ user.fullName || user.username || user.email }} ({{ user.id }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select BangVe</mat-label>
+          <mat-select formControlName="bangveId">
+            <mat-option *ngFor="let bangve of allBangVe" [value]="bangve.id">
+              {{ bangve.kyhieubangve || bangve.id }} ({{ bangve.id }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Khau SX</mat-label>
+          <mat-select formControlName="khauSx">
+            <mat-option value="bd_ha">Bối dây hạ</mat-option>
+            <mat-option value="bd_cao">Bối dây cao</mat-option>
+            <mat-option value="bd_ep">Ép bối dây</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="button-group">
+          <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+            {{ isLoading ? 'Creating...' : 'Create Assignment' }}
+          </button>
+          <button mat-raised-button color="accent" type="button" (click)="checkAssignments()" [disabled]="isLoading">
+            {{ isLoading ? 'Loading...' : 'Check All Assignments' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="result-card" *ngIf="result">
+    <mat-card-header>
+      <mat-card-title>Result</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="result.success">
+        <p><strong>Status:</strong> Success</p>
+        <p *ngIf="result.docId"><strong>Document ID:</strong> {{ result.docId }}</p>
+        <div *ngIf="result.assignments">
+          <p><strong>Total Assignments:</strong> {{ result.assignments.length }}</p>
+          <div class="assignments-list">
+            <div *ngFor="let assignment of result.assignments" class="assignment-item">
+              <p><strong>ID:</strong> {{ assignment.id }}</p>
+              <p><strong>User ID:</strong> {{ assignment.user_id }}</p>
+              <p><strong>BangVe ID:</strong> {{ assignment.bangve_id }}</p>
+              <p><strong>Khau SX:</strong> {{ assignment.khau_sx }}</p>
+              <p><strong>Trang Thai:</strong> {{ assignment.trang_thai }}</p>
+              <p><strong>BD Ha ID:</strong> {{ assignment.bd_ha_id }}</p>
+              <p><strong>BD Cao ID:</strong> {{ assignment.bd_cao_id }}</p>
+              <p><strong>BD Ep ID:</strong> {{ assignment.bd_ep_id }}</p>
+              <hr>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!result.success">
+        <p><strong>Status:</strong> Error</p>
+        <p><strong>Error:</strong> {{ result.error }}</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

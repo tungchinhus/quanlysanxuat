@@ -5,19 +5,19 @@ import { CommonService } from './common.service';
 import { AuthService } from './auth.service';
 
 export interface UserBangVeData {
-  id?: number;
+  id?: number | string;
   user_id: number; // Foreign Key to users table
   firebase_uid?: string; // Firebase Authentication UID
   bangve_id: string; // Foreign Key to tbl_bangve (Firebase document ID)
-  bd_ha_id?: number; // Foreign Key to tbl_bd_ha
-  bd_cao_id?: number; // Foreign Key to tbl_bd_cao
-  bd_ep_id?: number; // Foreign Key to tbl_ep_boiday
+  bd_ha_id?: number | null; // Foreign Key to tbl_bd_ha
+  bd_cao_id?: number | null; // Foreign Key to tbl_bd_cao
+  bd_ep_id?: number | null; // Foreign Key to tbl_ep_boiday
   permission_type?: string; // Type of permission (e.g., 'gia_cong', 'view', 'edit')
   status?: boolean; // Assignment status (true = active, false = inactive)
   trang_thai_bv?: number; // Status of the drawing assignment
-  trang_thai_bd_ha?: number; // Status for low winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
-  trang_thai_bd_cao?: number; // Status for high winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
-  trang_thai_bd_ep?: number; // Status for pressing winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
+  trang_thai_bd_ha?: number | null; // Status for low winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
+  trang_thai_bd_cao?: number | null; // Status for high winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
+  trang_thai_bd_ep?: number | null; // Status for pressing winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
   assigned_at?: Date; // Assignment timestamp
   assigned_by_user_id?: number; // User who made the assignment
   created_at?: Date;

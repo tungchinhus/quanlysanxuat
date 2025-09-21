@@ -192,7 +192,7 @@ export class GiaCongPopupComponent implements OnInit {
       const roleName = roleArray[0] || 'user';
       return {
         id: Number.isFinite(Number(u.id)) ? Number(u.id) : Date.now(),
-        userId: undefined,
+        userId: Number.isFinite(Number(u.id)) ? Number(u.id) : Date.now(), // Set userId same as id
         name: u.fullName || u.username || u.email || '',
         username: u.username,
         email: u.email,
@@ -594,7 +594,16 @@ export class GiaCongPopupComponent implements OnInit {
     }
 
     try {
-      // 1. Lấy user ID từ Firestore users collection dựa vào email
+      // 1. Lấy Firebase Authentication UID từ current user
+      const currentUserUID = currentUser?.uid || currentUser?.id;
+      if (!currentUserUID) {
+        console.error('Cannot get Firebase Authentication UID');
+        this.commonService.thongbao('Không thể lấy Firebase UID', 'Đóng', 'error');
+        return;
+      }
+      console.log('Current user Firebase UID:', currentUserUID);
+
+      // 2. Lấy user ID từ Firestore users collection dựa vào email (cho assigned_by_user_id)
       console.log('Getting user by email from Firestore:', currentUserEmail);
       const currentUserFromFirestore = await this.userManagementService.getUserByEmail(currentUserEmail).pipe(take(1)).toPromise();
       if (!currentUserFromFirestore) {
@@ -605,16 +614,36 @@ export class GiaCongPopupComponent implements OnInit {
       const currentUserId = parseInt(currentUserFromFirestore.id);
       console.log('Current user ID from Firestore:', currentUserId);
 
-      // 2. Cập nhật trang_thai = 1 trong tbl_bangve (đang thi công)
+      // 3. Cập nhật trang_thai = 1 trong tbl_bangve (đang thi công)
       console.log('Updating bangve status to 1 (in progress)...');
       await this.updateBangVeStatus(bangveId, 1);
 
-      // 3. Tạo dữ liệu cho user bối dây hạ với đầy đủ các trường theo thiết kế database
+      // 4. Lấy Firebase UID của workers từ Firestore users collection
+      console.log('Getting Firebase UID for workers...');
+      if (!boiDayHa.email || !boiDayCao.email) {
+        console.error('Worker emails are missing');
+        this.commonService.thongbao('Thông tin email của người gia công không đầy đủ', 'Đóng', 'error');
+        return;
+      }
+      
+      const boiDayHaUser = await this.userManagementService.getUserByEmail(boiDayHa.email).pipe(take(1)).toPromise();
+      const boiDayCaoUser = await this.userManagementService.getUserByEmail(boiDayCao.email).pipe(take(1)).toPromise();
+      
+      if (!boiDayHaUser || !boiDayCaoUser) {
+        console.error('Cannot find workers in Firestore users collection');
+        this.commonService.thongbao('Không tìm thấy thông tin người gia công trong hệ thống', 'Đóng', 'error');
+        return;
+      }
+      
+      console.log('BoiDayHa user from Firestore:', boiDayHaUser);
+      console.log('BoiDayCao user from Firestore:', boiDayCaoUser);
+
+      // 5. Tạo dữ liệu cho user bối dây hạ với đầy đủ các trường theo thiết kế database
       const userBangVeHa: UserBangVeData = {
-        user_id: boiDayHa.userId || boiDayHa.id,
-        firebase_uid: undefined, // Firebase Authentication UID - sẽ được cập nhật sau
+        user_id: parseInt(boiDayHaUser.id), // Sử dụng Firestore user ID
+        firebase_uid: boiDayHaUser.uid || boiDayHaUser.id, // Sử dụng Firebase UID thực tế
         bangve_id: bangveId,
-        bd_ha_id: boiDayHa.userId || boiDayHa.id, // Foreign Key to tbl_bd_ha
+        bd_ha_id: undefined, // Sẽ được cập nhật sau khi tạo bd_ha record
         bd_cao_id: undefined, // Không có bd_cao_id cho user bối dây hạ
         bd_ep_id: undefined, // Không có bd_ep_id cho user bối dây hạ
         permission_type: 'gia_cong',
@@ -632,13 +661,13 @@ export class GiaCongPopupComponent implements OnInit {
         trang_thai: 0 // 0 = chỉ mới gán chưa thi công
       };
 
-      // 4. Tạo dữ liệu cho user bối dây cao với đầy đủ các trường theo thiết kế database
+      // 6. Tạo dữ liệu cho user bối dây cao với đầy đủ các trường theo thiết kế database
       const userBangVeCao: UserBangVeData = {
-        user_id: boiDayCao.userId || boiDayCao.id,
-        firebase_uid: undefined, // Firebase Authentication UID - sẽ được cập nhật sau
+        user_id: parseInt(boiDayCaoUser.id), // Sử dụng Firestore user ID
+        firebase_uid: boiDayCaoUser.uid || boiDayCaoUser.id, // Sử dụng Firebase UID thực tế
         bangve_id: bangveId,
         bd_ha_id: undefined, // Không có bd_ha_id cho user bối dây cao
-        bd_cao_id: boiDayCao.userId || boiDayCao.id, // Foreign Key to tbl_bd_cao
+        bd_cao_id: undefined, // Sẽ được cập nhật sau khi tạo bd_cao record
         bd_ep_id: undefined, // Không có bd_ep_id cho user bối dây cao
         permission_type: 'gia_cong',
         status: true,

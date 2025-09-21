@@ -30,6 +30,9 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ErrorDialogComponent, ErrorDialogData } from './error-dialog/error-dialog.component';
+import { SuccessDialogComponent, SuccessDialogData } from './success-dialog/success-dialog.component';
 
 export interface QuanDayData {
   id: string; // Firebase document ID (string)
@@ -107,7 +110,8 @@ export interface GetUserAssignedDrawingsResponse {
     MatTabsModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatProgressSpinnerModule
 ]
 })
 export class DsQuanDayComponent implements OnInit {
@@ -120,9 +124,11 @@ export class DsQuanDayComponent implements OnInit {
   userRole: UserRole | null = null;
   isGiaCongHa: boolean = false;
   isGiaCongCao: boolean = false;
-  isGiaCongEp: boolean = false; 
+  isGiaCongEp: boolean = false;
+  isLoading: boolean = false; 
 
-  displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'bd_ha_trong', 'bd_ha_ngoai', 'bd_cao', 'bd_ep', 'bung_bd', 'user_create', 'created_at', 'trang_thai', 'actions'];
+  displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
+  displayedColumnsInProgress: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
   displayedColumnsCompleted: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
   
   searchTerm: string = '';
@@ -215,17 +221,29 @@ export class DsQuanDayComponent implements OnInit {
               this.loadQuanDayData();
             } else {
               console.log('checkAuthentication: User does not have quan day access, redirecting to unauthorized');
-              this.showError('Bạn không có quyền truy cập trang quản lý quấn dây');
+              this.showError(
+                'Bạn không có quyền truy cập trang quản lý quấn dây',
+                'Vui lòng liên hệ quản trị viên để được cấp quyền truy cập.',
+                false
+              );
               this.router.navigate(['/unauthorized']);
             }
           } else {
             console.error('User không có thông tin user_id hợp lệ:', userId);
             this.debugUserIdIssue();
-            this.showError('User không có quyền truy cập dữ liệu này - userId không hợp lệ');
+            this.showError(
+              'User không có quyền truy cập dữ liệu này',
+              'userId không hợp lệ. Vui lòng đăng nhập lại hoặc liên hệ quản trị viên.',
+              true
+            );
           }
         } else {
           console.error('Không thể lấy thông tin user');
-          this.showError('Không thể lấy thông tin người dùng');
+          this.showError(
+            'Không thể lấy thông tin người dùng',
+            'Vui lòng đăng nhập lại hoặc kiểm tra kết nối mạng.',
+            true
+          );
         }
       } else {
         console.log('User not authenticated, redirecting to login');
@@ -269,6 +287,7 @@ export class DsQuanDayComponent implements OnInit {
   }
 
   async loadQuanDayData(): Promise<void> {
+    this.isLoading = true;
     try {
       console.log('=== LOAD QUAN DAY DATA FROM FIREBASE START ===');
       console.log('Current user:', this.currentUser);
@@ -311,35 +330,109 @@ export class DsQuanDayComponent implements OnInit {
       }
       console.log('Found user in Firestore:', user);
       
-      // 2. Lấy user_bangve assignments cho user hiện tại bằng user ID từ Firestore
-      console.log('Loading user_bangve assignments for user ID:', user.id);
-      const userAssignments = await this.firebaseUserBangVeService.getUserBangVeByUserId(parseInt(user.id));
-      console.log('User assignments loaded:', userAssignments.length, 'items');
+      // 2. Lấy user_bangve assignments cho user hiện tại bằng cả user_id và firebase_uid
+      console.log('Loading user_bangve assignments for user...');
+      console.log('User ID from Firestore:', user.id);
+      console.log('Firebase UID:', this.currentUser.uid);
+      
+      // Thử cả hai cách lookup
+      const userAssignmentsByUserId = await this.firebaseUserBangVeService.getUserBangVeByUserId(parseInt(user.id));
+      const userAssignmentsByFirebaseUID = await this.firebaseUserBangVeService.getUserBangVeByFirebaseUID(this.currentUser.uid);
+      
+      // Kết hợp cả hai kết quả và loại bỏ trùng lặp
+      const allAssignments = [...userAssignmentsByUserId, ...userAssignmentsByFirebaseUID];
+      const userAssignments = allAssignments.filter((assignment, index, self) => 
+        index === self.findIndex(a => a.id === assignment.id)
+      );
+      
+      console.log('User assignments by user_id:', userAssignmentsByUserId.length, 'items');
+      console.log('User assignments by firebase_uid:', userAssignmentsByFirebaseUID.length, 'items');
+      console.log('Combined user assignments:', userAssignments.length, 'items');
+      
+      // Debug: Log all assignments
+      console.log('=== ALL USER ASSIGNMENTS DEBUG ===');
+      userAssignments.forEach((assignment, index) => {
+        console.log(`Assignment ${index}:`, {
+          id: assignment.id,
+          user_id: assignment.user_id,
+          firebase_uid: assignment.firebase_uid,
+          bangve_id: assignment.bangve_id,
+          khau_sx: assignment.khau_sx,
+          permission_type: assignment.permission_type,
+          status: assignment.status,
+          bd_ha_id: assignment.bd_ha_id,
+          bd_cao_id: assignment.bd_cao_id,
+          bd_ep_id: assignment.bd_ep_id,
+          trang_thai_bd_ha: assignment.trang_thai_bd_ha,
+          trang_thai_bd_cao: assignment.trang_thai_bd_cao,
+          trang_thai_bd_ep: assignment.trang_thai_bd_ep
+        });
+      });
+      console.log('=== END ALL USER ASSIGNMENTS DEBUG ===');
       
       // 2. Filter assignments theo role của user (hỗ trợ cả trường mới và legacy)
       let relevantAssignments = userAssignments;
       if (this.isGiaCongHa) {
-        relevantAssignments = userAssignments.filter(assignment => 
-          // Sử dụng trường mới nếu có, fallback về legacy
-          (assignment.bd_ha_id !== undefined && assignment.bd_ha_id !== null) ||
-          (assignment.khau_sx === 'bd_ha' || assignment.khau_sx === 'boidayha')
-        );
+        relevantAssignments = userAssignments.filter(assignment => {
+          // Lấy tất cả assignments cho bối dây hạ, không cần có bd_ha_id
+          const hasCorrectKhauSx = assignment.khau_sx === 'bd_ha' || assignment.khau_sx === 'boidayha';
+          const hasPermissionType = assignment.permission_type === 'gia_cong';
+          const isRelevant = hasCorrectKhauSx || hasPermissionType;
+          
+          console.log('Assignment for boidayha check:', {
+            id: assignment.id,
+            bd_ha_id: assignment.bd_ha_id,
+            khau_sx: assignment.khau_sx,
+            permission_type: assignment.permission_type,
+            hasCorrectKhauSx,
+            hasPermissionType,
+            isRelevant
+          });
+          
+          return isRelevant;
+        });
         console.log('Filtered assignments for boidayha:', relevantAssignments.length, 'items');
         console.log('Sample assignments:', relevantAssignments.slice(0, 2));
       } else if (this.isGiaCongCao) {
-        relevantAssignments = userAssignments.filter(assignment => 
-          // Sử dụng trường mới nếu có, fallback về legacy
-          (assignment.bd_cao_id !== undefined && assignment.bd_cao_id !== null) ||
-          (assignment.khau_sx === 'bd_cao' || assignment.khau_sx === 'boidaycao')
-        );
+        relevantAssignments = userAssignments.filter(assignment => {
+          // Lấy tất cả assignments cho bối dây cao, không cần có bd_cao_id
+          const hasCorrectKhauSx = assignment.khau_sx === 'bd_cao' || assignment.khau_sx === 'boidaycao';
+          const hasPermissionType = assignment.permission_type === 'gia_cong';
+          const isRelevant = hasCorrectKhauSx || hasPermissionType;
+          
+          console.log('Assignment for boidaycao check:', {
+            id: assignment.id,
+            bd_cao_id: assignment.bd_cao_id,
+            khau_sx: assignment.khau_sx,
+            permission_type: assignment.permission_type,
+            hasCorrectKhauSx,
+            hasPermissionType,
+            isRelevant
+          });
+          
+          return isRelevant;
+        });
         console.log('Filtered assignments for boidaycao:', relevantAssignments.length, 'items');
         console.log('Sample assignments:', relevantAssignments.slice(0, 2));
       } else if (this.isGiaCongEp) {
-        relevantAssignments = userAssignments.filter(assignment => 
-          // Sử dụng trường mới nếu có, fallback về legacy
-          (assignment.bd_ep_id !== undefined && assignment.bd_ep_id !== null) ||
-          (assignment.khau_sx === 'bd_ep' || assignment.khau_sx === 'epboiday')
-        );
+        relevantAssignments = userAssignments.filter(assignment => {
+          // Lấy tất cả assignments cho ép bối dây, không cần có bd_ep_id
+          const hasCorrectKhauSx = assignment.khau_sx === 'bd_ep' || assignment.khau_sx === 'epboiday';
+          const hasPermissionType = assignment.permission_type === 'gia_cong';
+          const isRelevant = hasCorrectKhauSx || hasPermissionType;
+          
+          console.log('Assignment for epboiday check:', {
+            id: assignment.id,
+            bd_ep_id: assignment.bd_ep_id,
+            khau_sx: assignment.khau_sx,
+            permission_type: assignment.permission_type,
+            hasCorrectKhauSx,
+            hasPermissionType,
+            isRelevant
+          });
+          
+          return isRelevant;
+        });
         console.log('Filtered assignments for epboiday:', relevantAssignments.length, 'items');
         console.log('Sample assignments:', relevantAssignments.slice(0, 2));
       }
@@ -440,17 +533,18 @@ export class DsQuanDayComponent implements OnInit {
       });
 
       // Tab "Đang gia công" - hiển thị bảng vẽ đang được thi công (trang_thai = 1)
+      // Chỉ hiển thị khi có bd_ha_id/bd_cao_id/bd_ep_id (đã bắt đầu thi công) và đang thi công (trang_thai = 1)
       this.inProgressQuanDays = filteredData.filter(item => {
         let result = false;
         if (this.isGiaCongHa) {
-          // Sử dụng trường mới nếu có, fallback về legacy
-          result = (item.trang_thai_bd_ha === 1) || (item.trang_thai === 1 && item.khau_sx === 'bd_ha');
+          // Chỉ hiển thị khi có bd_ha_id và đang thi công (trang_thai_bd_ha = 1)
+          result = (item.bd_ha_id && item.trang_thai_bd_ha === 1);
         } else if (this.isGiaCongCao) {
-          result = (item.trang_thai_bd_cao === 1) || (item.trang_thai === 1 && item.khau_sx === 'bd_cao');
+          result = (item.bd_cao_id && item.trang_thai_bd_cao === 1);
         } else if (this.isGiaCongEp) {
-          result = (item.trang_thai_bd_ep === 1) || (item.trang_thai === 1 && item.khau_sx === 'bd_ep');
+          result = (item.bd_ep_id && item.trang_thai_bd_ep === 1);
         }
-        console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in in-progress tab: ${result}`);
+        console.log(`Item ${item.kyhieuquanday}: bd_ha_id=${item.bd_ha_id}, bd_cao_id=${item.bd_cao_id}, bd_ep_id=${item.bd_ep_id}, trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in in-progress tab: ${result}`);
         return result;
       });
       
@@ -503,6 +597,8 @@ export class DsQuanDayComponent implements OnInit {
       this.completedQuanDays = [];
       this.filteredCompletedQuanDays = [];
       this.pagedCompletedQuanDays = [];
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -1446,6 +1542,9 @@ export class DsQuanDayComponent implements OnInit {
       return;
     }
     
+    // Chuyển trạng thái từ "chưa bắt đầu" sang "đang thi công" trước khi mở popup
+    this.startGiaCong(element, 'bd_ha');
+    
     console.log('onGiaCongHa: Opening lower winding popup...');
     
     // Mở popup bối dây hạ
@@ -1463,7 +1562,11 @@ export class DsQuanDayComponent implements OnInit {
         // Nếu lưu thành công và cần reload data
         if (result.reloadData) {
           console.log('Reload data sau khi lưu bối dây hạ thành công');
-          this.showSuccess(result.message || 'Thông tin bối dây hạ đã được lưu thành công!');
+          this.showSuccess(
+            result.message || 'Thông tin bối dây hạ đã được lưu thành công!',
+            'Dữ liệu đã được cập nhật và đồng bộ với hệ thống.',
+            true
+          );
           
           // Cập nhật trạng thái bối dây hạ trong database trước
           this.updateBoiDayHaStatus(element.id, 1);
@@ -1508,6 +1611,9 @@ export class DsQuanDayComponent implements OnInit {
       this.showError('Bạn không có quyền thực hiện gia công cao');
       return;
     }
+    
+    // Chuyển trạng thái từ "chưa bắt đầu" sang "đang thi công" trước khi mở popup
+    this.startGiaCong(element, 'bd_cao');
     
     console.log('onGiaCongCao: Opening upper winding popup...');
     
@@ -1767,6 +1873,59 @@ export class DsQuanDayComponent implements OnInit {
     console.log('=== END DATA STATUS ===');
   }
 
+  // Bắt đầu gia công - chuyển từ "chưa bắt đầu" sang "đang thi công"
+  private async startGiaCong(element: QuanDayData, khauSx: string): Promise<void> {
+    try {
+      console.log(`startGiaCong: Starting ${khauSx} for element:`, element.kyhieuquanday);
+      
+      const currentUser = this.authService.getUserInfo();
+      if (!currentUser) {
+        console.warn('startGiaCong: No current user found');
+        return;
+      }
+      
+      const userFromFirestore = await this.userManagementService.getUserByEmail(currentUser.email).pipe(take(1)).toPromise();
+      
+      if (!userFromFirestore) {
+        console.warn('startGiaCong: User not found in Firestore');
+        return;
+      }
+      
+      // Lấy tất cả assignments của user
+      const userAssignments = await this.firebaseUserBangVeService.getUserBangVeByUserId(parseInt(userFromFirestore.id));
+      
+      // Tìm assignment có bangve_id tương ứng và có khau_sx phù hợp
+      const relevantAssignment = userAssignments.find(assignment => 
+        assignment.bangve_id === String(element.id) && 
+        assignment.khau_sx === khauSx
+      );
+      
+      if (!relevantAssignment) {
+        console.warn('startGiaCong: No relevant assignment found');
+        return;
+      }
+      
+      console.log('startGiaCong: Found relevant assignment:', relevantAssignment);
+      
+      // Cập nhật trạng thái thành "đang thi công" (1)
+      if (relevantAssignment.id) {
+        const fieldName = khauSx === 'bd_ha' ? 'trang_thai_bd_ha' : 
+                         khauSx === 'bd_cao' ? 'trang_thai_bd_cao' : 'trang_thai_bd_ep';
+        
+        await this.firebaseUserBangVeService.updateUserBangVeStatus(
+          relevantAssignment.id.toString(), 
+          1, // đang thi công
+          fieldName
+        );
+        
+        console.log(`startGiaCong: Updated ${fieldName} to 1 (đang thi công)`);
+      }
+      
+    } catch (error) {
+      console.error('startGiaCong: Error:', error);
+    }
+  }
+
   // Method để cập nhật trạng thái bối dây hạ trong database
   private updateBoiDayHaStatus(bangveId: string, status: number): void {
     console.log(`updateBoiDayHaStatus: Updating bối dây hạ status for bangveId: ${bangveId} to status: ${status}`);
@@ -1894,28 +2053,30 @@ export class DsQuanDayComponent implements OnInit {
   }
 
   // Method để xử lý lỗi và hiển thị thông báo cho user
-  private showError(message: string): void {
+  private showError(message: string, details?: string, showRetry: boolean = false): void {
     console.error('showError:', message);
     
-    // Hiển thị thông báo lỗi cho user
-    this._snackBar.open(message, 'Đóng', {
-      duration: 5000,
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['error-snackbar']
-    });
+    // Hiển thị snackbar nhỏ ở góc trên bên phải
+    this.showQuickMessage(message, 'error');
   }
 
   // Method để xử lý lỗi và hiển thị thông báo thành công
-  private showSuccess(message: string): void {
+  private showSuccess(message: string, details?: string, showAction: boolean = false): void {
     console.log('showSuccess:', message);
     
-    // Hiển thị thông báo thành công cho user
-    this._snackBar.open(message, 'Đóng', {
-      duration: 3000,
-      horizontalPosition: 'center',
+    // Hiển thị snackbar nhỏ ở góc trên bên phải
+    this.showQuickMessage(message, 'success');
+  }
+
+  // Method để hiển thị thông báo nhanh (snackbar)
+  private showQuickMessage(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
+    const panelClass = `${type}-snackbar`;
+    
+    this._snackBar.open(message, '×', {
+      duration: type === 'error' ? 5000 : 3000,
+      horizontalPosition: 'right',
       verticalPosition: 'top',
-      panelClass: ['success-snackbar']
+      panelClass: [panelClass, 'compact-snackbar']
     });
   }
 
