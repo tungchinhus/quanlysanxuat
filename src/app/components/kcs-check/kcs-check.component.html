@@ -1,36 +1,23 @@
-<div class="kcs-check-container">
-  <div class="header">
-    <h1>
-      <mat-icon class="header-icon">verified</mat-icon>
-      KCS Check - Kiểm tra chất lượng
-    </h1>
-  </div>
+<div class="container">
+  <!-- Header Section -->
+  <mat-toolbar class="header-toolbar">
+    <div class="header-content">
+      <div class="title-container">
+        <h1 class="header-title">
+          <mat-icon class="header-icon">verified</mat-icon>
+          KCS Check - Kiểm tra chất lượng
+        </h1>
+        <p class="header-subtitle">Kiểm tra và duyệt chất lượng sản phẩm theo tiêu chuẩn KCS</p>
+      </div>
+    </div>
+  </mat-toolbar>
 
-  <!-- Tabs Navigation -->
-  <mat-tab-group (selectedTabChange)="onTabChange($event)" class="kcs-tabs">
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Tab Navigation -->
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" class="kcs-tabs">
     <mat-tab label="Bối dây hạ">
       <div class="tab-content">
-        <!-- Search Section -->
-        <div class="search-section">
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Tìm kiếm theo tên bảng vẽ</mat-label>
-            <input matInput 
-                   [(ngModel)]="searchBangVe" 
-                   (ngModelChange)="onSearchBangVeChange($event)"
-                   placeholder="Nhập tên bảng vẽ để tìm kiếm...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
-            <input matInput 
-                   [(ngModel)]="searchKeyword" 
-                   (ngModelChange)="onSearchChange($event)"
-                   placeholder="Tìm kiếm ký hiệu quấn dây hoặc TBKT...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-        </div>
-
         <!-- Data Table -->
         <div class="table-container">
           <!-- Loading indicator -->
@@ -127,7 +114,7 @@
                 <mat-menu #menu="matMenu">
                   <button mat-menu-item (click)="viewBangVeDetails(element)">
                     <mat-icon>visibility</mat-icon>
-                    <span>Xem chi tiết bảng vẽ</span>
+                    <span>Xem chi tiết</span>
                   </button>
                   <button mat-menu-item (click)="approveKcs(element)">
                     <mat-icon>check_circle</mat-icon>
@@ -168,30 +155,23 @@
 
     <mat-tab label="Bối dây cao">
       <div class="tab-content">
-        <!-- Similar content for Bối dây cao -->
-        <div class="search-section">
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Tìm kiếm theo tên bảng vẽ</mat-label>
-            <input matInput 
-                   [(ngModel)]="searchBangVeCao" 
-                   (ngModelChange)="onSearchBangVeCaoChange($event)"
-                   placeholder="Nhập tên bảng vẽ để tìm kiếm...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
-            <input matInput 
-                   [(ngModel)]="searchKeywordCao" 
-                   (ngModelChange)="onSearchCaoChange($event)"
-                   placeholder="Tìm kiếm ký hiệu quấn dây hoặc TBKT...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-        </div>
-
         <!-- Data Table for Bối dây cao -->
         <div class="table-container">
-          <table mat-table [dataSource]="boiDayCaoDataSource" class="kcs-table">
+          <!-- Loading indicator -->
+          <div *ngIf="isLoading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Đang tải dữ liệu...</p>
+          </div>
+
+          <!-- No data message -->
+          <div *ngIf="!isLoading && boiDayCaoDataSource.data.length === 0" class="no-data-container">
+            <mat-icon>inbox</mat-icon>
+            <p>Không có dữ liệu bối dây cao chờ duyệt</p>
+          </div>
+
+          <!-- Data table -->
+          <table *ngIf="!isLoading && boiDayCaoDataSource.data.length > 0" 
+                 mat-table [dataSource]="boiDayCaoDataSource" class="kcs-table">
             <!-- Similar columns for Bối dây cao -->
             <ng-container matColumnDef="kyhieuQuanDay">
               <th mat-header-cell *matHeaderCellDef>Ký hiệu quấn dây</th>
@@ -263,7 +243,7 @@
                 <mat-menu #menuCao="matMenu">
                   <button mat-menu-item (click)="viewBangVeDetails(element)">
                     <mat-icon>visibility</mat-icon>
-                    <span>Xem chi tiết bảng vẽ</span>
+                    <span>Xem chi tiết</span>
                   </button>
                   <button mat-menu-item (click)="approveKcs(element)">
                     <mat-icon>check_circle</mat-icon>
@@ -282,40 +262,45 @@
           </table>
 
           <!-- Pagination -->
-          <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" 
-                         showFirstLastButtons 
-                         aria-label="Select page of KCS check items">
-          </mat-paginator>
+          <div *ngIf="!isLoading && boiDayCaoDataSource.data.length > 0" class="pagination-container">
+            <mat-paginator 
+              [length]="totalCount"
+              [pageSize]="pageSize"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              [pageIndex]="currentPage - 1"
+              (page)="onPageChange($event)"
+              showFirstLastButtons 
+              aria-label="Select page of KCS check items">
+            </mat-paginator>
+            
+            <!-- Additional pagination info -->
+            <div class="pagination-info">
+              <span>Hiển thị {{(currentPage - 1) * pageSize + 1}} - {{Math.min(currentPage * pageSize, totalCount)}} của {{totalCount}} kết quả</span>
+            </div>
+          </div>
         </div>
       </div>
     </mat-tab>
 
     <mat-tab label="Ép bối dây">
       <div class="tab-content">
-        <!-- Similar content for Ép bối dây -->
-        <div class="search-section">
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Tìm kiếm theo tên bảng vẽ</mat-label>
-            <input matInput 
-                   [(ngModel)]="searchBangVeEp" 
-                   (ngModelChange)="onSearchBangVeEpChange($event)"
-                   placeholder="Nhập tên bảng vẽ để tìm kiếm...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Tìm kiếm ký hiệu quấn dây hoặc TBKT</mat-label>
-            <input matInput 
-                   [(ngModel)]="searchKeywordEp" 
-                   (ngModelChange)="onSearchEpChange($event)"
-                   placeholder="Tìm kiếm ký hiệu quấn dây hoặc TBKT...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-        </div>
-
         <!-- Data Table for Ép bối dây -->
         <div class="table-container">
-          <table mat-table [dataSource]="epBoiDayDataSource" class="kcs-table">
+          <!-- Loading indicator -->
+          <div *ngIf="isLoading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Đang tải dữ liệu...</p>
+          </div>
+
+          <!-- No data message -->
+          <div *ngIf="!isLoading && epBoiDayDataSource.data.length === 0" class="no-data-container">
+            <mat-icon>inbox</mat-icon>
+            <p>Không có dữ liệu ép bối dây chờ duyệt</p>
+          </div>
+
+          <!-- Data table -->
+          <table *ngIf="!isLoading && epBoiDayDataSource.data.length > 0" 
+                 mat-table [dataSource]="epBoiDayDataSource" class="kcs-table">
             <!-- Similar columns for Ép bối dây -->
             <ng-container matColumnDef="kyhieuQuanDay">
               <th mat-header-cell *matHeaderCellDef>Ký hiệu quấn dây</th>
@@ -387,7 +372,7 @@
                 <mat-menu #menuEp="matMenu">
                   <button mat-menu-item (click)="viewBangVeDetails(element)">
                     <mat-icon>visibility</mat-icon>
-                    <span>Xem chi tiết bảng vẽ</span>
+                    <span>Xem chi tiết</span>
                   </button>
                   <button mat-menu-item (click)="approveKcs(element)">
                     <mat-icon>check_circle</mat-icon>
@@ -406,14 +391,25 @@
           </table>
 
           <!-- Pagination -->
-          <div class="paginator-container">
-            <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]"
-                           [showFirstLastButtons]="true"
-                           aria-label="Select page of KCS check items">
+          <div *ngIf="!isLoading && epBoiDayDataSource.data.length > 0" class="pagination-container">
+            <mat-paginator 
+              [length]="totalCount"
+              [pageSize]="pageSize"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              [pageIndex]="currentPage - 1"
+              (page)="onPageChange($event)"
+              showFirstLastButtons 
+              aria-label="Select page of KCS check items">
             </mat-paginator>
+            
+            <!-- Additional pagination info -->
+            <div class="pagination-info">
+              <span>Hiển thị {{(currentPage - 1) * pageSize + 1}} - {{Math.min(currentPage * pageSize, totalCount)}} của {{totalCount}} kết quả</span>
+            </div>
           </div>
         </div>
       </div>
     </mat-tab>
-  </mat-tab-group>
+    </mat-tab-group>
+  </div>
 </div>

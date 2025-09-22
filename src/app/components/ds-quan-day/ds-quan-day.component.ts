@@ -370,72 +370,29 @@ export class DsQuanDayComponent implements OnInit {
       });
       console.log('=== END ALL USER ASSIGNMENTS DEBUG ===');
       
-      // 2. Filter assignments theo role của user (hỗ trợ cả trường mới và legacy)
-      let relevantAssignments = userAssignments;
-      if (this.isGiaCongHa) {
-        relevantAssignments = userAssignments.filter(assignment => {
-          // Lấy tất cả assignments cho bối dây hạ, không cần có bd_ha_id
-          const hasCorrectKhauSx = assignment.khau_sx === 'bd_ha' || assignment.khau_sx === 'boidayha';
-          const hasPermissionType = assignment.permission_type === 'gia_cong';
-          const isRelevant = hasCorrectKhauSx || hasPermissionType;
-          
-          console.log('Assignment for boidayha check:', {
-            id: assignment.id,
-            bd_ha_id: assignment.bd_ha_id,
-            khau_sx: assignment.khau_sx,
-            permission_type: assignment.permission_type,
-            hasCorrectKhauSx,
-            hasPermissionType,
-            isRelevant
-          });
-          
-          return isRelevant;
+      // 2. Lấy hết data user_bangve và filter theo user đang login
+      const currentUser = this.authService.getUserInfo();
+      const currentUserUID = currentUser?.uid || currentUser?.id;
+      
+      console.log('Current user UID for filtering:', currentUserUID);
+      
+      // Filter assignments theo user đang login
+      const relevantAssignments = userAssignments.filter(assignment => {
+        const isAssignedToCurrentUser = assignment.assigned_by_user_id && currentUserUID && 
+                                       assignment.assigned_by_user_id === currentUserUID;
+        
+        console.log('Assignment user check:', {
+          assignment_id: assignment.id,
+          assigned_by_user_id: assignment.assigned_by_user_id,
+          currentUserUID: currentUserUID,
+          isAssignedToCurrentUser: isAssignedToCurrentUser
         });
-        console.log('Filtered assignments for boidayha:', relevantAssignments.length, 'items');
-        console.log('Sample assignments:', relevantAssignments.slice(0, 2));
-      } else if (this.isGiaCongCao) {
-        relevantAssignments = userAssignments.filter(assignment => {
-          // Lấy tất cả assignments cho bối dây cao, không cần có bd_cao_id
-          const hasCorrectKhauSx = assignment.khau_sx === 'bd_cao' || assignment.khau_sx === 'boidaycao';
-          const hasPermissionType = assignment.permission_type === 'gia_cong';
-          const isRelevant = hasCorrectKhauSx || hasPermissionType;
-          
-          console.log('Assignment for boidaycao check:', {
-            id: assignment.id,
-            bd_cao_id: assignment.bd_cao_id,
-            khau_sx: assignment.khau_sx,
-            permission_type: assignment.permission_type,
-            hasCorrectKhauSx,
-            hasPermissionType,
-            isRelevant
-          });
-          
-          return isRelevant;
-        });
-        console.log('Filtered assignments for boidaycao:', relevantAssignments.length, 'items');
-        console.log('Sample assignments:', relevantAssignments.slice(0, 2));
-      } else if (this.isGiaCongEp) {
-        relevantAssignments = userAssignments.filter(assignment => {
-          // Lấy tất cả assignments cho ép bối dây, không cần có bd_ep_id
-          const hasCorrectKhauSx = assignment.khau_sx === 'bd_ep' || assignment.khau_sx === 'epboiday';
-          const hasPermissionType = assignment.permission_type === 'gia_cong';
-          const isRelevant = hasCorrectKhauSx || hasPermissionType;
-          
-          console.log('Assignment for epboiday check:', {
-            id: assignment.id,
-            bd_ep_id: assignment.bd_ep_id,
-            khau_sx: assignment.khau_sx,
-            permission_type: assignment.permission_type,
-            hasCorrectKhauSx,
-            hasPermissionType,
-            isRelevant
-          });
-          
-          return isRelevant;
-        });
-        console.log('Filtered assignments for epboiday:', relevantAssignments.length, 'items');
-        console.log('Sample assignments:', relevantAssignments.slice(0, 2));
-      }
+        
+        return isAssignedToCurrentUser;
+      });
+      
+      console.log('Filtered assignments for current user:', relevantAssignments.length, 'items');
+      console.log('Sample assignments:', relevantAssignments.slice(0, 2));
       
       if (relevantAssignments.length === 0) {
         console.log('No relevant assignments found for user role, showing empty data');
@@ -460,10 +417,29 @@ export class DsQuanDayComponent implements OnInit {
       );
       console.log('Assigned bangve loaded:', assignedBangVe.length, 'items');
       
-      // 5. Tạo map của assignments để dễ lookup
+      // 5. Tạo map của assignments để dễ lookup (xử lý trường hợp có nhiều assignments cho cùng một bangve_id)
       const assignmentMap = new Map();
       relevantAssignments.forEach(assignment => {
-        assignmentMap.set(assignment.bangve_id, assignment);
+        const bangveId = String(assignment.bangve_id);
+        if (assignmentMap.has(bangveId)) {
+          // Nếu đã có assignment cho bangve_id này, merge thông tin
+          const existingAssignment = assignmentMap.get(bangveId);
+          const mergedAssignment = {
+            ...existingAssignment,
+            ...assignment,
+            // Ưu tiên thông tin từ assignment mới hơn
+            trang_thai_bd_ha: assignment.trang_thai_bd_ha !== undefined ? assignment.trang_thai_bd_ha : existingAssignment.trang_thai_bd_ha,
+            trang_thai_bd_cao: assignment.trang_thai_bd_cao !== undefined ? assignment.trang_thai_bd_cao : existingAssignment.trang_thai_bd_cao,
+            trang_thai_bd_ep: assignment.trang_thai_bd_ep !== undefined ? assignment.trang_thai_bd_ep : existingAssignment.trang_thai_bd_ep,
+            bd_ha_id: assignment.bd_ha_id || existingAssignment.bd_ha_id,
+            bd_cao_id: assignment.bd_cao_id || existingAssignment.bd_cao_id,
+            bd_ep_id: assignment.bd_ep_id || existingAssignment.bd_ep_id,
+            assigned_by_user_id: assignment.assigned_by_user_id || existingAssignment.assigned_by_user_id
+          };
+          assignmentMap.set(bangveId, mergedAssignment);
+        } else {
+          assignmentMap.set(bangveId, assignment);
+        }
       });
       console.log('Assignment map created with', assignmentMap.size, 'entries');
       
@@ -517,37 +493,47 @@ export class DsQuanDayComponent implements OnInit {
         isGiaCongEp: this.isGiaCongEp
       });
       
-      // Tab "Quấn dây mới" - hiển thị bảng vẽ được gán cho user nhưng chưa bắt đầu (trang_thai = 0)
+      // Tab "Quấn dây mới" - hiển thị bảng vẽ chưa xử lý (trang_thai != 2)
       this.quanDays = filteredData.filter(item => {
         let result = false;
         if (this.isGiaCongHa) {
-          // Sử dụng trường mới nếu có, fallback về legacy
-          result = (item.trang_thai_bd_ha === 0) || (item.trang_thai === 0 && item.khau_sx === 'bd_ha');
+          // Chưa xử lý bối dây hạ (trang_thai_bd_ha != 2)
+          result = item.trang_thai_bd_ha !== 2;
         } else if (this.isGiaCongCao) {
-          result = (item.trang_thai_bd_cao === 0) || (item.trang_thai === 0 && item.khau_sx === 'bd_cao');
+          // Chưa xử lý bối dây cao (trang_thai_bd_cao != 2)
+          result = item.trang_thai_bd_cao !== 2;
         } else if (this.isGiaCongEp) {
-          result = (item.trang_thai_bd_ep === 0) || (item.trang_thai === 0 && item.khau_sx === 'bd_ep');
+          // Chưa xử lý bối dây ép (trang_thai_bd_ep != 2)
+          result = item.trang_thai_bd_ep !== 2;
         }
-        console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, trang_thai=${item.trang_thai}, khau_sx=${item.khau_sx}, included in new tab: ${result}`);
+        console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, included in new tab: ${result}`);
         return result;
       });
       
-      // Tab "Quấn dây đã xử lý" - hiển thị bảng vẽ đang thi công (trang_thai = 1) và đã hoàn thành (trang_thai = 2)
+      // Tab "Quấn dây đã xử lý" - hiển thị bảng vẽ đã xử lý (trang_thai = 2)
       let processedData: any[] = [];
       
       if (this.isGiaCongHa) {
-        // Bao gồm cả đang thi công (trang_thai_bd_ha = 1) và đã hoàn thành (trang_thai_bd_ha = 2)
-        processedData = filteredData.filter(item => 
-          item.bd_ha_id && (item.trang_thai_bd_ha === 1 || item.trang_thai_bd_ha === 2)
-        );
+        // Đã xử lý bối dây hạ (trang_thai_bd_ha = 2)
+        processedData = filteredData.filter(item => {
+          const result = item.trang_thai_bd_ha === 2;
+          console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, included in processed tab: ${result}`);
+          return result;
+        });
       } else if (this.isGiaCongCao) {
-        processedData = filteredData.filter(item => 
-          item.bd_cao_id && (item.trang_thai_bd_cao === 1 || item.trang_thai_bd_cao === 2)
-        );
+        // Đã xử lý bối dây cao (trang_thai_bd_cao = 2)
+        processedData = filteredData.filter(item => {
+          const result = item.trang_thai_bd_cao === 2;
+          console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_cao=${item.trang_thai_bd_cao}, included in processed tab: ${result}`);
+          return result;
+        });
       } else if (this.isGiaCongEp) {
-        processedData = filteredData.filter(item => 
-          item.bd_ep_id && (item.trang_thai_bd_ep === 1 || item.trang_thai_bd_ep === 2)
-        );
+        // Đã xử lý bối dây ép (trang_thai_bd_ep = 2)
+        processedData = filteredData.filter(item => {
+          const result = item.trang_thai_bd_ep === 2;
+          console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ep=${item.trang_thai_bd_ep}, included in processed tab: ${result}`);
+          return result;
+        });
       }
       
       this.completedQuanDays = processedData;

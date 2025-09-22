@@ -775,6 +775,7 @@ mat-form-field {
   margin: 8px !important;
   max-width: 400px !important;
   animation: slideInFromTop 0.3s ease-out !important;
+  z-index: 9999999 !important;
 }
 
 ::ng-deep .success-snackbar {
@@ -788,6 +789,7 @@ mat-form-field {
   margin: 8px !important;
   max-width: 400px !important;
   animation: slideInFromTop 0.3s ease-out !important;
+  z-index: 9999999 !important;
 }
 
 ::ng-deep .warning-snackbar {
@@ -801,6 +803,7 @@ mat-form-field {
   margin: 8px !important;
   max-width: 400px !important;
   animation: slideInFromTop 0.3s ease-out !important;
+  z-index: 9999999 !important;
 }
 
 ::ng-deep .info-snackbar {
@@ -814,6 +817,7 @@ mat-form-field {
   margin: 8px !important;
   max-width: 400px !important;
   animation: slideInFromTop 0.3s ease-out !important;
+  z-index: 9999999 !important;
 }
 
 @keyframes slideInFromTop {
@@ -873,6 +877,7 @@ mat-form-field {
   border-radius: 6px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
   font-weight: 500 !important;
+  z-index: 9999999 !important;
   
   .mat-simple-snackbar-action {
     color: rgba(255, 255, 255, 0.8) !important;

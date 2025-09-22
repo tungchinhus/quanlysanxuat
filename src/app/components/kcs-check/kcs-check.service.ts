@@ -272,6 +272,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error fetching BoiDayHa pending data:', error);
+          // Temporarily return mock data for BoiDayHa since API endpoint may not exist
           return this.getMockBoiDayHaPendingResponse();
         })
       );
@@ -291,6 +292,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error searching BoiDayHa pending data:', error);
+          // Temporarily return mock data for BoiDayHa search since API endpoint may not exist
           return this.getMockBoiDayHaPendingSearchResponse(searchCriteria);
         })
       );
@@ -339,6 +341,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error fetching BoiDayCao pending data:', error);
+          // Temporarily return mock data for BoiDayCao since API endpoint may not exist
           return this.getMockBoiDayCaoPendingResponse();
         })
       );
@@ -358,6 +361,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error searching BoiDayCao pending data:', error);
+          // Temporarily return mock data for BoiDayCao search since API endpoint may not exist
           return this.getMockBoiDayCaoPendingSearchResponse(searchCriteria);
         })
       );
@@ -636,7 +640,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error fetching BoiDayCao data:', error);
-          return this.getMockBoiDayCaoData();
+          return of([]); // Return empty array instead of mock data
         })
       );
   }
@@ -735,7 +739,7 @@ export class KcsCheckService {
         }),
         catchError(error => {
           console.error('Error fetching EpBoiDay data:', error);
-          return this.getMockEpBoiDayData();
+          return of([]); // Return empty array instead of mock data
         })
       );
   }

@@ -603,7 +603,7 @@ export class GiaCongPopupComponent implements OnInit {
       }
       console.log('Current user Firebase UID:', currentUserUID);
 
-      // 2. Lấy user ID từ Firestore users collection dựa vào email (cho assigned_by_user_id)
+      // 2. Lấy user ID từ Firestore users collection dựa vào email (cho created_by)
       console.log('Getting user by email from Firestore:', currentUserEmail);
       const currentUserFromFirestore = await this.userManagementService.getUserByEmail(currentUserEmail).pipe(take(1)).toPromise();
       if (!currentUserFromFirestore) {
@@ -613,6 +613,10 @@ export class GiaCongPopupComponent implements OnInit {
       }
       const currentUserId = parseInt(currentUserFromFirestore.id);
       console.log('Current user ID from Firestore:', currentUserId);
+      
+      // assigned_by_user_id phải là Firebase UID của user hiện tại (người thực hiện gán)
+      const assignedByUserId = currentUserUID;
+      console.log('Assigned by user ID (Firebase UID):', assignedByUserId);
 
       // 3. Cập nhật trang_thai = 1 trong tbl_bangve (đang thi công)
       console.log('Updating bangve status to 1 (in progress)...');
@@ -653,7 +657,7 @@ export class GiaCongPopupComponent implements OnInit {
         trang_thai_bd_cao: 0, // 0 = chưa bắt đầu cho user bối dây hạ
         trang_thai_bd_ep: 0, // 0 = chưa bắt đầu cho user bối dây hạ
         assigned_at: new Date(),
-        assigned_by_user_id: currentUserId,
+        assigned_by_user_id: boiDayHaUser.uid || boiDayHaUser.id, // UID của user được gán (bối dây hạ)
         created_at: new Date(),
         created_by: currentUserId,
         // Legacy fields for backward compatibility
@@ -676,7 +680,7 @@ export class GiaCongPopupComponent implements OnInit {
         trang_thai_bd_cao: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
         trang_thai_bd_ep: 0, // 0 = chưa bắt đầu cho user bối dây cao
         assigned_at: new Date(),
-        assigned_by_user_id: currentUserId,
+        assigned_by_user_id: boiDayCaoUser.uid || boiDayCaoUser.id, // UID của user được gán (bối dây cao)
         created_at: new Date(),
         created_by: currentUserId,
         // Legacy fields for backward compatibility

@@ -157,4 +157,22 @@ export const routes: Routes = [
     loadComponent: () => import('./components/test-assignment/test-assignment.component').then(m => m.TestAssignmentComponent),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'kcs-manager',
+    loadComponent: () => import('./components/kcs-manager/kcs-manager.component').then(m => m.KcsManagerComponent),
+    canActivate: [AuthGuard],
+    data: { 
+      roles: ['kcs'],
+      permissions: ['kcs_manager']
+    }
+  },
+  {
+    path: 'kcs-check',
+    loadComponent: () => import('./components/kcs-check/kcs-check.component').then(m => m.KcsCheckComponent),
+    canActivate: [AuthGuard],
+    data: { 
+      roles: ['kcs'],
+      permissions: ['kcs_check']
+    }
+  },
 ];

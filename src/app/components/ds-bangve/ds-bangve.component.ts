@@ -12,6 +12,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { FirebaseBangVeService } from '../../services/firebase-bangve.service';
+import { FirebaseUserBangVeService } from '../../services/firebase-user-bangve.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { STATUS } from '../../models/common.enum';
 import { CommonModule } from '@angular/common';
@@ -47,6 +48,16 @@ export interface BangVeData {
   bung_bd: number;
   user_create: string;
   trang_thai: number | null; // Thay đổi từ boolean thành number | null
+  trang_thai_bd_cao?: number | null; // Trạng thái bối dây cao: 1=đang làm, 2=đã hoàn thành
+  trang_thai_bd_ha?: number | null; // Trạng thái bối dây hạ: 1=đang làm, 2=đã hoàn thành
+  trang_thai_bd_ep?: number | null; // Trạng thái bối dây ép: 1=đang làm, 2=đã hoàn thành
+  bd_cao_id?: string | null; // ID của bối dây cao từ tbl_bd_cao
+  bd_ha_id?: string | null; // ID của bối dây hạ từ tbl_bd_ha
+  bd_ep_id?: string | null; // ID của bối dây ép từ tbl_bd_ep
+  assigned_by_user_id?: string | null; // Firebase UID của user thực hiện gán
+  // Thêm thông tin user_update để debug
+  bd_ha_user_update?: string | null; // User update từ tbl_bd_ha
+  bd_cao_user_update?: string | null; // User update từ tbl_bd_cao
   created_at: Date;
   username: string;
   email: string;
@@ -141,6 +152,7 @@ export class DsBangveComponent implements OnInit {
     private http: HttpClient,
     private authService: AuthService,
     private firebaseBangVeService: FirebaseBangVeService,
+    private firebaseUserBangVeService: FirebaseUserBangVeService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -422,8 +434,16 @@ export class DsBangveComponent implements OnInit {
       console.log('📊 [loadDrawingsFromFirebase] Loaded', firebaseDrawings.length, 'drawings from Firebase');
       
       if (firebaseDrawings && firebaseDrawings.length > 0) {
-        // Process the data the same way as API data
-        this.categorizeDrawingsByTrangThai(firebaseDrawings);
+        // Load user_bangve data to get boiday status information
+        const userBangVeData = await this.loadUserBangVeData();
+        console.log('📊 [loadDrawingsFromFirebase] Loaded', userBangVeData.length, 'user_bangve records');
+        
+        // Merge bangve data with user_bangve data to get complete status information
+        const enrichedDrawings = this.enrichDrawingsWithBoidayStatus(firebaseDrawings, userBangVeData);
+        console.log('📊 [loadDrawingsFromFirebase] Enriched drawings with boiday status from user_bangve');
+        
+        // Process the enriched data
+        this.categorizeDrawingsByTrangThai(enrichedDrawings);
         
         // Update filtered lists
         this.filterNewDrawings();
@@ -474,9 +494,23 @@ export class DsBangveComponent implements OnInit {
       console.log(`  - Converted trang_thai type: ${typeof trangThai}`);
       console.log(`  - Is NaN: ${isNaN(trangThai)}`);
       
-      // Phân loại dựa vào trang_thai (xử lý cả string và number)
-      if (trangThai === 2) {
-        console.log(`  → Adding to PROCESSED drawings (trang_thai = ${trangThai})`);
+      // Kiểm tra xem có phải bảng vẽ đã hoàn thành bôi dây cao hoặc bôi dây hạ không
+      const isBoidayCaoCompleted = this.checkBoidayCaoCompletion(drawing);
+      const isBoidayHaCompleted = this.checkBoidayHaCompletion(drawing);
+      console.log(`  - Is boiday cao completed: ${isBoidayCaoCompleted}`);
+      console.log(`  - Is boiday ha completed: ${isBoidayHaCompleted}`);
+      
+      // Kiểm tra user đang login có phải là user được gán hay không
+      const currentUser = this.authService.getUserInfo();
+      const currentUserUID = currentUser?.uid || currentUser?.id;
+      const isAssignedToCurrentUser = drawing.assigned_by_user_id && currentUserUID && drawing.assigned_by_user_id === currentUserUID;
+      console.log(`  - Current user UID: ${currentUserUID}`);
+      console.log(`  - Assigned by user ID: ${drawing.assigned_by_user_id}`);
+      console.log(`  - Is assigned to current user: ${isAssignedToCurrentUser}`);
+      
+      // Phân loại dựa vào trang_thai, trạng thái bôi dây và user assignment
+      if (trangThai === 2 || (isBoidayCaoCompleted && isAssignedToCurrentUser) || (isBoidayHaCompleted && isAssignedToCurrentUser)) {
+        console.log(`  → Adding to PROCESSED drawings (trang_thai = ${trangThai} or boiday completed for current user)`);
         const processedDrawing: ProcessedBangVeData = {
           ...drawing,
           user_process: drawing.user_create || 'Unknown',
@@ -484,19 +518,12 @@ export class DsBangveComponent implements OnInit {
           process_status: 'Completed'
         };
         this.processedDrawings.push(processedDrawing);
-      } else if (trangThai === 1) {
-        console.log(`  → Adding to IN PROGRESS drawings (trang_thai = ${trangThai})`);
+      } else if (trangThai === 1 || (isAssignedToCurrentUser && (drawing.trang_thai_bd_ha === 1 || drawing.trang_thai_bd_cao === 1))) {
+        console.log(`  → Adding to IN PROGRESS drawings (trang_thai = ${trangThai} or boiday in progress for current user)`);
         this.inProgressDrawings.push(drawing);
-      } else if (trangThai === 0) {
-        console.log(`  → Adding to NEW drawings (trang_thai = ${trangThai})`);
-        this.drawings.push(drawing);
-      } else if (drawing.trang_thai === null || drawing.trang_thai === undefined) {
-        // trang_thai = null/undefined → Tab "Bảng vẽ mới"
+      } else if (trangThai === 0 || drawing.trang_thai === null || drawing.trang_thai === undefined || isNaN(trangThai)) {
+        // trang_thai = 0/null/undefined/invalid → Tab "Bảng vẽ mới"
         console.log(`  → Adding to NEW drawings (trang_thai = ${drawing.trang_thai})`);
-        this.drawings.push(drawing);
-      } else if (isNaN(trangThai)) {
-        // trang_thai is not a valid number → Tab "Bảng vẽ mới"
-        console.log(`  → Adding to NEW drawings (invalid trang_thai = ${drawing.trang_thai})`);
         this.drawings.push(drawing);
       } else {
         // Other trang_thai values → Default to "Bảng vẽ mới" tab
@@ -523,6 +550,120 @@ export class DsBangveComponent implements OnInit {
     
     // Log thông tin chi tiết về bảng vẽ có boiday
     // this.logBoidayCategorization();
+  }
+
+  // Method để load dữ liệu user_bangve từ Firebase
+  private async loadUserBangVeData(): Promise<any[]> {
+    try {
+      console.log('🔄 [loadUserBangVeData] Loading user_bangve data from Firebase...');
+      const userBangVeData = await this.firebaseUserBangVeService.getAllUserBangVe();
+      console.log('📊 [loadUserBangVeData] Loaded', userBangVeData.length, 'user_bangve records');
+      return userBangVeData;
+    } catch (error) {
+      console.error('❌ [loadUserBangVeData] Error loading user_bangve data:', error);
+      return [];
+    }
+  }
+
+  // Method để merge dữ liệu bangve với user_bangve để có thông tin trạng thái bôi dây
+  private enrichDrawingsWithBoidayStatus(drawings: BangVeData[], userBangVeData: any[]): BangVeData[] {
+    console.log('🔄 [enrichDrawingsWithBoidayStatus] Enriching drawings with boiday status from user_bangve...');
+    console.log('📊 [enrichDrawingsWithBoidayStatus] userBangVeData sample:', userBangVeData.slice(0, 2));
+    
+    return drawings.map(drawing => {
+      // Tìm user_bangve record tương ứng với bangve_id
+      const userBangVeRecord = userBangVeData.find(ubv => ubv.bangve_id === drawing.id);
+      
+      console.log(`🔍 [enrichDrawingsWithBoidayStatus] Drawing ${drawing.kyhieubangve} (ID: ${drawing.id}):`);
+      console.log(`  - user_bangve record:`, userBangVeRecord);
+      console.log(`  - user_bangve_record.trang_thai_bd_ha:`, userBangVeRecord?.trang_thai_bd_ha);
+      console.log(`  - user_bangve_record.trang_thai_bd_cao:`, userBangVeRecord?.trang_thai_bd_cao);
+      
+      // Merge thông tin trạng thái bôi dây từ user_bangve
+      return {
+        ...drawing,
+        trang_thai_bd_ha: userBangVeRecord?.trang_thai_bd_ha || null,
+        trang_thai_bd_cao: userBangVeRecord?.trang_thai_bd_cao || null,
+        bd_ha_id: userBangVeRecord?.bd_ha_id || null,
+        bd_cao_id: userBangVeRecord?.bd_cao_id || null,
+        assigned_by_user_id: userBangVeRecord?.assigned_by_user_id || null,
+        // Thêm thông tin user_update để debug
+        bd_ha_user_update: userBangVeRecord?.user_update || null,
+        bd_cao_user_update: userBangVeRecord?.user_update || null
+      };
+    });
+  }
+
+  // Method để kiểm tra xem bôi dây cao đã hoàn thành chưa
+  private checkBoidayCaoCompletion(drawing: BangVeData): boolean {
+    console.log(`🔍 [checkBoidayCaoCompletion] Checking boiday cao completion for drawing ${drawing.kyhieubangve}`);
+    
+    // Lấy thông tin user hiện tại
+    const currentUser = this.authService.getUserInfo();
+    const currentUserUID = currentUser?.uid || currentUser?.id;
+    console.log(`  - Current user UID: ${currentUserUID}`);
+    
+    // Kiểm tra trạng thái bôi dây cao từ user_bangve
+    const trangThaiBdCao = drawing.trang_thai_bd_cao;
+    const bdCaoId = drawing.bd_cao_id;
+    const assignedByUserId = drawing.assigned_by_user_id;
+    
+    console.log(`  - trang_thai_bd_cao: ${trangThaiBdCao}`);
+    console.log(`  - bd_cao_id: ${bdCaoId}`);
+    console.log(`  - assigned_by_user_id: ${assignedByUserId}`);
+    
+    // Bôi dây cao được coi là hoàn thành nếu:
+    // 1. trang_thai_bd_cao = 2 (đã hoàn thành) VÀ
+    // 2. có bd_cao_id (không rỗng) VÀ
+    // 3. user đang login là user được gán (assigned_by_user_id)
+    const hasValidTrangThai = trangThaiBdCao === 2;
+    const hasValidBdCaoId = !!(bdCaoId && bdCaoId.trim() !== '');
+    const isAssignedToCurrentUser = !!(assignedByUserId && currentUserUID && assignedByUserId === currentUserUID);
+    
+    const isCompleted = hasValidTrangThai && hasValidBdCaoId && isAssignedToCurrentUser;
+    
+    console.log(`  - hasValidTrangThai (trang_thai_bd_cao = 2): ${hasValidTrangThai}`);
+    console.log(`  - hasValidBdCaoId (bd_cao_id not empty): ${hasValidBdCaoId}`);
+    console.log(`  - isAssignedToCurrentUser (assigned_by_user_id === currentUserUID): ${isAssignedToCurrentUser}`);
+    console.log(`  - Is boiday cao completed: ${isCompleted}`);
+    
+    return isCompleted;
+  }
+
+  // Method để kiểm tra xem bôi dây hạ đã hoàn thành chưa
+  private checkBoidayHaCompletion(drawing: BangVeData): boolean {
+    console.log(`🔍 [checkBoidayHaCompletion] Checking boiday ha completion for drawing ${drawing.kyhieubangve}`);
+    
+    // Lấy thông tin user hiện tại
+    const currentUser = this.authService.getUserInfo();
+    const currentUserUID = currentUser?.uid || currentUser?.id;
+    console.log(`  - Current user UID: ${currentUserUID}`);
+    
+    // Kiểm tra trạng thái bôi dây hạ từ user_bangve
+    const trangThaiBdHa = drawing.trang_thai_bd_ha;
+    const bdHaId = drawing.bd_ha_id;
+    const assignedByUserId = drawing.assigned_by_user_id;
+    
+    console.log(`  - trang_thai_bd_ha: ${trangThaiBdHa}`);
+    console.log(`  - bd_ha_id: ${bdHaId}`);
+    console.log(`  - assigned_by_user_id: ${assignedByUserId}`);
+    
+    // Bôi dây hạ được coi là hoàn thành nếu:
+    // 1. trang_thai_bd_ha = 2 (đã hoàn thành) VÀ
+    // 2. có bd_ha_id (không rỗng) VÀ
+    // 3. user đang login là user được gán (assigned_by_user_id)
+    const hasValidTrangThai = trangThaiBdHa === 2;
+    const hasValidBdHaId = !!(bdHaId && bdHaId.trim() !== '');
+    const isAssignedToCurrentUser = !!(assignedByUserId && currentUserUID && assignedByUserId === currentUserUID);
+    
+    const isCompleted = hasValidTrangThai && hasValidBdHaId && isAssignedToCurrentUser;
+    
+    console.log(`  - hasValidTrangThai (trang_thai_bd_ha = 2): ${hasValidTrangThai}`);
+    console.log(`  - hasValidBdHaId (bd_ha_id not empty): ${hasValidBdHaId}`);
+    console.log(`  - isAssignedToCurrentUser (assigned_by_user_id === currentUserUID): ${isAssignedToCurrentUser}`);
+    console.log(`  - Is boiday ha completed: ${isCompleted}`);
+    
+    return isCompleted;
   }
 
   // Method để force UI update
@@ -1825,6 +1966,13 @@ export class DsBangveComponent implements OnInit {
       user_create: item.user_create || '',
       // Safe type casting for trang_thai: handle both boolean and number
       trang_thai: this.safeCastTrangThai(item.trang_thai),
+      // Thêm các field mới cho trạng thái bôi dây
+      trang_thai_bd_cao: this.safeCastTrangThai(item.trang_thai_bd_cao),
+      trang_thai_bd_ha: this.safeCastTrangThai(item.trang_thai_bd_ha),
+      trang_thai_bd_ep: this.safeCastTrangThai(item.trang_thai_bd_ep),
+      bd_cao_id: item.bd_cao_id || null,
+      bd_ha_id: item.bd_ha_id || null,
+      bd_ep_id: item.bd_ep_id || null,
       created_at: item.created_at ? new Date(item.created_at) : new Date(),
       username: item.username || '',
       email: item.email || '',

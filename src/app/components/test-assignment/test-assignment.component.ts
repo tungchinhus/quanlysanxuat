@@ -108,7 +108,7 @@ export class TestAssignmentComponent implements OnInit {
         trang_thai_bd_cao: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
         trang_thai_bd_ep: 0, // 0 = chưa bắt đầu, sẽ cập nhật 1 khi user vào thi công
         assigned_at: new Date(),
-        assigned_by_user_id: 1,
+        assigned_by_user_id: 'current_user_uid', // TODO: Lấy Firebase UID của user hiện tại
         created_at: new Date(),
         created_by: 1,
         khau_sx: formValue.khauSx,

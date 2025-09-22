@@ -4,17 +4,18 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, PageEvent, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSnackBar, MatSnackBarConfig, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { CommonService } from '../../services/common.service';
 import { AuthService } from '../../services/auth.service';
+import { FirebaseKcsApproveService } from '../../services/firebase-kcs-approve.service';
+import { KcsApproveCreateData } from '../../models/kcs-approve.model';
 import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, BoiDayCaoPendingResponse, BoiDayCaoPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
 import { RejectDialogComponent, RejectDialogData } from './reject-dialog/reject-dialog.component';
@@ -29,14 +30,13 @@ import { RejectDialogComponent, RejectDialogData } from './reject-dialog/reject-
     MatTabsModule,
     MatTableModule,
     MatPaginatorModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatToolbarModule
   ],
   standalone: true
 })
@@ -46,13 +46,6 @@ export class KcsCheckComponent implements OnInit {
   // Make Math available in template
   Math = Math;
 
-  // Search variables for each tab
-  searchBangVe: string = '';
-  searchKeyword: string = '';
-  searchBangVeCao: string = '';
-  searchKeywordCao: string = '';
-  searchBangVeEp: string = '';
-  searchKeywordEp: string = '';
 
   // Pagination variables
   currentPage = 1;
@@ -85,13 +78,19 @@ export class KcsCheckComponent implements OnInit {
   isLoading = false;
   currentTab = 'boiDayHa';
 
+  // Selected item (from query params)
+  selectedItemId: number | null = null;
+  selectedType: 'ha' | 'cao' | 'ep' | null = null;
+
   constructor(
     private commonService: CommonService,
     private authService: AuthService,
+    private firebaseKcsApproveService: FirebaseKcsApproveService,
     private kcsService: KcsCheckService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -104,6 +103,24 @@ export class KcsCheckComponent implements OnInit {
       return;
     }
     
+    // Check for query parameters to determine which tab to show and selected id
+    this.route.queryParams.subscribe(params => {
+      const typeParam = (params['type'] || '').toString();
+      const idParam = params['id'];
+
+      if (typeParam) {
+        this.selectedType = (typeParam === 'ha' || typeParam === 'cao' || typeParam === 'ep') ? typeParam : 'ha';
+        this.currentTab = this.selectedType === 'ha' ? 'boiDayHa' :
+                          this.selectedType === 'cao' ? 'boiDayCao' :
+                          'epBoiDay';
+      }
+
+      if (idParam !== undefined && idParam !== null) {
+        const parsed = Number(idParam);
+        this.selectedItemId = isNaN(parsed) ? null : parsed;
+      }
+    });
+    
     this.loadData();
   }
 
@@ -113,6 +130,7 @@ export class KcsCheckComponent implements OnInit {
     this.boiDayCaoDataSource.paginator = this.paginator;
     this.epBoiDayDataSource.paginator = this.paginator;
   }
+
 
   loadData(): void {
     this.isLoading = true;
@@ -138,7 +156,11 @@ export class KcsCheckComponent implements OnInit {
       next: (response: BoiDayHaPendingResponse) => {
         if (response.IsSuccess) {
           // Convert to legacy format for backward compatibility
-          const legacyData = this.kcsService.convertToLegacyFormat(response.Data);
+          let legacyData = this.kcsService.convertToLegacyFormat(response.Data);
+          // If a specific id is requested for this tab, filter to only that item
+          if (this.selectedItemId && this.currentTab === 'boiDayHa') {
+            legacyData = legacyData.filter(item => Number(item.id) === this.selectedItemId);
+          }
           this.boiDayHaDataSource.data = legacyData;
           this.totalCount = response.TotalCount;
           this.totalPages = Math.ceil(this.totalCount / this.pageSize);
@@ -162,8 +184,8 @@ export class KcsCheckComponent implements OnInit {
     this.isLoading = true;
     
     const searchCriteria: SearchCriteria = {
-      SearchByDrawingName: this.searchBangVe || undefined,
-      SearchByWindingSymbolOrTBKT: this.searchKeyword || undefined,
+      SearchByDrawingName: undefined,
+      SearchByWindingSymbolOrTBKT: undefined,
       PageNumber: this.currentPage,
       PageSize: this.pageSize
     };
@@ -196,13 +218,20 @@ export class KcsCheckComponent implements OnInit {
 
   loadBoiDayCaoData(): void {
     this.isLoading = true;
+    console.log('Loading BoiDayCao data...');
     
     // Use new API method for pending items
     this.kcsService.getBoiDayCaoPending().subscribe({
       next: (response: BoiDayCaoPendingResponse) => {
+        console.log('BoiDayCao API response:', response);
         if (response.IsSuccess) {
           // Convert to legacy format for backward compatibility
-          const legacyData = this.kcsService.convertBoiDayCaoToLegacyFormat(response.Data);
+          let legacyData = this.kcsService.convertBoiDayCaoToLegacyFormat(response.Data);
+          // If a specific id is requested for this tab, filter to only that item
+          if (this.selectedItemId && this.currentTab === 'boiDayCao') {
+            legacyData = legacyData.filter(item => Number(item.id) === this.selectedItemId);
+          }
+          console.log('Converted BoiDayCao data:', legacyData);
           this.boiDayCaoDataSource.data = legacyData;
           this.totalCount = response.TotalCount;
           this.totalPages = Math.ceil(this.totalCount / this.pageSize);
@@ -224,52 +253,25 @@ export class KcsCheckComponent implements OnInit {
 
   loadEpBoiDayData(): void {
     this.isLoading = true;
+    console.log('Loading EpBoiDay data...');
     this.kcsService.getEpBoiDayData().subscribe({
       next: (data) => {
-        this.epBoiDayDataSource.data = data;
+        console.log('EpBoiDay data loaded:', data);
+        let result = data;
+        if (this.selectedItemId && this.currentTab === 'epBoiDay') {
+          result = (data || []).filter((item: any) => Number(item.id) === this.selectedItemId);
+        }
+        this.epBoiDayDataSource.data = result;
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading EpBoiDay data:', error);
         this.thongbao('Lỗi khi tải dữ liệu', 'Đóng', 'error');
+        this.isLoading = false;
       }
     });
   }
 
-  // Search methods for Bối dây hạ
-  onSearchBangVeChange(value: string): void {
-    this.searchBangVe = value;
-    this.currentPage = 1; // Reset to first page
-    this.searchBoiDayHaData();
-  }
-
-  onSearchChange(value: string): void {
-    this.searchKeyword = value;
-    this.currentPage = 1; // Reset to first page
-    this.searchBoiDayHaData();
-  }
-
-  // Search methods for Bối dây cao
-  onSearchBangVeCaoChange(value: string): void {
-    this.searchBangVeCao = value;
-    this.filterBoiDayCaoData();
-  }
-
-  onSearchCaoChange(value: string): void {
-    this.searchKeywordCao = value;
-    this.filterBoiDayCaoData();
-  }
-
-  // Search methods for Ép bối dây
-  onSearchBangVeEpChange(value: string): void {
-    this.searchBangVeEp = value;
-    this.filterEpBoiDayData();
-  }
-
-  onSearchEpChange(value: string): void {
-    this.searchKeywordEp = value;
-    this.filterEpBoiDayData();
-  }
 
   // Filter methods for each tab
   filterBoiDayHaData(): void {
@@ -286,8 +288,8 @@ export class KcsCheckComponent implements OnInit {
     this.isLoading = true;
     
     const searchCriteria: SearchCriteria = {
-      SearchByDrawingName: this.searchBangVeCao || undefined,
-      SearchByWindingSymbolOrTBKT: this.searchKeywordCao || undefined,
+      SearchByDrawingName: undefined,
+      SearchByWindingSymbolOrTBKT: undefined,
       PageNumber: this.currentPage,
       PageSize: this.pageSize
     };
@@ -319,22 +321,8 @@ export class KcsCheckComponent implements OnInit {
   }
 
   filterEpBoiDayData(): void {
-    let filteredData = this.epBoiDayDataSource.data;
-
-    if (this.searchBangVeEp) {
-      filteredData = filteredData.filter(item => 
-        item.tenbangve?.toLowerCase().includes(this.searchBangVeEp.toLowerCase())
-      );
-    }
-
-    if (this.searchKeywordEp) {
-      filteredData = filteredData.filter(item => 
-        item.kyhieuquanday?.toLowerCase().includes(this.searchKeywordEp.toLowerCase()) ||
-        item.tbkt?.toLowerCase().includes(this.searchKeywordEp.toLowerCase())
-      );
-    }
-
-    this.epBoiDayDataSource.data = filteredData;
+    // Show all data without filtering
+    this.epBoiDayDataSource.data = this.epBoiDayDataSource.data;
   }
 
   onTabChange(event: MatTabChangeEvent): void {
@@ -359,12 +347,6 @@ export class KcsCheckComponent implements OnInit {
   }
 
   resetSearch(): void {
-    this.searchBangVe = '';
-    this.searchKeyword = '';
-    this.searchBangVeCao = '';
-    this.searchKeywordCao = '';
-    this.searchBangVeEp = '';
-    this.searchKeywordEp = '';
     this.currentPage = 1;
     this.pageSize = 10;
   }
@@ -384,7 +366,7 @@ export class KcsCheckComponent implements OnInit {
   // Action methods
   viewBangVeDetails(element: any): void {
     console.log('Viewing details for:', element);
-    this.thongbao(`Xem chi tiết bảng vẽ: ${element.kyhieuquanday}`, 'Đóng', 'info');
+    this.thongbao(`Xem chi tiết: ${element.kyhieuquanday}`, 'Đóng', 'info');
   }
 
   approveKcs(element: any): void {
@@ -394,7 +376,6 @@ export class KcsCheckComponent implements OnInit {
       itemId: Number(element.id),
       itemName: element.kyhieuquanday,
       itemType: this.currentTab
-      // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
     };
 
     const dialogRef = this.dialog.open(ApproveDialogComponent, {
@@ -405,6 +386,8 @@ export class KcsCheckComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.IsSuccess) {
+        // Save approval data to Firebase
+        this.saveApprovalToFirebase(element, result.data);
         this.thongbao(result.Message, 'Đóng', 'success');
         // Refresh data after approval
         this.loadData();
@@ -470,28 +453,81 @@ export class KcsCheckComponent implements OnInit {
    * Kiểm tra xem user có quyền KCS không
    */
   private checkKcsPermission(): boolean {
-    const role = localStorage.getItem('role')?.toLowerCase() || '';
-    const khauSx = localStorage.getItem('khau_sx')?.toLowerCase() || '';
-    const email = localStorage.getItem('email')?.toLowerCase() || '';
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (!currentUserStr) {
+        console.log('No current user found in localStorage');
+        return false;
+      }
 
-    console.log('KcsCheckComponent checking KCS permissions:', { role, khauSx, email });
+      const currentUser = JSON.parse(currentUserStr);
+      console.log('KcsCheckComponent checking KCS permissions for user:', currentUser);
 
-    // Kiểm tra role
-    if (role.includes('kcs')) {
-      return true;
+      // Kiểm tra roles array
+      if (currentUser.roles && Array.isArray(currentUser.roles)) {
+        const hasKcsRole = currentUser.roles.some((role: any) => 
+          typeof role === 'string' ? role.toLowerCase().includes('kcs') : 
+          (role.name || role.role_name || '').toLowerCase().includes('kcs')
+        );
+        if (hasKcsRole) {
+          console.log('User has KCS role');
+          return true;
+        }
+      }
+
+      // Kiểm tra email
+      if (currentUser.email && currentUser.email.toLowerCase().includes('kcs')) {
+        console.log('User email contains KCS');
+        return true;
+      }
+
+      // Kiểm tra khau_sx nếu có
+      if (currentUser.khau_sx && currentUser.khau_sx.toLowerCase().includes('kcs')) {
+        console.log('User khau_sx contains KCS');
+        return true;
+      }
+
+      console.log('User does not have KCS permissions');
+      return false;
+    } catch (error) {
+      console.error('Error checking KCS permissions:', error);
+      return false;
     }
+  }
 
-    // Kiểm tra khau_sx
-    if (khauSx.includes('kcs')) {
-      return true;
+  /**
+   * Save approval data to Firebase
+   */
+  private saveApprovalToFirebase(element: any, approvalData: any): void {
+    try {
+      const currentUser = this.authService.getCurrentUser();
+      const userEmail = currentUser?.email || currentUser?.username || 'unknown';
+      
+      const kcsApproveData: KcsApproveCreateData = {
+        kyhieubangve: element.kyhieuquanday || element.tenbangve || 'N/A',
+        id_boiday: element.id?.toString() || 'N/A',
+        masothe_bd: element.masothe_bd || element.id?.toString() || 'N/A',
+        user_kcs_approve: userEmail,
+        kcs_approve_status: 'approved',
+        ghi_chu: approvalData?.notes || 'Đạt tiêu chuẩn chất lượng KCS',
+        ngay_approve: new Date()
+      };
+
+      console.log('Saving KCS approval to Firebase:', kcsApproveData);
+
+      this.firebaseKcsApproveService.createKcsApprove(kcsApproveData)
+        .then(docId => {
+          console.log('KCS approval saved successfully with ID:', docId);
+          this.thongbao('Dữ liệu KCS đã được lưu vào Firebase', 'Đóng', 'success');
+        })
+        .catch(error => {
+          console.error('Error saving KCS approval to Firebase:', error);
+          this.thongbao('Lỗi khi lưu dữ liệu KCS vào Firebase', 'Đóng', 'error');
+        });
+    } catch (error) {
+      console.error('Error preparing KCS approval data:', error);
+      this.thongbao('Lỗi khi chuẩn bị dữ liệu KCS', 'Đóng', 'error');
     }
-
-    // Kiểm tra email
-    if (email.includes('kcs')) {
-      return true;
-    }
-
-    return false;
   }
 
   /**

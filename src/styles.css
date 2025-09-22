@@ -134,3 +134,41 @@ input, textarea, select {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--thibidi-dark);
 }
+
+/* Snackbar z-index fix */
+::ng-deep .mat-mdc-snack-bar-container {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .mat-snack-bar-container {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .cdk-overlay-container {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .cdk-overlay-pane {
+  z-index: 9999999 !important;
+}
+
+/* Snackbar custom styles with high z-index */
+::ng-deep .snackbar-custom {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .snackbar-success {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .snackbar-error {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .snackbar-warning {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .snackbar-info {
+  z-index: 9999999 !important;
+}

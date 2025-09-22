@@ -500,6 +500,14 @@ export class AuthService {
       return;
     }
 
+    // Check for KCS role
+    if (roleNames.some((role: any) => 
+      role?.toLowerCase().includes('kcs')
+    )) {
+      this.router.navigate(['/kcs-manager']);
+      return;
+    }
+
     // Default redirect to dashboard
     this.router.navigate(['/dashboard']);
   }

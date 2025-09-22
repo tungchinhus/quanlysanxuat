@@ -19,7 +19,7 @@ export interface UserBangVeData {
   trang_thai_bd_cao?: number; // Status for high winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
   trang_thai_bd_ep?: number; // Status for pressing winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
   assigned_at?: Date; // Assignment timestamp
-  assigned_by_user_id?: number; // User who made the assignment
+  assigned_by_user_id?: string; // User who made the assignment (Firebase UID)
   created_at?: Date;
   updated_at?: Date;
   created_by?: number;
