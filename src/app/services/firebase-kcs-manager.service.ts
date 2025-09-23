@@ -55,7 +55,7 @@ export interface ProcessedDrawingResponse {
 })
 export class FirebaseKcsManagerService {
   private firestore: Firestore;
-  private readonly COLLECTION_NAME = 'processed_drawings';
+  // Removed COLLECTION_NAME as we use original collections directly
 
   constructor(private firebaseService: FirebaseService) {
     this.firestore = this.firebaseService.getFirestore();
@@ -104,19 +104,11 @@ export class FirebaseKcsManagerService {
 
   /**
    * Lấy danh sách bảng vẽ đã xử lý chờ kiểm duyệt
+   * @deprecated Use getRealProcessedDrawings instead
    */
   getProcessedDrawings(criteria: ProcessedDrawingSearchCriteria): Observable<ProcessedDrawingResponse> {
-    return from(this.fetchProcessedDrawings(criteria)).pipe(
-      map(response => response),
-      catchError(error => {
-        console.error('Error fetching processed drawings:', error);
-        return of({
-          data: [],
-          totalCount: 0,
-          hasMore: false
-        } as ProcessedDrawingResponse);
-      })
-    );
+    // Redirect to getRealProcessedDrawings to avoid duplication
+    return this.getRealProcessedDrawings(criteria);
   }
 
   /**
@@ -140,24 +132,14 @@ export class FirebaseKcsManagerService {
    * Tìm kiếm bảng vẽ theo từ khóa
    */
   searchProcessedDrawings(criteria: ProcessedDrawingSearchCriteria): Observable<ProcessedDrawingResponse> {
-    return from(this.fetchProcessedDrawings(criteria)).pipe(
-      map(response => response),
-      catchError(error => {
-        console.error('Error searching processed drawings:', error);
-        return of({
-          data: [],
-          totalCount: 0,
-          hasMore: false
-        } as ProcessedDrawingResponse);
-      })
-    );
+    return this.getRealProcessedDrawings(criteria);
   }
 
   /**
-   * Lấy chi tiết một bảng vẽ theo ID
+   * Lấy chi tiết một bảng vẽ theo ID từ các collection gốc
    */
   getProcessedDrawingById(id: string): Observable<ProcessedDrawingData | null> {
-    return from(this.fetchProcessedDrawingById(id)).pipe(
+    return from(this.fetchProcessedDrawingByIdFromOriginalCollections(id)).pipe(
       map(drawing => drawing),
       catchError(error => {
         console.error('Error fetching processed drawing by ID:', error);
@@ -167,10 +149,10 @@ export class FirebaseKcsManagerService {
   }
 
   /**
-   * Cập nhật trạng thái bảng vẽ
+   * Cập nhật trạng thái bảng vẽ trong collection gốc
    */
   updateDrawingStatus(id: string, status: 'pending' | 'approved' | 'rejected'): Observable<boolean> {
-    return from(this.updateStatus(id, status)).pipe(
+    return from(this.updateStatusInOriginalCollection(id, status)).pipe(
       map(success => success),
       catchError(error => {
         console.error('Error updating drawing status:', error);
@@ -267,162 +249,76 @@ export class FirebaseKcsManagerService {
     }
   }
 
-  private async fetchProcessedDrawings(criteria: ProcessedDrawingSearchCriteria): Promise<ProcessedDrawingResponse> {
+  // Removed fetchProcessedDrawings method as it's no longer needed
+
+  private async fetchProcessedDrawingByIdFromOriginalCollections(id: string): Promise<ProcessedDrawingData | null> {
     try {
-      console.log('Fetching processed drawings with criteria:', criteria);
+      const possibleCollections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
 
-      // First, let's get all documents to see what's in the database
-      let q = query(collection(this.firestore, this.COLLECTION_NAME));
+      for (const collectionName of possibleCollections) {
+        try {
+          const docRef = doc(this.firestore, collectionName, id);
+          const docSnap = await getDocs(query(collection(this.firestore, collectionName), where('__name__', '==', id)));
 
-      // If trang_thai is specified, filter by it
-      if (criteria.trang_thai) {
-        q = query(q, where('trang_thai', '==', criteria.trang_thai));
-      }
+          if (!docSnap.empty) {
+            const docSnapshot = docSnap.docs[0];
+            const data = docSnapshot.data();
 
-      // Filter by loai_boi_day if specified
-      if (criteria.loai_boi_day) {
-        q = query(q, where('loai_boi_day', '==', criteria.loai_boi_day));
-      }
-
-      // Order by created_at descending if the field exists
-      try {
-        q = query(q, orderBy('created_at', 'desc'));
-      } catch (error) {
-        console.log('Cannot order by created_at, using default order');
-        // If created_at doesn't exist, we'll just get the documents without ordering
-      }
-
-      // Apply pagination
-      const startIndex = (criteria.pageNumber - 1) * criteria.pageSize;
-      if (startIndex > 0) {
-        // For pagination beyond first page, we need to get the last document from previous page
-        // This is a simplified approach - in production, you'd implement proper cursor-based pagination
-        q = query(q, limit(criteria.pageSize));
-      } else {
-        q = query(q, limit(criteria.pageSize));
-      }
-
-      const snapshot = await getDocs(q);
-      const drawings: ProcessedDrawingData[] = [];
-
-      console.log(`Found ${snapshot.size} documents in collection ${this.COLLECTION_NAME}`);
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        console.log('Document data:', doc.id, data);
-        
-        const drawing: ProcessedDrawingData = {
-          id: doc.id,
-          kyhieubangve: data['kyhieubangve'] || '',
-          kyhieuquanday: data['kyhieuquanday'] || '',
-          tenbangve: data['tenbangve'] || '',
-          congsuat: data['congsuat'] || '',
-          tbkt: data['tbkt'] || '',
-          nhasanxuat: data['nhasanxuat'] || '',
-          ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
-          ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
-          trang_thai: this.mapTrangThai(data['trang_thai'] || 1),
-          nguoigiacong: data['nguoigiacong'] || '',
-          loai_boi_day: data['loai_boi_day'] || 'ha',
-          created_at: data['created_at']?.toDate() || new Date(),
-          updated_at: data['updated_at']?.toDate() || new Date()
-        };
-
-        // Apply client-side search if searchTerm is provided
-        if (criteria.searchTerm && criteria.searchTerm.trim()) {
-          const searchLower = criteria.searchTerm.toLowerCase();
-          const matches = 
-            drawing.kyhieuquanday.toLowerCase().includes(searchLower) ||
-            drawing.tenbangve.toLowerCase().includes(searchLower) ||
-            drawing.congsuat.toLowerCase().includes(searchLower) ||
-            drawing.tbkt.toLowerCase().includes(searchLower) ||
-            drawing.nhasanxuat.toLowerCase().includes(searchLower) ||
-            drawing.nguoigiacong.toLowerCase().includes(searchLower);
-
-          if (matches) {
-            drawings.push(drawing);
+            return {
+              id: docSnapshot.id,
+              kyhieubangve: data['kyhieubangve'] || data['ky_hieu_bang_ve'] || data['kh_bv'] || '',
+              kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || data['kyhieu'] || data['ky_hieu'] || '',
+              tenbangve: data['tenbangve'] || data['ten_bang_ve'] || data['ten'] || data['ten_bv'] || '',
+              congsuat: data['congsuat'] || data['cong_suat'] || data['congSuat'] || '',
+              tbkt: data['tbkt'] || data['tb_kt'] || data['TBKT'] || '',
+              nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || data['nhaSX'] || '',
+              ngaysanxuat: this.toDateAny(data['ngaysanxuat'] || data['ngay_san_xuat'] || data['ngaySX']),
+              ngaygiacong: this.toDateAny(data['ngaygiacong'] || data['ngay_gia_cong'] || data['ngayGiaCong']),
+              trang_thai: this.mapTrangThai(data['trang_thai'] || data['status'] || 1),
+              nguoigiacong: data['nguoigiacong'] || data['nguoi_gia_cong'] || data['nguoiGiaCong'] || '',
+              loai_boi_day: (data['loai_boi_day'] || data['loai'] || 'ha') as 'ha' | 'cao' | 'ep',
+              created_at: this.toDateAny(data['created_at']),
+              updated_at: this.toDateAny(data['updated_at'])
+            };
           }
-        } else {
-          drawings.push(drawing);
+        } catch (error) {
+          console.log(`Error checking collection ${collectionName} for ID ${id}:`, error);
         }
-      });
-
-      // Get total count for pagination
-      const countQuery = query(
-        collection(this.firestore, this.COLLECTION_NAME),
-        where('trang_thai', '==', criteria.trang_thai || 'pending')
-      );
-      
-      if (criteria.loai_boi_day) {
-        const countQueryWithType = query(countQuery, where('loai_boi_day', '==', criteria.loai_boi_day));
-        const countSnapshot = await getDocs(countQueryWithType);
-        const totalCount = countSnapshot.size;
       }
 
-      const totalCount = drawings.length; // Simplified - in production, implement proper counting
-
-      console.log(`Fetched ${drawings.length} processed drawings`);
-
-      return {
-        data: drawings,
-        totalCount: totalCount,
-        hasMore: drawings.length === criteria.pageSize
-      };
+      return null;
 
     } catch (error) {
-      console.error('Error in fetchProcessedDrawings:', error);
+      console.error('Error fetching processed drawing by ID from original collections:', error);
       throw error;
     }
   }
 
-  private async fetchProcessedDrawingById(id: string): Promise<ProcessedDrawingData | null> {
+  private async updateStatusInOriginalCollection(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<boolean> {
     try {
-      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
-      const docSnap = await getDocs(query(collection(this.firestore, this.COLLECTION_NAME), where('__name__', '==', id)));
+      const possibleCollections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
 
-      if (docSnap.empty) {
-        return null;
+      for (const collectionName of possibleCollections) {
+        try {
+          const docRef = doc(this.firestore, collectionName, id);
+          await updateDoc(docRef, {
+            trang_thai: status,
+            updated_at: Timestamp.fromDate(new Date())
+          });
+
+          console.log(`Updated drawing ${id} status to ${status} in collection ${collectionName}`);
+          return true;
+        } catch (error) {
+          // Document not found in this collection, try next one
+          console.log(`Document ${id} not found in collection ${collectionName}, trying next...`);
+        }
       }
 
-      const docSnapshot = docSnap.docs[0];
-      const data = docSnapshot.data();
-
-      return {
-        id: docSnapshot.id,
-        kyhieubangve: data['kyhieubangve'] || '',
-        kyhieuquanday: data['kyhieuquanday'] || '',
-        tenbangve: data['tenbangve'] || '',
-        congsuat: data['congsuat'] || '',
-        tbkt: data['tbkt'] || '',
-        nhasanxuat: data['nhasanxuat'] || '',
-        ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
-        ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
-        trang_thai: this.mapTrangThai(data['trang_thai'] || 1),
-        nguoigiacong: data['nguoigiacong'] || '',
-        loai_boi_day: data['loai_boi_day'] || 'ha',
-        created_at: data['created_at']?.toDate() || new Date(),
-        updated_at: data['updated_at']?.toDate() || new Date()
-      };
+      console.error(`Document ${id} not found in any collection`);
+      return false;
 
     } catch (error) {
-      console.error('Error fetching processed drawing by ID:', error);
-      throw error;
-    }
-  }
-
-  private async updateStatus(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<boolean> {
-    try {
-      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
-      await updateDoc(docRef, {
-        trang_thai: status,
-        updated_at: Timestamp.fromDate(new Date())
-      });
-
-      console.log(`Updated drawing ${id} status to ${status}`);
-      return true;
-
-    } catch (error) {
-      console.error('Error updating drawing status:', error);
+      console.error('Error updating drawing status in original collection:', error);
       throw error;
     }
   }
@@ -445,19 +341,13 @@ export class FirebaseKcsManagerService {
         return;
       }
       
-      // Check multiple possible collection names that might contain processed drawings
+      // Check original collections that contain processed drawings
       const possibleCollections = [
         'bangve', // Most likely collection
         'quan_day',
         'boi_day_ha',
         'boi_day_cao',
-        'ep_boi_day',
-        'processed_drawings',
-        'bangve_processed',
-        'drawings_processed',
-        'kcs_drawings',
-        'boi_day_processed',
-        'quan_day_processed'
+        'ep_boi_day'
       ];
       
       let totalFound = 0;
@@ -518,73 +408,26 @@ export class FirebaseKcsManagerService {
         return;
       }
 
-      // Check if we already have data
-      const existingQuery = query(collection(this.firestore, this.COLLECTION_NAME));
-      const existingSnapshot = await getDocs(existingQuery);
+      // Check if we already have data in original collections
+      const possibleCollections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
+      let totalExisting = 0;
       
-      if (existingSnapshot.size > 0) {
-        console.log(`✅ Found ${existingSnapshot.size} existing documents in ${this.COLLECTION_NAME}`);
+      for (const collectionName of possibleCollections) {
+        try {
+          const existingQuery = query(collection(this.firestore, collectionName));
+          const existingSnapshot = await getDocs(existingQuery);
+          totalExisting += existingSnapshot.size;
+        } catch (error) {
+          console.log(`Error checking collection ${collectionName}:`, error);
+        }
+      }
+      
+      if (totalExisting > 0) {
+        console.log(`✅ Found ${totalExisting} existing documents in original collections`);
         return;
       }
 
-      // Create sample data
-      console.log('📝 Creating sample data...');
-      const sampleData: Omit<ProcessedDrawingData, 'id'>[] = [
-        {
-          kyhieuquanday: '1000-39N-25086T-065',
-          tenbangve: '1000-39N-25086T',
-          congsuat: '1000',
-          tbkt: '25086T',
-          nhasanxuat: 'nha_sx1',
-          ngaysanxuat: new Date('2025-01-19'),
-          ngaygiacong: new Date('2025-01-20'),
-          trang_thai: 'pending',
-          nguoigiacong: 'Nguyễn Văn A',
-          loai_boi_day: 'ha',
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          kyhieuquanday: '1500-40N-25087T-066',
-          tenbangve: '1500-40N-25087T',
-          congsuat: '1500',
-          tbkt: '25087T',
-          nhasanxuat: 'nha_sx2',
-          ngaysanxuat: new Date('2025-01-18'),
-          ngaygiacong: new Date('2025-01-19'),
-          trang_thai: 'pending',
-          nguoigiacong: 'Trần Thị B',
-          loai_boi_day: 'cao',
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          kyhieuquanday: '2000-41N-25088T-067',
-          tenbangve: '2000-41N-25088T',
-          congsuat: '2000',
-          tbkt: '25088T',
-          nhasanxuat: 'nha_sx3',
-          ngaysanxuat: new Date('2025-01-17'),
-          ngaygiacong: new Date('2025-01-18'),
-          trang_thai: 'pending',
-          nguoigiacong: 'Lê Văn C',
-          loai_boi_day: 'ha',
-          created_at: new Date(),
-          updated_at: new Date()
-        }
-      ];
-
-      for (const data of sampleData) {
-        await addDoc(collection(this.firestore, this.COLLECTION_NAME), {
-          ...data,
-          ngaysanxuat: Timestamp.fromDate(data.ngaysanxuat),
-          ngaygiacong: Timestamp.fromDate(data.ngaygiacong),
-          created_at: Timestamp.fromDate(data.created_at || new Date()),
-          updated_at: Timestamp.fromDate(data.updated_at || new Date())
-        });
-      }
-
-      console.log('✅ Sample data created successfully');
+      console.log('⚠️ No existing data found in original collections. Sample data should be created in the appropriate collection based on business logic.');
 
     } catch (error) {
       console.error('❌ Error testing and creating sample data:', error);
@@ -594,8 +437,10 @@ export class FirebaseKcsManagerService {
 
   /**
    * Tạo dữ liệu mẫu để test (chỉ dùng trong development)
+   * @deprecated Sample data should be created in appropriate original collections
    */
   async createSampleData(): Promise<void> {
+    console.log('⚠️ createSampleData is deprecated. Sample data should be created in appropriate original collections based on business logic.');
     return this.testAndCreateSampleData();
   }
 }

@@ -143,6 +143,110 @@ export class App implements OnInit, OnDestroy {
     return hasAdmin;
   }
 
+  hasDashboardPermission(): boolean {
+    const user = this.authService.getCurrentUser();
+    console.log('hasDashboardPermission - Current user:', user);
+    
+    if (!user) {
+      console.log('hasDashboardPermission - No user found');
+      return false;
+    }
+    
+    // Ensure roles is an array
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    console.log('hasDashboardPermission - User roles:', roles);
+    
+    if (roles.length === 0) {
+      console.log('hasDashboardPermission - User has no roles');
+      return false;
+    }
+    
+    // Check for admin, manager, kcs, totruong roles
+    const hasPermission = roles.some(role => {
+      const roleName = typeof role === 'string' ? role : (role as any).name;
+      console.log('hasDashboardPermission - Checking role:', roleName);
+      return roleName === 'admin' || roleName === 'super_admin' || roleName === 'manager' || roleName === 'kcs' || roleName === 'totruong';
+    });
+    
+    console.log('hasDashboardPermission - Has permission:', hasPermission);
+    return hasPermission;
+  }
+
+  hasBangVePermission(): boolean {
+    const user = this.authService.getCurrentUser();
+    console.log('hasBangVePermission - Current user:', user);
+    
+    if (!user) {
+      console.log('hasBangVePermission - No user found');
+      return false;
+    }
+    
+    // Ensure roles is an array
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    console.log('hasBangVePermission - User roles:', roles);
+    
+    if (roles.length === 0) {
+      console.log('hasBangVePermission - User has no roles');
+      return false;
+    }
+    
+    // Check for admin, manager, totruong roles
+    const hasPermission = roles.some(role => {
+      const roleName = typeof role === 'string' ? role : (role as any).name;
+      console.log('hasBangVePermission - Checking role:', roleName);
+      return roleName === 'admin' || roleName === 'super_admin' || roleName === 'manager' || roleName === 'totruong';
+    });
+    
+    console.log('hasBangVePermission - Has permission:', hasPermission);
+    return hasPermission;
+  }
+
+  hasKcsManagerPermission(): boolean {
+    const user = this.authService.getCurrentUser();
+    console.log('hasKcsManagerPermission - Current user:', user);
+    
+    if (!user) {
+      console.log('hasKcsManagerPermission - No user found');
+      return false;
+    }
+    
+    // Ensure roles is an array
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    console.log('hasKcsManagerPermission - User roles:', roles);
+    
+    if (roles.length === 0) {
+      console.log('hasKcsManagerPermission - User has no roles');
+      return false;
+    }
+    
+    // Check for KCS, admin, manager roles
+    const hasPermission = roles.some(role => {
+      const roleName = typeof role === 'string' ? role : (role as any).name;
+      console.log('hasKcsManagerPermission - Checking role:', roleName);
+      return roleName === 'kcs' || roleName === 'admin' || roleName === 'super_admin' || roleName === 'manager';
+    });
+    
+    // Check if user is quanboiday (should NOT have access)
+    const isQuanBoiDay = roles.some(role => {
+      const roleName = typeof role === 'string' ? role : (role as any).name;
+      return roleName?.toLowerCase().includes('quanboiday') || 
+             roleName?.toLowerCase().includes('quandayha') || 
+             roleName?.toLowerCase().includes('quandaycao') || 
+             roleName?.toLowerCase().includes('epboiday') ||
+             roleName?.toLowerCase().includes('boidayha') ||
+             roleName?.toLowerCase().includes('boidaycao') ||
+             roleName?.toLowerCase().includes('boidayep');
+    });
+    
+    if (isQuanBoiDay) {
+      console.log('hasKcsManagerPermission - User is quanboiday, denying access');
+      return false;
+    }
+    
+    console.log('hasKcsManagerPermission - Has permission:', hasPermission);
+    return hasPermission;
+  }
+
   async refreshUserData(): Promise<void> {
     try {
       console.log('Refreshing user data...');

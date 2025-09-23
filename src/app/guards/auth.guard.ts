@@ -111,6 +111,26 @@ export class AuthGuard implements CanActivate {
       }
     }
 
+    // Special check for KCS Manager route - exclude quanboiday users
+    if (roles.includes('kcs') || roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager')) {
+      const isQuanBoiDay = userRoles.some(userRole => {
+        const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;
+        return roleName?.toLowerCase().includes('quanboiday') || 
+               roleName?.toLowerCase().includes('quandayha') || 
+               roleName?.toLowerCase().includes('quandaycao') || 
+               roleName?.toLowerCase().includes('epboiday') ||
+               roleName?.toLowerCase().includes('boidayha') ||
+               roleName?.toLowerCase().includes('boidaycao') ||
+               roleName?.toLowerCase().includes('boidayep');
+      });
+      
+      if (isQuanBoiDay) {
+        console.log('User is quanboiday, denying access to KCS Manager');
+        this.router.navigate(['/unauthorized']);
+        return of(false);
+      }
+    }
+
     // Check if user has any of the required roles (case insensitive)
     const hasRequiredRole = userRoles.some(userRole => {
       const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;

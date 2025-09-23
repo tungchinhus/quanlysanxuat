@@ -15,6 +15,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { CommonService } from '../../services/common.service';
 import { AuthService } from '../../services/auth.service';
 import { FirebaseKcsApproveService } from '../../services/firebase-kcs-approve.service';
+import { FirebaseBdCaoService } from '../../services/firebase-bd-cao.service';
 import { KcsApproveCreateData } from '../../models/kcs-approve.model';
 import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, BoiDayCaoPendingResponse, BoiDayCaoPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
@@ -86,6 +87,7 @@ export class KcsCheckComponent implements OnInit {
     private commonService: CommonService,
     private authService: AuthService,
     private firebaseKcsApproveService: FirebaseKcsApproveService,
+    private firebaseBdCaoService: FirebaseBdCaoService,
     private kcsService: KcsCheckService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
@@ -102,6 +104,9 @@ export class KcsCheckComponent implements OnInit {
       this.router.navigate(['/landing']);
       return;
     }
+    
+    // Debug: Check Firebase data first
+    this.debugFirebaseData();
     
     // Check for query parameters to determine which tab to show and selected id
     this.route.queryParams.subscribe(params => {
@@ -218,36 +223,63 @@ export class KcsCheckComponent implements OnInit {
 
   loadBoiDayCaoData(): void {
     this.isLoading = true;
-    console.log('Loading BoiDayCao data...');
+    console.log('Loading BoiDayCao data from Firebase...');
     
-    // Use new API method for pending items
-    this.kcsService.getBoiDayCaoPending().subscribe({
-      next: (response: BoiDayCaoPendingResponse) => {
-        console.log('BoiDayCao API response:', response);
-        if (response.IsSuccess) {
-          // Convert to legacy format for backward compatibility
-          let legacyData = this.kcsService.convertBoiDayCaoToLegacyFormat(response.Data);
-          // If a specific id is requested for this tab, filter to only that item
-          if (this.selectedItemId && this.currentTab === 'boiDayCao') {
-            legacyData = legacyData.filter(item => Number(item.id) === this.selectedItemId);
-          }
-          console.log('Converted BoiDayCao data:', legacyData);
-          this.boiDayCaoDataSource.data = legacyData;
-          this.totalCount = response.TotalCount;
-          this.totalPages = Math.ceil(this.totalCount / this.pageSize);
-          
-          console.log(`Loaded ${legacyData.length} BoiDayCao pending items`);
-        } else {
-          console.error('Failed to load BoiDayCao data:', response.Message);
-          this.thongbao(response.Message || 'Lỗi khi tải dữ liệu', 'Đóng', 'error');
-        }
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading BoiDayCao data:', error);
-        this.thongbao('Lỗi khi tải dữ liệu', 'Đóng', 'error');
-        this.isLoading = false;
+    // Use Firebase service to get data directly from tbl_bd_cao
+    this.firebaseBdCaoService.getAllBdCao().then((bdCaoData) => {
+      console.log('Firebase BoiDayCao raw data:', bdCaoData);
+      console.log('Total bd_cao records found:', bdCaoData.length);
+      
+      // Convert to legacy format for display
+      const legacyData = bdCaoData.map(item => {
+        const mappedItem = {
+          id: parseInt(item.id || '0'),
+          kyhieuquanday: item.masothe_bd_cao || 'N/A',
+          congsuat: item.kyhieubangve || 'N/A',
+          tbkt: item.quycachday || 'N/A',
+          dienap: item.sosoiday?.toString() || 'N/A',
+          quy_cach_day: item.quycachday || 'N/A',
+          so_soi_day: item.sosoiday || 0,
+          nha_san_xuat: item.nhasanxuat || 'N/A',
+          ngay_san_xuat: item.ngaysanxuat || new Date(),
+          trang_thai: this.mapTrangThaiFromNumber(item.trang_thai),
+          nguoigiacong: item.nguoigiacong || 'N/A',
+          ngaygiacong: item.ngaygiacong || new Date()
+        };
+        console.log('Mapped item:', mappedItem, 'Original trang_thai:', item.trang_thai);
+        return mappedItem;
+      });
+      
+      console.log('All legacy data:', legacyData);
+      
+      // For KCS Check, we want to show items that are ready for inspection
+      // This means items with trang_thai = 1 (processed/completed) that need KCS approval
+      const readyForInspection = legacyData.filter(item => {
+        const isReady = item.trang_thai === 'approved' || item.trang_thai === 'pending';
+        console.log(`Item ${item.id} trang_thai: ${item.trang_thai}, isReady: ${isReady}`);
+        return isReady;
+      });
+      
+      console.log('Items ready for inspection:', readyForInspection);
+      
+      // If a specific id is requested for this tab, filter to only that item
+      if (this.selectedItemId && this.currentTab === 'boiDayCao') {
+        const filteredData = readyForInspection.filter(item => Number(item.id) === this.selectedItemId);
+        this.boiDayCaoDataSource.data = filteredData;
+        this.totalCount = filteredData.length;
+      } else {
+        this.boiDayCaoDataSource.data = readyForInspection;
+        this.totalCount = readyForInspection.length;
       }
+      
+      this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+      
+      console.log(`Loaded ${this.boiDayCaoDataSource.data.length} BoiDayCao items ready for inspection from Firebase`);
+      this.isLoading = false;
+    }).catch((error) => {
+      console.error('Error loading BoiDayCao data from Firebase:', error);
+      this.thongbao('Lỗi khi tải dữ liệu từ Firebase: ' + error.message, 'Đóng', 'error');
+      this.isLoading = false;
     });
   }
 
@@ -540,5 +572,71 @@ export class KcsCheckComponent implements OnInit {
     config.duration = 3000; // Tùy chọn: Thời gian hiển thị (ví dụ 3 giây)
     config.panelClass = ['snackbar-custom', `snackbar-${type}`];
     this.snackBar.open(text, action, config);
+  }
+
+  private mapTrangThaiFromNumber(trangThai: number): 'pending' | 'approved' | 'rejected' {
+    switch (trangThai) {
+      case 0: return 'pending';
+      case 1: return 'approved';
+      case 2: return 'rejected';
+      default: return 'pending';
+    }
+  }
+
+  private async debugFirebaseData(): Promise<void> {
+    try {
+      console.log('=== DEBUG: Checking Firebase data ===');
+      
+      // Check tbl_bd_cao collection
+      const bdCaoData = await this.firebaseBdCaoService.getAllBdCao();
+      console.log('tbl_bd_cao collection:', bdCaoData);
+      console.log('tbl_bd_cao count:', bdCaoData.length);
+      
+      if (bdCaoData.length === 0) {
+        console.log('⚠️ tbl_bd_cao collection is empty');
+        this.thongbao('Không có dữ liệu bối dây cao trong Firebase. Vui lòng tạo dữ liệu mẫu.', 'Đóng', 'warning');
+        // Create sample data
+        await this.createSampleBdCaoData();
+      } else {
+        console.log('✅ Found data in tbl_bd_cao:', bdCaoData);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error debugging Firebase data:', error);
+      this.thongbao('Lỗi khi kiểm tra dữ liệu Firebase: ' + (error instanceof Error ? error.message : String(error)), 'Đóng', 'error');
+    }
+  }
+
+  private async createSampleBdCaoData(): Promise<void> {
+    try {
+      console.log('Creating sample bd_cao data...');
+      
+      const sampleData = {
+        masothe_bd_cao: '1000-39N-25086T-437',
+        kyhieubangve: '1000-39N-25086T',
+        ngaygiacong: new Date(),
+        nguoigiacong: 'quandaycao1@thibidi.com',
+        quycachday: '2.5mm²',
+        sosoiday: 1,
+        ngaysanxuat: new Date('2025-01-19'),
+        nhasanxuat: 'nha_sx1',
+        chieuquanday: true,
+        mayquanday: '2',
+        xungquanh: 2,
+        haidau: 2,
+        trang_thai: 1, // Processed, ready for KCS check
+        user_update: 'system',
+        created_at: new Date(),
+        khau_sx: 'bd_cao'
+      };
+
+      const docId = await this.firebaseBdCaoService.createBdCao(sampleData);
+      console.log('✅ Created sample bd_cao with ID:', docId);
+      this.thongbao('Đã tạo dữ liệu mẫu bối dây cao', 'Đóng', 'success');
+      
+    } catch (error) {
+      console.error('❌ Error creating sample data:', error);
+      this.thongbao('Lỗi khi tạo dữ liệu mẫu: ' + (error instanceof Error ? error.message : String(error)), 'Đóng', 'error');
+    }
   }
 }

@@ -19,7 +19,7 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'manager', 'user', 'totruong'] }
+    data: { roles: ['admin', 'super_admin', 'manager', 'kcs', 'totruong'] }
   },
   {
     path: 'quan-ly-tuyen-duong',
@@ -86,7 +86,7 @@ export const routes: Routes = [
     loadComponent: () => import('./components/ds-bangve/ds-bangve.component').then(m => m.DsBangveComponent),
     canActivate: [AuthGuard],
     data: { 
-      roles: ['admin', 'manager', 'user', 'totruong'],
+      roles: ['admin', 'super_admin', 'manager', 'totruong'],
       permissions: ['drawing_view']
     }
   },
@@ -162,7 +162,7 @@ export const routes: Routes = [
     loadComponent: () => import('./components/kcs-manager/kcs-manager.component').then(m => m.KcsManagerComponent),
     canActivate: [AuthGuard],
     data: { 
-      roles: ['kcs'],
+      roles: ['kcs', 'admin', 'super_admin', 'manager'],
       permissions: ['kcs_manager']
     }
   },
