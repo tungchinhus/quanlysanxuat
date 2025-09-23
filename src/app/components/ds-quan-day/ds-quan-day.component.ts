@@ -1518,8 +1518,8 @@ export class DsQuanDayComponent implements OnInit {
     
     // Mở popup bối dây hạ
     const dialogRef = this.dialog.open(BoiDayHaPopupComponent, {
-      width: '900px',
-      maxWidth: '95vw',
+      width: '1200px',
+      maxWidth: '100vw',
       data: { quanDay: element },
       disableClose: true
     });
@@ -1588,8 +1588,8 @@ export class DsQuanDayComponent implements OnInit {
     
     // Mở popup bối dây cao
     const dialogRef = this.dialog.open(BoiDayCaoPopupComponent, {
-      width: '1000px',
-      maxWidth: '95vw',
+      width: '1200px',
+      maxWidth: '100vw',
       data: { quanDay: element },
       disableClose: true
     });

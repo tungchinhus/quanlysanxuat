@@ -53,6 +53,22 @@
     }
   }
 
+  /* Lưới hai cột cho phần thông tin đầu trang */
+  .header-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+    margin-top: 8px;
+    margin-bottom: 20px;
+  }
+
+  /* Làm nổi bật giá trị ở phần thông tin đầu trang */
+  .header-info-grid .info-item .value {
+    font-weight: 700;
+    font-style: normal;
+    color: #000;
+  }
+
   .form-section {
     margin-bottom: 24px;
   }
@@ -67,6 +83,87 @@
     width: 100%;
     min-width: 0; // Bỏ min-width mặc định của Material để tránh đẩy rộng cột
     box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
+  }
+
+  // Special styling for wire specification row
+  .wire-spec-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+
+    .wire-spec-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .strand-count-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // Special styling for basic dimensions row
+  .basic-dimensions-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 20px; // Hạ thấp hàng cho thẳng với baseline các trường bên cạnh
+
+    .dimension-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // Special styling for winding controls row
+  .winding-controls-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end; // Align to bottom to match input field height
+
+    .winding-direction-group {
+      flex: 1;
+      min-width: 0;
+
+      .mat-label {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      .radio-group {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        .radio-button {
+          margin-right: 12px;
+        }
+      }
+    }
+
+    .winding-machine-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // Special styling for manufacturer and date row
+  .manufacturer-date-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+
+    .manufacturer-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .date-field {
+      flex: 1;
+      min-width: 0;
+    }
   }
 
   .combined-field {

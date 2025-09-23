@@ -9,25 +9,48 @@
   <mat-dialog-content class="popup-content">
     <form [formGroup]="boiDayHaForm" (ngSubmit)="onSubmit()">
       
-      <!-- Thông tin cơ bản từ quấn dây -->
-      <div class="info-section">
-        <h3>Thông tin bảng vẽ</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">Công suất:</span>
-            <span class="value">{{ data.quanDay.congsuat }} KVA</span>
+      <!-- Thông tin đầu trang: Bảng vẽ và Gia công -->
+      <div class="header-info-grid">
+        <div class="info-section">
+          <h3>Thông tin bảng vẽ</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Công suất:</span>
+              <span class="value">{{ data.quanDay.congsuat }} KVA</span>
+            </div>
+            <div class="info-item">
+              <span class="label">TBKT:</span>
+              <span class="value">{{ data.quanDay.tbkt }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Điện áp:</span>
+              <span class="value">{{ data.quanDay.dienap }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Số bối dây:</span>
+              <span class="value">{{ data.quanDay.soboiday }}</span>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="label">TBKT:</span>
-            <span class="value">{{ data.quanDay.tbkt }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Điện áp:</span>
-            <span class="value">{{ data.quanDay.dienap }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Số bối dây:</span>
-            <span class="value">{{ data.quanDay.soboiday }}</span>
+        </div>
+
+        <div class="info-section" style="margin-top: 20px;">
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Người gia công:</span>
+              <span class="value">{{ currentUser?.hoten || currentUser?.username || currentUser?.email || 'Unknown' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Ngày gia công:</span>
+              <span class="value">{{ currentDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Ký hiệu BV:</span>
+              <span class="value">{{ data.quanDay.kyhieuquanday }}-065</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Ngày tạo:</span>
+              <span class="value">{{ currentDate | date:'dd/MM/yyyy' }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -35,88 +58,88 @@
       <!-- Form nhập thông tin bối dây hạ - Tối ưu và gọn gàng -->
       <div class="form-section">
         <div class="form-grid compact-grid">
-          <!-- Dây và nhà sản xuất -->
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Quy cách dây</mat-label>
-            <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm²">
-            <mat-error *ngIf="boiDayHaForm.get('quy_cach_day')?.hasError('required') && boiDayHaForm.get('quy_cach_day')?.touched">
-              Quy cách dây là bắt buộc
-            </mat-error>
-          </mat-form-field>
+          <!-- Wire specification and number of strands on same row -->
+          <div class="form-field wire-spec-row">
+            <mat-form-field appearance="outline" class="wire-spec-field">
+              <mat-label>Quy cách dây</mat-label>
+              <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm²">
+              <mat-error *ngIf="boiDayHaForm.get('quy_cach_day')?.hasError('required') && boiDayHaForm.get('quy_cach_day')?.touched">
+                Quy cách dây là bắt buộc
+              </mat-error>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Số sợi chập</mat-label>
-            <input matInput type="number" formControlName="so_soi_day" placeholder="Nhập số sợi dây">
-            <mat-error *ngIf="boiDayHaForm.get('so_soi_day')?.hasError('required') && boiDayHaForm.get('so_soi_day')?.touched">
-              Số sợi dây là bắt buộc
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Nhà sản xuất</mat-label>
-            <mat-select formControlName="nha_san_xuat" (selectionChange)="onManufacturerChange($event)">
-              <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.value">
-                {{ manufacturer.name }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="boiDayHaForm.get('nha_san_xuat')?.hasError('required') && boiDayHaForm.get('nha_san_xuat')?.touched">
-              Nhà sản xuất là bắt buộc
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field other-manufacturer" 
-                         [class.hidden]="boiDayHaForm.get('nha_san_xuat')?.value !== 'OTHER'">
-            <mat-label>Tên nhà sản xuất khác</mat-label>
-            <input matInput formControlName="nha_san_xuat_other" placeholder="Nhập tên nhà sản xuất">
-            <mat-error *ngIf="boiDayHaForm.get('nha_san_xuat_other')?.hasError('required') && boiDayHaForm.get('nha_san_xuat_other')?.touched">
-              Tên nhà sản xuất là bắt buộc
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Ngày sản xuất</mat-label>
-            <input matInput [matDatepicker]="pickerNgaySanXuat" formControlName="ngay_san_xuat">
-            <mat-datepicker-toggle matSuffix [for]="pickerNgaySanXuat"></mat-datepicker-toggle>
-            <mat-datepicker #pickerNgaySanXuat></mat-datepicker>
-            <mat-error *ngIf="boiDayHaForm.get('ngay_san_xuat')?.hasError('required') && boiDayHaForm.get('ngay_san_xuat')?.touched">
-              Ngày sản xuất là bắt buộc
-            </mat-error>
-          </mat-form-field>
-
-          <!-- Kích thước cơ bản -->
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Chu vi khuôn (mm)</mat-label>
-            <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi khuôn">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>KT bụng bd trước (mm)</mat-label>
-            <input matInput type="number" formControlName="kt_bung_bd_truoc" placeholder="Nhập KT bụng bd trước">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Bụng bd sau (mm)</mat-label>
-            <input matInput type="number" formControlName="bung_bd_sau" placeholder="Nhập bụng bd sau">
-          </mat-form-field>
-
-          <!-- Thông số kỹ thuật -->
-          <div class="form-field">
-            <label class="mat-label">Chiều quấn dây</label>
-            <div class="radio-group">
-              <mat-radio-group formControlName="chieu_quan_day">
-                <mat-radio-button [value]="true" class="radio-button">Trái</mat-radio-button>
-                <mat-radio-button [value]="false" class="radio-button">Phải</mat-radio-button>
-              </mat-radio-group>
-            </div>
+            <mat-form-field appearance="outline" class="strand-count-field">
+              <mat-label>Số sợi chập</mat-label>
+              <input matInput type="number" formControlName="so_soi_day" placeholder="Nhập số sợi dây">
+              <mat-error *ngIf="boiDayHaForm.get('so_soi_day')?.hasError('required') && boiDayHaForm.get('so_soi_day')?.touched">
+                Số sợi dây là bắt buộc
+              </mat-error>
+            </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Máy quấn dây</mat-label>
-            <input matInput formControlName="may_quan_day" placeholder="Nhập máy quấn dây">
-            <mat-error *ngIf="boiDayHaForm.get('may_quan_day')?.hasError('required') && boiDayHaForm.get('may_quan_day')?.touched">
-              Máy quấn dây là bắt buộc
-            </mat-error>
-          </mat-form-field>
+          <!-- Manufacturer and Production Date on same row -->
+          <div class="form-field manufacturer-date-row">
+            <mat-form-field appearance="outline" class="manufacturer-field">
+              <mat-label>Nhà sản xuất</mat-label>
+              <mat-select formControlName="nha_san_xuat" (selectionChange)="onManufacturerChange($event)">
+                <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.value">
+                  {{ manufacturer.name }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="boiDayHaForm.get('nha_san_xuat')?.hasError('required') && boiDayHaForm.get('nha_san_xuat')?.touched">
+                Nhà sản xuất là bắt buộc
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="date-field">
+              <mat-label>Ngày sản xuất</mat-label>
+              <input matInput [matDatepicker]="pickerNgaySanXuat" formControlName="ngay_san_xuat">
+              <mat-datepicker-toggle matSuffix [for]="pickerNgaySanXuat"></mat-datepicker-toggle>
+              <mat-datepicker #pickerNgaySanXuat></mat-datepicker>
+              <mat-error *ngIf="boiDayHaForm.get('ngay_san_xuat')?.hasError('required') && boiDayHaForm.get('ngay_san_xuat')?.touched">
+                Ngày sản xuất là bắt buộc
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Basic dimensions on same row -->
+          <div class="form-field basic-dimensions-row">
+            <mat-form-field appearance="outline" class="dimension-field">
+              <mat-label>Chu vi khuôn (mm)</mat-label>
+              <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi khuôn">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="dimension-field">
+              <mat-label>KT bụng bd trước (mm)</mat-label>
+              <input matInput type="number" formControlName="kt_bung_bd_truoc" placeholder="Nhập KT bụng bd trước">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="dimension-field">
+              <mat-label>Bụng bd sau (mm)</mat-label>
+              <input matInput type="number" formControlName="bung_bd_sau" placeholder="Nhập bụng bd sau">
+            </mat-form-field>
+          </div>
+
+          <!-- Winding direction and machine on same row -->
+          <div class="form-field winding-controls-row">
+            <div class="winding-direction-group">
+              <label class="mat-label">Chiều quấn dây</label>
+              <div class="radio-group">
+                <mat-radio-group formControlName="chieu_quan_day">
+                  <mat-radio-button [value]="true" class="radio-button">Trái</mat-radio-button>
+                  <mat-radio-button [value]="false" class="radio-button">Phải</mat-radio-button>
+                </mat-radio-group>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="winding-machine-field">
+              <mat-label>Máy quấn dây</mat-label>
+              <input matInput formControlName="may_quan_day" placeholder="Nhập máy quấn dây">
+              <mat-error *ngIf="boiDayHaForm.get('may_quan_day')?.hasError('required') && boiDayHaForm.get('may_quan_day')?.touched">
+                Máy quấn dây là bắt buộc
+              </mat-error>
+            </mat-form-field>
+          </div>
 
           <!-- Độ dày -->
           <div class="form-field">
@@ -221,6 +244,27 @@
             </div>
           </div>
 
+          <!-- Kích thước bối dây hạ trong -->
+          <div class="form-field combined-field">
+            <div class="field-label">KT bối dây hạ trong (mm)</div>
+            <div class="input-group">
+              <mat-form-field appearance="outline" class="small-input">
+                <mat-label>Pha 1</mat-label>
+                <input matInput type="number" formControlName="kt_bd_ha_trong_1p" placeholder="Pha 1">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="small-input">
+                <mat-label>Pha 2</mat-label>
+                <input matInput type="number" formControlName="kt_bd_ha_trong_2p" placeholder="Pha 2">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="small-input">
+                <mat-label>Pha 3</mat-label>
+                <input matInput type="number" formControlName="kt_bd_ha_trong_3p" placeholder="Pha 3">
+              </mat-form-field>
+            </div>
+          </div>
+
           <!-- Kích thước bối dây hạ ngoài -->
           <div class="form-field combined-field">
             <div class="field-label">KT bối dây hạ ngoài (mm)</div>
@@ -282,8 +326,8 @@
           </div>
 
           <!-- Độ lệch điện trở -->
-          <div class="form-field with-note">
-            <mat-form-field appearance="outline" class="form-field">
+            <div class="form-field with-note">
+              <mat-form-field appearance="outline" class="form-field" style="margin-top: 20px;">
               <mat-label>Độ lệch điện trở giữa các pha (%)</mat-label>
               <input matInput type="number" formControlName="do_lech_dien_tro_giua_cac_pha"
                      placeholder="Nhập độ lệch" max="2" min="0" step="0.1">
@@ -301,28 +345,7 @@
         </div>
       </div>
 
-      <!-- Thông tin gia công -->
-      <div class="info-section">
-        <h3>Thông tin gia công</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">Người gia công:</span>
-            <span class="value">{{ currentUser?.firstName + ' ' + currentUser?.lastName || 'Unknown' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Ngày gia công:</span>
-            <span class="value">{{ currentDate | date:'dd/MM/yyyy HH:mm' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Ký hiệu BV:</span>
-            <span class="value">{{ data.quanDay.kyhieuquanday }}-066</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Ngày tạo:</span>
-            <span class="value">{{ currentDate | date:'dd/MM/yyyy' }}</span>
-          </div>
-        </div>
-      </div>
+      
     </form>
   </mat-dialog-content>
 

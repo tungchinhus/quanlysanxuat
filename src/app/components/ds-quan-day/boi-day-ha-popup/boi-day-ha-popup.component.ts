@@ -160,8 +160,7 @@ export class BoiDayHaPopupComponent implements OnInit {
   manufacturers = [
     { value: 'nha_sx1', name: 'Nha sx 1' },
     { value: 'nha_sx2', name: 'Nha sx 2' },
-    { value: 'nha_sx3', name: 'Nha sx 3' },
-    { value: 'OTHER', name: 'Khác' }
+    { value: 'nha_sx3', name: 'Nha sx 3' }
   ];
 
   constructor(
@@ -207,6 +206,11 @@ export class BoiDayHaPopupComponent implements OnInit {
       chu_vi_bd_ha_trong_2p: [0, [Validators.min(0)]],
       chu_vi_bd_ha_trong_3p: [0, [Validators.min(0)]],
       
+      // Kích thước bối dây hạ trong
+      kt_bd_ha_trong_1p: [0, [Validators.min(0)]],
+      kt_bd_ha_trong_2p: [0, [Validators.min(0)]],
+      kt_bd_ha_trong_3p: [0, [Validators.min(0)]],
+
       // Kích thước bối dây hạ ngoài
       kt_bd_ha_ngoai_bv_1p: [0, [Validators.min(0)]],
       kt_bd_ha_ngoai_bv_2p: [0, [Validators.min(0)]],
