@@ -435,14 +435,14 @@ export class KcsCheckComponent implements OnInit {
     };
 
     const dialogRef = this.dialog.open(ApproveDialogComponent, {
-      width: '600px',
+      width: '700px',
       data: dialogData,
       disableClose: true
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.IsSuccess) {
-        // Save approval data to Firebase
+        // Save approval data directly to Firebase (no API/SQL)
         this.saveApprovalToFirebase(element, result.data);
         this.thongbao(result.Message, 'Đóng', 'success');
         // Refresh data after approval
@@ -585,6 +585,8 @@ export class KcsCheckComponent implements OnInit {
       this.thongbao('Lỗi khi chuẩn bị dữ liệu KCS', 'Đóng', 'error');
     }
   }
+
+  // SQL save removed per requirement (use Firebase only)
 
   /**
    * Hàm thông báo chung với styling tùy chỉnh

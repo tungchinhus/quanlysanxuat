@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
 import { delay, catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { STATUS } from '../../models/common.enum';
@@ -928,6 +928,8 @@ export class KcsCheckService {
         })
       );
   }
+
+  // Removed SQL create method — using Firebase only as requested
 
   // Reject item - sử dụng endpoint đơn giản theo khuyến nghị BE
   rejectItem(type: string, id: number, reason?: string): Observable<RejectResponse> {
