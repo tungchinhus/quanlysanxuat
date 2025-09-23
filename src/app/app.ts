@@ -53,6 +53,20 @@ export class App implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(isAuth => {
         this.isAuthenticated = isAuth;
+        // Trigger change detection when authentication state changes
+        this.cdr.detectChanges();
+      });
+
+    // Subscribe to current user changes to update menu permissions
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        console.log('App: Current user changed:', user);
+        // Add a small delay to ensure user data is fully loaded
+        setTimeout(() => {
+          this.cdr.detectChanges();
+          this.debugMenuVisibility();
+        }, 100);
       });
   }
 
@@ -136,7 +150,7 @@ export class App implements OnInit, OnDestroy {
     const hasAdmin = roles.some(role => {
       const roleName = typeof role === 'string' ? role : (role as any).name;
       console.log('hasAdminRole - Checking role:', roleName);
-      return roleName === 'admin' || roleName === 'super_admin';
+      return roleName?.toLowerCase() === 'admin' || roleName?.toLowerCase() === 'super_admin';
     });
     
     console.log('hasAdminRole - Has admin role:', hasAdmin);
@@ -161,11 +175,11 @@ export class App implements OnInit, OnDestroy {
       return false;
     }
     
-    // Check for admin, manager, kcs, totruong roles
+    // Check for admin, manager, kcs, totruong roles (case insensitive)
     const hasPermission = roles.some(role => {
       const roleName = typeof role === 'string' ? role : (role as any).name;
       console.log('hasDashboardPermission - Checking role:', roleName);
-      return roleName === 'admin' || roleName === 'super_admin' || roleName === 'manager' || roleName === 'kcs' || roleName === 'totruong';
+      return roleName?.toLowerCase() === 'admin' || roleName?.toLowerCase() === 'super_admin' || roleName?.toLowerCase() === 'manager' || roleName?.toLowerCase() === 'kcs' || roleName?.toLowerCase() === 'totruong';
     });
     
     console.log('hasDashboardPermission - Has permission:', hasPermission);
@@ -190,11 +204,11 @@ export class App implements OnInit, OnDestroy {
       return false;
     }
     
-    // Check for admin, manager, totruong roles
+    // Check for admin, manager, totruong roles (case insensitive)
     const hasPermission = roles.some(role => {
       const roleName = typeof role === 'string' ? role : (role as any).name;
       console.log('hasBangVePermission - Checking role:', roleName);
-      return roleName === 'admin' || roleName === 'super_admin' || roleName === 'manager' || roleName === 'totruong';
+      return roleName?.toLowerCase() === 'admin' || roleName?.toLowerCase() === 'super_admin' || roleName?.toLowerCase() === 'manager' || roleName?.toLowerCase() === 'totruong';
     });
     
     console.log('hasBangVePermission - Has permission:', hasPermission);
@@ -219,11 +233,11 @@ export class App implements OnInit, OnDestroy {
       return false;
     }
     
-    // Check for KCS, admin, manager roles
+    // Check for KCS, admin roles only (manager is totruong khau quan day, not KCS)
     const hasPermission = roles.some(role => {
       const roleName = typeof role === 'string' ? role : (role as any).name;
       console.log('hasKcsManagerPermission - Checking role:', roleName);
-      return roleName === 'kcs' || roleName === 'admin' || roleName === 'super_admin' || roleName === 'manager';
+      return roleName?.toLowerCase() === 'kcs' || roleName?.toLowerCase() === 'admin' || roleName?.toLowerCase() === 'super_admin';
     });
     
     // Check if user is quanboiday (should NOT have access)
@@ -245,6 +259,18 @@ export class App implements OnInit, OnDestroy {
     
     console.log('hasKcsManagerPermission - Has permission:', hasPermission);
     return hasPermission;
+  }
+
+  // Debug method to check menu visibility
+  debugMenuVisibility(): void {
+    console.log('=== MENU VISIBILITY DEBUG ===');
+    console.log('isAuthenticated:', this.isAuthenticated);
+    console.log('currentUser:', this.authService.getCurrentUser());
+    console.log('hasDashboardPermission():', this.hasDashboardPermission());
+    console.log('hasBangVePermission():', this.hasBangVePermission());
+    console.log('hasKcsManagerPermission():', this.hasKcsManagerPermission());
+    console.log('hasAdminRole():', this.hasAdminRole());
+    console.log('=== END MENU VISIBILITY DEBUG ===');
   }
 
   async refreshUserData(): Promise<void> {

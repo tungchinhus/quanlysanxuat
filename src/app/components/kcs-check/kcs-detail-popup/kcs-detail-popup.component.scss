@@ -1,0 +1,247 @@
+.kcs-detail-popup {
+  width: 1000px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .header-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-text {
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      p {
+        margin: 4px 0 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+    }
+  }
+
+  .close-button {
+    color: white;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.popup-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 140px);
+
+  .status-card {
+    margin-bottom: 20px;
+    border-left: 4px solid #ff9800;
+
+    .status-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .status-icon {
+        color: #ff9800;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .status-details {
+        h3 {
+          margin: 0 0 8px 0;
+          font-size: 16px;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .info-card {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    mat-card-header {
+      padding-bottom: 16px;
+
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+
+        mat-icon {
+          color: #1976d2;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+          font-size: 12px;
+          font-weight: 500;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .value {
+          font-size: 14px;
+          color: #333;
+          font-weight: 400;
+          padding: 8px 12px;
+          background-color: #f5f5f5;
+          border-radius: 4px;
+          border: 1px solid #e0e0e0;
+        }
+      }
+    }
+  }
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .cancel-button {
+    color: #666;
+  }
+
+  .reject-button {
+    background-color: #f44336;
+    color: white;
+
+    &:hover {
+      background-color: #d32f2f;
+    }
+  }
+
+  .approve-button {
+    background-color: #4caf50;
+    color: white;
+
+    &:hover {
+      background-color: #388e3c;
+    }
+  }
+}
+
+// Status chip styles
+.status-pending {
+  background-color: #fff3cd !important;
+  color: #856404 !important;
+  border: 1px solid #ffeaa7 !important;
+}
+
+.status-approved {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+  border: 1px solid #c3e6cb !important;
+}
+
+.status-rejected {
+  background-color: #f8d7da !important;
+  color: #721c24 !important;
+  border: 1px solid #f5c6cb !important;
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .kcs-detail-popup {
+    width: 90vw;
+    max-width: 900px;
+  }
+
+  .popup-content {
+    .info-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .kcs-detail-popup {
+    width: 95vw;
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+
+  .popup-content {
+    padding: 16px;
+
+    .info-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+
+  .popup-actions {
+    flex-direction: column;
+    gap: 8px;
+
+    button {
+      width: 100%;
+    }
+  }
+}

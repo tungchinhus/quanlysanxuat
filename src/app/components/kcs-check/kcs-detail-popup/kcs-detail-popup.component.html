@@ -1,0 +1,125 @@
+<div class="kcs-detail-popup">
+  <!-- Header -->
+  <div class="popup-header">
+    <div class="header-content">
+      <mat-icon class="header-icon">fact_check</mat-icon>
+      <div class="header-text">
+        <h2>Chi tiết {{ itemTypeText }}</h2>
+        <p>Thông tin chi tiết sản phẩm chờ kiểm tra KCS</p>
+      </div>
+    </div>
+    <button mat-icon-button class="close-button" (click)="onClose()" aria-label="Đóng">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="popup-content">
+
+    <!-- Basic Information -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Thông tin cơ bản
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Ký hiệu quấn dây:</label>
+            <span class="value">{{ data.item.kyhieuquanday || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Tên bảng vẽ:</label>
+            <span class="value">{{ data.item.tenbangve || data.item.congsuat || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Công suất:</label>
+            <span class="value">{{ data.item.congsuat || 'N/A' }} kVA</span>
+          </div>
+          <div class="info-item">
+            <label>TBKT:</label>
+            <span class="value">{{ data.item.tbkt || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Nhà sản xuất:</label>
+            <span class="value">{{ data.item.nha_san_xuat || data.item.nhasanxuat || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Người gia công:</label>
+            <span class="value">{{ data.item.nguoigiacong || 'N/A' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Date Information -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          Thông tin thời gian
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Ngày sản xuất:</label>
+            <span class="value">{{ data.item.ngay_san_xuat ? (data.item.ngay_san_xuat | date:'dd/MM/yyyy') : 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Ngày gia công:</label>
+            <span class="value">{{ data.item.ngaygiacong ? (data.item.ngaygiacong | date:'dd/MM/yyyy') : 'N/A' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Technical Specifications -->
+    <mat-card class="info-card" *ngIf="data.itemType === 'boiDayCao' || data.itemType === 'boiDayHa'">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>settings</mat-icon>
+          Thông số kỹ thuật
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Quy cách dây:</label>
+            <span class="value">{{ data.item.quy_cach_day || data.item.tbkt || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Số sợi dây:</label>
+            <span class="value">{{ data.item.so_soi_day || data.item.dienap || 'N/A' }}</span>
+          </div>
+          <div class="info-item" *ngIf="data.itemType === 'boiDayCao'">
+            <label>Chiều quấn dây:</label>
+            <span class="value">{{ data.item.chieuquanday ? 'Có' : 'Không' }}</span>
+          </div>
+          <div class="info-item" *ngIf="data.itemType === 'boiDayCao'">
+            <label>Máy quấn dây:</label>
+            <span class="value">{{ data.item.mayquanday || 'N/A' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Actions -->
+  <div class="popup-actions">
+    <button mat-button (click)="onClose()" class="cancel-button">
+      <mat-icon>close</mat-icon>
+      Đóng
+    </button>
+    <button mat-raised-button color="warn" (click)="onReject()" class="reject-button">
+      <mat-icon>cancel</mat-icon>
+      Từ chối KCS
+    </button>
+    <button mat-raised-button color="primary" (click)="onApprove()" class="approve-button">
+      <mat-icon>check_circle</mat-icon>
+      Duyệt KCS
+    </button>
+  </div>
+</div>

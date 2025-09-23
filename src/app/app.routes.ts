@@ -162,7 +162,7 @@ export const routes: Routes = [
     loadComponent: () => import('./components/kcs-manager/kcs-manager.component').then(m => m.KcsManagerComponent),
     canActivate: [AuthGuard],
     data: { 
-      roles: ['kcs', 'admin', 'super_admin', 'manager'],
+      roles: ['kcs', 'admin', 'super_admin'],
       permissions: ['kcs_manager']
     }
   },
@@ -174,5 +174,9 @@ export const routes: Routes = [
       roles: ['kcs'],
       permissions: ['kcs_check']
     }
+  },
+  {
+    path: 'menu-debug',
+    loadComponent: () => import('./components/menu-debug/menu-debug.component').then(m => m.MenuDebugComponent)
   },
 ];

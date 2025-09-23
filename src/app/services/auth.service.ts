@@ -362,11 +362,49 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    // First try to get from subject
+    const currentUser = this.currentUserSubject.value;
+    if (currentUser) {
+      return currentUser;
+    }
+    
+    // Fallback to localStorage if subject is null (e.g., after page reload)
+    try {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        // Update subject with stored user
+        this.currentUserSubject.next(parsedUser);
+        return parsedUser;
+      }
+    } catch (error) {
+      console.error('Error parsing stored user from localStorage:', error);
+    }
+    
+    return null;
   }
 
   isAuthenticated(): boolean {
-    return this.isAuthenticatedSubject.value;
+    // First try to get from subject
+    const isAuth = this.isAuthenticatedSubject.value;
+    if (isAuth) {
+      return isAuth;
+    }
+    
+    // Fallback to localStorage if subject is false (e.g., after page reload)
+    try {
+      const token = localStorage.getItem('authToken');
+      const user = localStorage.getItem('currentUser');
+      if (token && user) {
+        // Update subject with stored state
+        this.isAuthenticatedSubject.next(true);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error checking authentication from localStorage:', error);
+    }
+    
+    return false;
   }
 
   getToken(): string | null {
@@ -504,7 +542,7 @@ export class AuthService {
     if (roleNames.some((role: any) => 
       role?.toLowerCase().includes('kcs')
     )) {
-      this.router.navigate(['/kcs-manager']);
+      this.router.navigate(['/dashboard']);
       return;
     }
 

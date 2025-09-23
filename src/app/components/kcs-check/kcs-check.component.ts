@@ -20,6 +20,7 @@ import { KcsApproveCreateData } from '../../models/kcs-approve.model';
 import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, BoiDayCaoPendingResponse, BoiDayCaoPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
 import { RejectDialogComponent, RejectDialogData } from './reject-dialog/reject-dialog.component';
+import { KcsDetailPopupComponent, KcsDetailData } from './kcs-detail-popup/kcs-detail-popup.component';
 
 @Component({
   selector: 'app-kcs-check',
@@ -397,8 +398,31 @@ export class KcsCheckComponent implements OnInit {
 
   // Action methods
   viewBangVeDetails(element: any): void {
-    console.log('Viewing details for:', element);
-    this.thongbao(`Xem chi tiết: ${element.kyhieuquanday}`, 'Đóng', 'info');
+    console.log('Viewing KCS details for:', element);
+    
+    const dialogData: KcsDetailData = {
+      item: element,
+      itemType: this.currentTab as 'boiDayHa' | 'boiDayCao' | 'epBoiDay'
+    };
+
+    const dialogRef = this.dialog.open(KcsDetailPopupComponent, {
+      width: '1000px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: dialogData,
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        console.log('Dialog result:', result);
+        if (result.action === 'approve') {
+          this.approveKcs(result.item);
+        } else if (result.action === 'reject') {
+          this.rejectKcs(result.item);
+        }
+      }
+    });
   }
 
   approveKcs(element: any): void {

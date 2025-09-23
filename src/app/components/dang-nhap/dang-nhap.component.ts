@@ -202,7 +202,7 @@ export class DangNhapComponent implements OnInit {
     if (roleNames.some((role: any) => 
       role?.toLowerCase().includes('kcs')
     )) {
-      this.router.navigate(['/kcs-manager']);
+      this.router.navigate(['/dashboard']);
       return;
     }
 
