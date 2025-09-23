@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "dieuxe-fe": {
+    "quanlysanxuat": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -85,10 +85,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "dieuxe-fe:build:production"
+              "buildTarget": "quanlysanxuat:build:production"
             },
             "development": {
-              "buildTarget": "dieuxe-fe:build:development"
+              "buildTarget": "quanlysanxuat:build:development"
             }
           },
           "defaultConfiguration": "development"

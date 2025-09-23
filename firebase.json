@@ -2,7 +2,7 @@
   "hosting": [
     {
       "target": "quanlysanxuat-b7346",
-      "public": "dist/dieuxe-fe/browser",
+      "public": "dist/quanlysanxuat/browser",
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -37,7 +37,7 @@
     },
     {
       "target": "quanlysx",
-    "public": "dist/dieuxe-fe/browser",
+    "public": "dist/quanlysanxuat/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
