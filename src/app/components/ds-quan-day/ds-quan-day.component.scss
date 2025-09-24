@@ -10,7 +10,7 @@
 .container {
   padding: 0;
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
 }
 
@@ -55,7 +55,7 @@
 
 .main-content {
   padding: 24px;
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   min-height: calc(100vh - 80px);
 }
 
@@ -98,20 +98,16 @@ mat-form-field {
   color: var(--mlf-green) !important;
 }
 
-// Search button styling
-.search-btn {
-  border: 2px solid #0000c1 !important;
-  color: #0000c1 !important;
+// Button styling
+.search-btn, .add-btn {
+  border: 2px solid !important;
   background: transparent !important;
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   
   &:hover {
-    background: #0000c1 !important;
     color: white !important;
-    border-color: #0000c1 !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 193, 0.3) !important;
   }
   
   &:active {
@@ -123,28 +119,23 @@ mat-form-field {
   }
 }
 
-// Add button styling - similar to search button
+.search-btn {
+  border-color: #0000c1 !important;
+  color: #0000c1 !important;
+  
+  &:hover {
+    background: #0000c1 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 193, 0.3) !important;
+  }
+}
+
 .add-btn {
-  border: 2px solid #00a758 !important;
+  border-color: #00a758 !important;
   color: #00a758 !important;
-  background: transparent !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
   
   &:hover {
     background: #00a758 !important;
-    color: white !important;
-    border-color: #00a758 !important;
-    transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 167, 88, 0.3) !important;
-  }
-  
-  &:active {
-    transform: translateY(0);
-  }
-  
-  mat-icon {
-    color: inherit !important;
   }
 }
 
@@ -326,7 +317,7 @@ mat-form-field {
   }
 }
 
-// Fallback for icon buttons (if needed)
+// Icon buttons
 .mat-icon-button {
   margin: 0 2px;
   width: 40px;
@@ -338,19 +329,10 @@ mat-form-field {
   border: none !important;
   box-shadow: none !important;
   
-  &:hover {
+  &:hover, &:active, &:focus {
     background: transparent !important;
     transform: none !important;
     box-shadow: none !important;
-  }
-  
-  &:active {
-    background: transparent !important;
-    transform: none !important;
-  }
-  
-  &:focus {
-    background: transparent !important;
     outline: none !important;
   }
   
@@ -360,30 +342,20 @@ mat-form-field {
     height: 20px;
     line-height: 20px;
   }
-}
-
-// Specific colors for action buttons
-.mat-icon-button[color="primary"] {
-  color: var(--cds-color-jh-blue);
   
-  &:hover {
-    background-color: rgba(0, 0, 193, 0.1);
+  &[color="primary"] {
+    color: var(--cds-color-jh-blue);
+    &:hover { background-color: rgba(0, 0, 193, 0.1); }
   }
-}
-
-.mat-icon-button[color="accent"] {
-  color: var(--cds-color-m-green);
   
-  &:hover {
-    background-color: rgba(0, 167, 88, 0.1);
+  &[color="accent"] {
+    color: var(--cds-color-m-green);
+    &:hover { background-color: rgba(0, 167, 88, 0.1); }
   }
-}
-
-.mat-icon-button[color="warn"] {
-  color: #c62828;
   
-  &:hover {
-    background-color: rgba(198, 40, 40, 0.1);
+  &[color="warn"] {
+    color: #c62828;
+    &:hover { background-color: rgba(198, 40, 40, 0.1); }
   }
 }
 
@@ -464,7 +436,7 @@ mat-form-field {
   }
 }
 
-// Autocomplete styling - Complete rewrite
+// Autocomplete styling
 .custom-option {
   height: auto !important;
   line-height: 1.4 !important;
@@ -497,48 +469,15 @@ mat-form-field {
       }
     }
     
-    .option-footer {
-      .info {
-        color: #777 !important;
-        font-size: 12px !important;
-        font-weight: 400 !important;
-        font-family: 'Roboto', sans-serif !important;
-      }
+    .option-footer .info {
+      color: #777 !important;
+      font-size: 12px !important;
+      font-weight: 400 !important;
+      font-family: 'Roboto', sans-serif !important;
     }
   }
 }
 
-// Fix for mat-option text visibility
-.mat-option {
-  color: #333 !important;
-  font-size: 14px !important;
-  
-  &:hover {
-    background-color: rgba(0, 0, 193, 0.1) !important;
-  }
-  
-  &.mat-selected {
-    background-color: rgba(0, 0, 193, 0.2) !important;
-  }
-}
-
-// Ensure mat-option-text is visible
-.mat-option-text {
-  color: inherit !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-}
-
-// Override Material's default styling
-.mat-autocomplete-panel {
-  .mat-option {
-    height: auto !important;
-    line-height: 1.4 !important;
-    padding: 8px 16px !important;
-  }
-}
-
-// Global fixes for autocomplete - Enhanced
 ::ng-deep .mat-autocomplete-panel {
   background: white !important;
   border: 1px solid #e0e0e0 !important;
@@ -549,6 +488,9 @@ mat-form-field {
   .mat-option {
     color: #333 !important;
     min-height: 48px !important;
+    height: auto !important;
+    line-height: 1.4 !important;
+    padding: 8px 16px !important;
     
     &:hover {
       background-color: rgba(0, 0, 193, 0.1) !important;
@@ -559,28 +501,17 @@ mat-form-field {
     }
     
     &.custom-option {
-      height: auto !important;
-      line-height: 1.4 !important;
       padding: 12px 16px !important;
     }
   }
 }
 
-// Force text visibility
 ::ng-deep .mat-option-text {
   color: #333 !important;
   font-size: 14px !important;
   font-weight: 400 !important;
   font-family: 'Roboto', sans-serif !important;
   line-height: 1.4 !important;
-}
-
-// Additional overrides for Material
-::ng-deep .mat-option .mat-option-text {
-  color: inherit !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-  font-family: inherit !important;
 }
 
 // Touch device optimizations
@@ -730,45 +661,25 @@ mat-form-field {
   }
 }
 
-// Global overrides for Material Design buttons to remove unwanted backgrounds
+// Global Material button overrides
 ::ng-deep .mat-icon-button {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   
-  &:hover {
+  &:hover, &:active, &:focus, &.cdk-focused, &.cdk-program-focused {
     background: transparent !important;
     transform: none !important;
     box-shadow: none !important;
-  }
-  
-  &:active {
-    background: transparent !important;
-    transform: none !important;
-  }
-  
-  &:focus {
-    background: transparent !important;
-    outline: none !important;
-  }
-  
-  &.cdk-focused {
-    background: transparent !important;
-    outline: none !important;
-  }
-  
-  &.cdk-program-focused {
-    background: transparent !important;
     outline: none !important;
   }
 }
 
-// Enhanced Snackbar Styles
-::ng-deep .error-snackbar {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+// Snackbar styles
+::ng-deep .error-snackbar, ::ng-deep .success-snackbar, 
+::ng-deep .warning-snackbar, ::ng-deep .info-snackbar {
   color: white !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3) !important;
   font-weight: 500 !important;
   font-size: 14px !important;
   padding: 16px 20px !important;
@@ -776,48 +687,26 @@ mat-form-field {
   max-width: 400px !important;
   animation: slideInFromTop 0.3s ease-out !important;
   z-index: 9999999 !important;
+}
+
+::ng-deep .error-snackbar {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3) !important;
 }
 
 ::ng-deep .success-snackbar {
   background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
-  color: white !important;
-  border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  padding: 16px 20px !important;
-  margin: 8px !important;
-  max-width: 400px !important;
-  animation: slideInFromTop 0.3s ease-out !important;
-  z-index: 9999999 !important;
 }
 
 ::ng-deep .warning-snackbar {
   background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
-  color: white !important;
-  border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  padding: 16px 20px !important;
-  margin: 8px !important;
-  max-width: 400px !important;
-  animation: slideInFromTop 0.3s ease-out !important;
-  z-index: 9999999 !important;
 }
 
 ::ng-deep .info-snackbar {
   background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%) !important;
-  color: white !important;
-  border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3) !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  padding: 16px 20px !important;
-  margin: 8px !important;
-  max-width: 400px !important;
-  animation: slideInFromTop 0.3s ease-out !important;
-  z-index: 9999999 !important;
 }
 
 @keyframes slideInFromTop {
@@ -891,12 +780,10 @@ mat-form-field {
   }
 }
 
-// Mobile snackbar adjustments
+// Mobile adjustments
 @media (max-width: 768px) {
-  ::ng-deep .error-snackbar,
-  ::ng-deep .success-snackbar,
-  ::ng-deep .warning-snackbar,
-  ::ng-deep .info-snackbar {
+  ::ng-deep .error-snackbar, ::ng-deep .success-snackbar,
+  ::ng-deep .warning-snackbar, ::ng-deep .info-snackbar {
     max-width: calc(100vw - 32px) !important;
     margin: 4px 16px !important;
     font-size: 13px !important;

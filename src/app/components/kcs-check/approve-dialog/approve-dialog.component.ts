@@ -7,7 +7,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { KcsCheckService } from '../kcs-check.service';
 import { AuthService } from '../../../services/auth.service';
 
 export interface ApproveDialogData {
@@ -40,7 +39,6 @@ export class ApproveDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ApproveDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ApproveDialogData,
-    private kcsService: KcsCheckService,
     private authService: AuthService
   ) {
     // Lấy thông tin người dùng hiện tại
@@ -91,37 +89,17 @@ export class ApproveDialogComponent implements OnInit {
       // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
     };
 
-    console.log('Submitting approval with data:', approvalData);
+    console.log('Preparing approval data for Firebase:', approvalData);
     
-    // Call service to approve item
-    this.kcsService.approveItem(this.data.itemType, this.data.itemId, approvalData)
-      .subscribe({
-        next: (response) => {
-          console.log('Approve response received:', response);
-          if (response.IsSuccess) {
-            this.dialogRef.close({
-              IsSuccess: true,
-              Message: response.Message || 'Đã duyệt KCS thành công',
-              data: approvalData
-            });
-          } else {
-            this.dialogRef.close({
-              IsSuccess: false,
-              Message: response.Message || 'Lỗi khi duyệt'
-            });
-          }
-        },
-        error: (error) => {
-          console.error('Error approving item:', error);
-          this.dialogRef.close({
-            IsSuccess: false,
-            Message: 'Lỗi khi duyệt. Vui lòng thử lại.'
-          });
-        },
-        complete: () => {
-          this.isLoading = false;
-        }
+    // Simulate loading time for better UX, then return data for Firebase save
+    setTimeout(() => {
+      this.dialogRef.close({
+        IsSuccess: true,
+        Message: 'Đã chuẩn bị dữ liệu duyệt KCS',
+        data: approvalData
       });
+      this.isLoading = false;
+    }, 500);
   }
 
   onCancel(): void {

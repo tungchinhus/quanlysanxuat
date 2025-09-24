@@ -16,6 +16,7 @@ import { CommonService } from '../../services/common.service';
 import { AuthService } from '../../services/auth.service';
 import { FirebaseKcsApproveService } from '../../services/firebase-kcs-approve.service';
 import { FirebaseBdCaoService } from '../../services/firebase-bd-cao.service';
+import { FirebaseBdHaService } from '../../services/firebase-bd-ha.service';
 import { KcsApproveCreateData } from '../../models/kcs-approve.model';
 import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, BoiDayCaoPendingResponse, BoiDayCaoPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
@@ -89,6 +90,7 @@ export class KcsCheckComponent implements OnInit {
     private authService: AuthService,
     private firebaseKcsApproveService: FirebaseKcsApproveService,
     private firebaseBdCaoService: FirebaseBdCaoService,
+    private firebaseBdHaService: FirebaseBdHaService,
     private kcsService: KcsCheckService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
@@ -471,6 +473,8 @@ export class KcsCheckComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.IsSuccess) {
+        // Save rejection data directly to Firebase (no API/SQL)
+        this.saveRejectionToFirebase(element, result.data);
         this.thongbao(result.Message, 'Đóng', 'success');
         // Refresh data after rejection
         this.loadData();
@@ -575,6 +579,45 @@ export class KcsCheckComponent implements OnInit {
         .then(docId => {
           console.log('KCS approval saved successfully with ID:', docId);
           this.thongbao('Dữ liệu KCS đã được lưu vào Firebase', 'Đóng', 'success');
+
+          // After saving approval, update corresponding bảng trạng thái to 2 (đã hoàn thành)
+          const kyHieu = element.kyhieuquanday || element.tenbangve;
+          if (!kyHieu) {
+            console.warn('Không xác định được ký hiệu bảng vẽ để cập nhật trạng thái');
+            return;
+          }
+
+          if (this.currentTab === 'boiDayHa') {
+            // Update tbl_bd_ha
+            this.firebaseBdHaService.getBdHaByKyHieuBangVe(kyHieu)
+              .then(items => {
+                const target = items && items.length > 0 ? items[0] : null;
+                if (target && target.id) {
+                  return this.firebaseBdHaService.updateBdHaStatus(target.id, 2);
+                } else {
+                  console.warn('Không tìm thấy bản ghi bd_ha để cập nhật', kyHieu);
+                  return;
+                }
+              })
+              .catch(err => {
+                console.error('Lỗi khi cập nhật trạng thái bd_ha:', err);
+              });
+          } else if (this.currentTab === 'boiDayCao') {
+            // Update tbl_bd_cao
+            this.firebaseBdCaoService.getBdCaoByKyHieuBangVe(kyHieu)
+              .then(items => {
+                const target = items && items.length > 0 ? items[0] : null;
+                if (target && target.id) {
+                  return this.firebaseBdCaoService.updateBdCaoStatus(target.id, 2);
+                } else {
+                  console.warn('Không tìm thấy bản ghi bd_cao để cập nhật', kyHieu);
+                  return;
+                }
+              })
+              .catch(err => {
+                console.error('Lỗi khi cập nhật trạng thái bd_cao:', err);
+              });
+          }
         })
         .catch(error => {
           console.error('Error saving KCS approval to Firebase:', error);
@@ -583,6 +626,41 @@ export class KcsCheckComponent implements OnInit {
     } catch (error) {
       console.error('Error preparing KCS approval data:', error);
       this.thongbao('Lỗi khi chuẩn bị dữ liệu KCS', 'Đóng', 'error');
+    }
+  }
+
+  /**
+   * Save rejection data to Firebase
+   */
+  private saveRejectionToFirebase(element: any, rejectionData: any): void {
+    try {
+      const currentUser = this.authService.getCurrentUser();
+      const userEmail = currentUser?.email || currentUser?.username || 'unknown';
+      
+      const kcsRejectData: KcsApproveCreateData = {
+        kyhieubangve: element.kyhieuquanday || element.tenbangve || 'N/A',
+        id_boiday: element.id?.toString() || 'N/A',
+        masothe_bd: element.masothe_bd || element.id?.toString() || 'N/A',
+        user_kcs_approve: userEmail,
+        kcs_approve_status: 'rejected',
+        ghi_chu: rejectionData?.ghiChu || 'Không đạt tiêu chuẩn chất lượng KCS',
+        ngay_approve: new Date()
+      };
+
+      console.log('Saving KCS rejection to Firebase:', kcsRejectData);
+
+      this.firebaseKcsApproveService.createKcsApprove(kcsRejectData)
+        .then(docId => {
+          console.log('KCS rejection saved successfully with ID:', docId);
+          this.thongbao('Dữ liệu từ chối KCS đã được lưu vào Firebase', 'Đóng', 'success');
+        })
+        .catch(error => {
+          console.error('Error saving KCS rejection to Firebase:', error);
+          this.thongbao('Lỗi khi lưu dữ liệu từ chối KCS vào Firebase', 'Đóng', 'error');
+        });
+    } catch (error) {
+      console.error('Error preparing KCS rejection data:', error);
+      this.thongbao('Lỗi khi chuẩn bị dữ liệu từ chối KCS', 'Đóng', 'error');
     }
   }
 

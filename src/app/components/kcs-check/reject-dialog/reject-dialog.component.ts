@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { KcsCheckService } from '../kcs-check.service';
+import { AuthService } from '../../../services/auth.service';
 
 export interface RejectDialogData {
   itemId: number;
@@ -39,7 +39,7 @@ export class RejectDialogComponent implements OnInit {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<RejectDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: RejectDialogData,
-    private kcsService: KcsCheckService
+    private authService: AuthService
   ) {
     this.rejectForm = this.fb.group({
       ghiChu: ['', [Validators.required]]
@@ -59,38 +59,22 @@ export class RejectDialogComponent implements OnInit {
         itemId: this.data.itemId,
         ghiChu: formData.ghiChu,
         rejectedAt: new Date().toISOString(),
-        itemType: this.data.itemType
-        // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
+        itemType: this.data.itemType,
+        rejectedBy: this.authService.getCurrentUser()?.username || 
+                   this.authService.getCurrentUser()?.email || 'Unknown'
       };
 
-      // Call service to reject item
-      this.kcsService.rejectItem(this.data.itemType, this.data.itemId, formData.ghiChu)
-        .subscribe({
-          next: (response) => {
-            if (response.IsSuccess) {
-              this.dialogRef.close({
-                IsSuccess: true,
-                Message: response.Message || 'Đã từ chối thành công',
-                data: rejectionData
-              });
-            } else {
-              this.dialogRef.close({
-                IsSuccess: false,
-                Message: response.Message || 'Lỗi khi từ chối'
-              });
-            }
-          },
-          error: (error) => {
-            console.error('Error rejecting item:', error);
-            this.dialogRef.close({
-              IsSuccess: false,
-              Message: 'Lỗi khi từ chối. Vui lòng thử lại.'
-            });
-          },
-          complete: () => {
-            this.isLoading = false;
-          }
+      console.log('Preparing rejection data for Firebase:', rejectionData);
+      
+      // Simulate loading time for better UX, then return data for Firebase save
+      setTimeout(() => {
+        this.dialogRef.close({
+          IsSuccess: true,
+          Message: 'Đã chuẩn bị dữ liệu từ chối KCS',
+          data: rejectionData
         });
+        this.isLoading = false;
+      }, 500);
     }
   }
 
