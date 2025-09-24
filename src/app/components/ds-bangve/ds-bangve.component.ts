@@ -48,6 +48,7 @@ export interface BangVeData {
   bung_bd: number;
   user_create: string;
   trang_thai: number | null; // Thay đổi từ boolean thành number | null
+  trang_thai_approve?: string; // KCS approval status: 'pending', 'approved', 'rejected'
   trang_thai_bd_cao?: number | null; // Trạng thái bối dây cao: 1=đang làm, 2=đã hoàn thành
   trang_thai_bd_ha?: number | null; // Trạng thái bối dây hạ: 1=đang làm, 2=đã hoàn thành
   trang_thai_bd_ep?: number | null; // Trạng thái bối dây ép: 1=đang làm, 2=đã hoàn thành
@@ -508,8 +509,23 @@ export class DsBangveComponent implements OnInit {
       console.log(`  - Assigned by user ID: ${drawing.assigned_by_user_id}`);
       console.log(`  - Is assigned to current user: ${isAssignedToCurrentUser}`);
       
-      // Phân loại dựa vào trang_thai, trạng thái bôi dây và user assignment
-      if (trangThai === 2 || (isBoidayCaoCompleted && isAssignedToCurrentUser) || (isBoidayHaCompleted && isAssignedToCurrentUser)) {
+      // Kiểm tra KCS approval status
+      const trangThaiApprove = drawing.trang_thai_approve;
+      console.log(`  - trang_thai_approve: ${trangThaiApprove}`);
+      
+      // Phân loại dựa vào KCS approval status TRƯỚC, sau đó mới đến trang_thai và trạng thái bôi dây
+      if (trangThaiApprove === 'approved' || trangThaiApprove === 'rejected') {
+        // KCS đã approve/reject → Tab "Đã xử lý" (ưu tiên cao nhất)
+        console.log(`  → Adding to PROCESSED drawings (KCS ${trangThaiApprove})`);
+        const processedDrawing: ProcessedBangVeData = {
+          ...drawing,
+          user_process: drawing.user_create || 'Unknown',
+          process_date: drawing.created_at || new Date(),
+          process_status: trangThaiApprove === 'approved' ? 'KCS Approved' : 'KCS Rejected'
+        };
+        this.processedDrawings.push(processedDrawing);
+      } else if (trangThai === 2 || (isBoidayCaoCompleted && isAssignedToCurrentUser) || (isBoidayHaCompleted && isAssignedToCurrentUser)) {
+        // Hoàn thành theo cách cũ → Tab "Đã xử lý"
         console.log(`  → Adding to PROCESSED drawings (trang_thai = ${trangThai} or boiday completed for current user)`);
         const processedDrawing: ProcessedBangVeData = {
           ...drawing,
@@ -519,14 +535,15 @@ export class DsBangveComponent implements OnInit {
         };
         this.processedDrawings.push(processedDrawing);
       } else if (trangThai === 1 || (isAssignedToCurrentUser && (drawing.trang_thai_bd_ha === 1 || drawing.trang_thai_bd_cao === 1))) {
+        // Đang gia công → Tab "Đang gia công"
         console.log(`  → Adding to IN PROGRESS drawings (trang_thai = ${trangThai} or boiday in progress for current user)`);
         this.inProgressDrawings.push(drawing);
       } else if (trangThai === 0 || drawing.trang_thai === null || drawing.trang_thai === undefined || isNaN(trangThai)) {
-        // trang_thai = 0/null/undefined/invalid → Tab "Bảng vẽ mới"
+        // Mới → Tab "Bảng vẽ mới"
         console.log(`  → Adding to NEW drawings (trang_thai = ${drawing.trang_thai})`);
         this.drawings.push(drawing);
       } else {
-        // Other trang_thai values → Default to "Bảng vẽ mới" tab
+        // Khác → Default to "Bảng vẽ mới" tab
         console.log(`  → Adding to NEW drawings (unknown trang_thai = ${drawing.trang_thai})`);
         this.drawings.push(drawing);
       }
@@ -1475,6 +1492,47 @@ export class DsBangveComponent implements OnInit {
     }
   }
 
+  /**
+   * Cập nhật trạng thái KCS approval cho bảng vẽ
+   */
+  public async updateDrawingKcsApprovalStatus(drawingId: number | string, approvalStatus: 'approved' | 'rejected'): Promise<void> {
+    try {
+      console.log(`🔄 [updateDrawingKcsApprovalStatus] Updating drawing ${drawingId} KCS approval status to: ${approvalStatus}`);
+      
+      // Tìm drawing trong danh sách
+      const drawing = this.drawings.find(d => d.id === drawingId) || 
+                     this.inProgressDrawings.find(d => d.id === drawingId) || 
+                     this.processedDrawings.find(d => d.id === drawingId);
+      
+      if (!drawing) {
+        console.warn(`⚠️ [updateDrawingKcsApprovalStatus] Drawing ${drawingId} not found in any list`);
+        return;
+      }
+
+      // Tạo bản sao của drawing với trang_thai_approve được cập nhật
+      const updatedDrawing: BangVeData = {
+        ...drawing,
+        trang_thai_approve: approvalStatus
+      };
+
+      // Cập nhật trong Firebase
+      const response = await this.updateDrawing(updatedDrawing);
+      
+      if (response) {
+        console.log(`✅ [updateDrawingKcsApprovalStatus] Successfully updated drawing ${drawingId} KCS approval status in Firebase:`, response);
+        
+        // Force refresh toàn bộ data để đảm bảo categorization đúng
+        this.refreshData();
+        
+        console.log(`✅ [updateDrawingKcsApprovalStatus] Successfully moved drawing ${drawingId} to processed tab`);
+      } else {
+        console.error(`❌ [updateDrawingKcsApprovalStatus] Failed to update drawing ${drawingId} KCS approval status in Firebase:`, response);
+      }
+    } catch (error) {
+      console.error(`❌ [updateDrawingKcsApprovalStatus] Error updating drawing ${drawingId} KCS approval status in Firebase:`, error);
+    }
+  }
+
   // Method mới: Kiểm tra xem bảng vẽ đã được cập nhật trạng thái đúng chưa
   private verifyDrawingStatusUpdate(drawingId: number | string): void {
     console.log(`🔍 [verifyDrawingStatusUpdate] Verifying drawing ${drawingId} status update...`);
@@ -2384,6 +2442,62 @@ export class DsBangveComponent implements OnInit {
     this.loadDrawings();
     
     console.log('=== Data refresh completed ===');
+  }
+
+  /**
+   * Debug method để kiểm tra trạng thái phân loại
+   */
+  public debugCategorizationStatus(): void {
+    console.log('=== DEBUG: Categorization Status ===');
+    console.log('Total drawings:', this.drawings.length + this.inProgressDrawings.length + this.processedDrawings.length);
+    console.log('New drawings:', this.drawings.length);
+    console.log('In progress drawings:', this.inProgressDrawings.length);
+    console.log('Processed drawings:', this.processedDrawings.length);
+    
+    // Kiểm tra các items có trang_thai_approve trong từng tab
+    const newWithApproval = this.drawings.filter(d => d.trang_thai_approve === 'approved' || d.trang_thai_approve === 'rejected');
+    const inProgressWithApproval = this.inProgressDrawings.filter(d => d.trang_thai_approve === 'approved' || d.trang_thai_approve === 'rejected');
+    const processedWithApproval = this.processedDrawings.filter(d => d.trang_thai_approve === 'approved' || d.trang_thai_approve === 'rejected');
+    
+    console.log('New drawings with approval status:', newWithApproval.length);
+    console.log('In progress drawings with approval status:', inProgressWithApproval.length);
+    console.log('Processed drawings with approval status:', processedWithApproval.length);
+    
+    if (inProgressWithApproval.length > 0) {
+      console.warn('⚠️ Found approved/rejected items in IN PROGRESS tab:');
+      inProgressWithApproval.forEach(item => {
+        console.warn(`  - ${item.kyhieubangve} (trang_thai_approve: ${item.trang_thai_approve})`);
+      });
+    }
+    
+    console.log('=== END DEBUG ===');
+  }
+
+  /**
+   * Force re-categorize data hiện tại
+   */
+  public forceRecategorizeData(): void {
+    console.log('=== Force Re-categorizing Data ===');
+    
+    // Lấy tất cả data hiện tại
+    const allDrawings = [...this.drawings, ...this.inProgressDrawings, ...this.processedDrawings];
+    console.log('Total drawings to re-categorize:', allDrawings.length);
+    
+    // Reset arrays
+    this.drawings = [];
+    this.inProgressDrawings = [];
+    this.processedDrawings = [];
+    
+    // Re-categorize
+    this.categorizeDrawingsByTrangThai(allDrawings);
+    
+    // Update UI
+    this.updatePagedNewDrawings();
+    this.updatePagedInProgressDrawings();
+    this.updatePagedProcessedDrawings();
+    
+    console.log('=== Re-categorization completed ===');
+    this.debugCategorizationStatus();
   }
 
   // Method để xử lý search

@@ -438,6 +438,7 @@ export class BoiDayHaPopupComponent implements OnInit {
         dientroRc: formData.dien_tro_ha_rc,
         dolechdientro: formData.do_lech_dien_tro_giua_cac_pha,
         trang_thai: 1, // Trạng thái hoàn thành
+        trang_thai_approve: 'pending', // Trạng thái chờ phê duyệt
         user_update: currentUser.email,
         created_at: new Date(),
         khau_sx: 'bd_ha'

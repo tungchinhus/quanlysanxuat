@@ -61,7 +61,7 @@ export class KcsDetailPopupComponent implements OnInit {
   }
 
   private setStatusInfo(): void {
-    const status = this.data.item.trang_thai;
+    const status = this.data.item.trang_thai_approve || this.data.item.trang_thai;
     switch (status) {
       case 'pending':
         this.statusText = 'CHỜ KIỂM TRA';

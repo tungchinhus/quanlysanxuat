@@ -231,6 +231,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
         dientroRb: formData.dien_tro_cao_rb,
         dientroRc: formData.dien_tro_cao_rc,
         trang_thai: 1, // Trạng thái hoàn thành
+        trang_thai_approve: 'pending', // Trạng thái chờ phê duyệt
         user_update: currentUser.email,
         created_at: new Date(),
         khau_sx: 'bd_cao'

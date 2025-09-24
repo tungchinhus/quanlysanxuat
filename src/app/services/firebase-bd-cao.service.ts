@@ -38,6 +38,7 @@ export interface BdCaoData {
   dientroRb?: number;
   dientroRc?: number;
   trang_thai: number;
+  trang_thai_approve?: string; // 'pending', 'approved', 'rejected'
   user_update?: string;
   created_at: Date;
   updated_at?: Date;
@@ -78,6 +79,7 @@ export class FirebaseBdCaoService {
       const now = new Date();
       const data = {
         ...bdCaoData,
+        trang_thai_approve: bdCaoData.trang_thai_approve || 'pending', // Ensure trang_thai_approve is set to 'pending' if not provided
         created_at: Timestamp.fromDate(now),
         updated_at: Timestamp.fromDate(now)
       };
@@ -129,6 +131,7 @@ export class FirebaseBdCaoService {
           dientroRb: data['dientroRb'] || 0,
           dientroRc: data['dientroRc'] || 0,
           trang_thai: data['trang_thai'] || 0,
+          trang_thai_approve: data['trang_thai_approve'] || 'pending', // Default to pending
           user_update: data['user_update'] || '',
           created_at: data['created_at']?.toDate() || new Date(),
           updated_at: data['updated_at']?.toDate() || new Date(),
@@ -182,6 +185,7 @@ export class FirebaseBdCaoService {
           dientroRb: data['dientroRb'] || 0,
           dientroRc: data['dientroRc'] || 0,
           trang_thai: data['trang_thai'] || 0,
+          trang_thai_approve: data['trang_thai_approve'] || 'pending', // Default to pending
           user_update: data['user_update'] || '',
           created_at: data['created_at']?.toDate() || new Date(),
           updated_at: data['updated_at']?.toDate() || new Date(),
@@ -214,6 +218,26 @@ export class FirebaseBdCaoService {
       console.log('BdCao status updated successfully');
     } catch (error) {
       console.error('Error updating bd_cao status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update bd_cao approval status
+   */
+  async updateBdCaoApprovalStatus(id: string, trangThaiApprove: string): Promise<void> {
+    try {
+      console.log('Updating bd_cao approval status for ID:', id, 'to approval status:', trangThaiApprove);
+      
+      const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
+      await updateDoc(docRef, {
+        trang_thai_approve: trangThaiApprove,
+        updated_at: Timestamp.fromDate(new Date())
+      });
+      
+      console.log('BdCao approval status updated successfully');
+    } catch (error) {
+      console.error('Error updating bd_cao approval status:', error);
       throw error;
     }
   }

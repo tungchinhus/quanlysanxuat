@@ -17,6 +17,8 @@ import { AuthService } from '../../services/auth.service';
 import { FirebaseKcsApproveService } from '../../services/firebase-kcs-approve.service';
 import { FirebaseBdCaoService } from '../../services/firebase-bd-cao.service';
 import { FirebaseBdHaService } from '../../services/firebase-bd-ha.service';
+import { FirebaseBangVeService } from '../../services/firebase-bangve.service';
+import { DsBangveComponent } from '../ds-bangve/ds-bangve.component';
 import { KcsApproveCreateData } from '../../models/kcs-approve.model';
 import { KcsCheckService, SearchCriteria, BoiDayHaPendingResponse, BoiDayHaPendingSearchResponse, BoiDayCaoPendingResponse, BoiDayCaoPendingSearchResponse, RejectResponse, ApproveResponse } from './kcs-check.service';
 import { ApproveDialogComponent, ApproveDialogData } from './approve-dialog/approve-dialog.component';
@@ -91,6 +93,7 @@ export class KcsCheckComponent implements OnInit {
     private firebaseKcsApproveService: FirebaseKcsApproveService,
     private firebaseBdCaoService: FirebaseBdCaoService,
     private firebaseBdHaService: FirebaseBdHaService,
+    private firebaseBangVeService: FirebaseBangVeService,
     private kcsService: KcsCheckService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
@@ -158,33 +161,65 @@ export class KcsCheckComponent implements OnInit {
 
   loadBoiDayHaData(): void {
     this.isLoading = true;
+    console.log('Loading BoiDayHa data from Firebase...');
     
-    // Use new API method for pending items
-    this.kcsService.getBoiDayHaPending().subscribe({
-      next: (response: BoiDayHaPendingResponse) => {
-        if (response.IsSuccess) {
-          // Convert to legacy format for backward compatibility
-          let legacyData = this.kcsService.convertToLegacyFormat(response.Data);
-          // If a specific id is requested for this tab, filter to only that item
-          if (this.selectedItemId && this.currentTab === 'boiDayHa') {
-            legacyData = legacyData.filter(item => Number(item.id) === this.selectedItemId);
-          }
-          this.boiDayHaDataSource.data = legacyData;
-          this.totalCount = response.TotalCount;
-          this.totalPages = Math.ceil(this.totalCount / this.pageSize);
-          
-          console.log(`Loaded ${legacyData.length} BoiDayHa pending items`);
-        } else {
-          console.error('Failed to load BoiDayHa data:', response.Message);
-          this.thongbao(response.Message || 'Lỗi khi tải dữ liệu', 'Đóng', 'error');
-        }
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading BoiDayHa data:', error);
-        this.thongbao('Lỗi khi tải dữ liệu', 'Đóng', 'error');
-        this.isLoading = false;
+    // Use Firebase service to get data directly from tbl_bd_ha
+    this.firebaseBdHaService.getAllBdHa().then((bdHaData) => {
+      console.log('Firebase BoiDayHa raw data:', bdHaData);
+      console.log('Total bd_ha records found:', bdHaData.length);
+      
+      // Convert to legacy format for display
+      const legacyData = bdHaData.map(item => {
+        const mappedItem = {
+          id: parseInt(item.id || '0'),
+          kyhieuquanday: item.masothe_bd_ha || 'N/A',
+          masothe_bd_ha: item.masothe_bd_ha || 'N/A', // Add this field for proper masothe_bd mapping
+          congsuat: item.kyhieubangve || 'N/A',
+          tenBangVe: item.kyhieubangve || 'N/A', // Add this field for proper kyhieubangve mapping
+          tbkt: item.quycachday || 'N/A',
+          dienap: item.sosoiday?.toString() || 'N/A',
+          quy_cach_day: item.quycachday || 'N/A',
+          so_soi_day: item.sosoiday || 0,
+          nha_san_xuat: item.nhasanxuat || 'N/A',
+          ngay_san_xuat: item.ngaysanxuat || new Date(),
+          trang_thai: this.mapApprovalStatusFromString(item.trang_thai_approve || 'pending'), // Use approval status
+          nguoigiacong: item.nguoigiacong || 'N/A',
+          ngaygiacong: item.ngaygiacong || new Date()
+        };
+        console.log('Mapped item:', mappedItem, 'Original trang_thai_approve:', item.trang_thai_approve);
+        return mappedItem;
+      });
+      
+      console.log('All legacy data:', legacyData);
+      
+      // For KCS Check, we want to show items that are ready for inspection
+      // This means items with trang_thai_approve = 'pending' (not yet approved or rejected)
+      const readyForInspection = legacyData.filter(item => {
+        const isReady = item.trang_thai === 'pending';
+        console.log(`Item ${item.id} trang_thai: ${item.trang_thai}, isReady: ${isReady}`);
+        return isReady;
+      });
+      
+      console.log('Items ready for inspection:', readyForInspection);
+      
+      // If a specific id is requested for this tab, filter to only that item
+      if (this.selectedItemId && this.currentTab === 'boiDayHa') {
+        const filteredData = readyForInspection.filter(item => Number(item.id) === this.selectedItemId);
+        this.boiDayHaDataSource.data = filteredData;
+        this.totalCount = filteredData.length;
+      } else {
+        this.boiDayHaDataSource.data = readyForInspection;
+        this.totalCount = readyForInspection.length;
       }
+      
+      this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+      
+      console.log(`Loaded ${this.boiDayHaDataSource.data.length} BoiDayHa pending items from Firebase`);
+      this.isLoading = false;
+    }).catch((error) => {
+      console.error('Error loading BoiDayHa data from Firebase:', error);
+      this.thongbao('Lỗi khi tải dữ liệu từ Firebase: ' + error.message, 'Đóng', 'error');
+      this.isLoading = false;
     });
   }
 
@@ -238,27 +273,29 @@ export class KcsCheckComponent implements OnInit {
         const mappedItem = {
           id: parseInt(item.id || '0'),
           kyhieuquanday: item.masothe_bd_cao || 'N/A',
+          masothe_bd_cao: item.masothe_bd_cao || 'N/A', // Add this field for proper masothe_bd mapping
           congsuat: item.kyhieubangve || 'N/A',
+          tenBangVe: item.kyhieubangve || 'N/A', // Add this field for proper kyhieubangve mapping
           tbkt: item.quycachday || 'N/A',
           dienap: item.sosoiday?.toString() || 'N/A',
           quy_cach_day: item.quycachday || 'N/A',
           so_soi_day: item.sosoiday || 0,
           nha_san_xuat: item.nhasanxuat || 'N/A',
           ngay_san_xuat: item.ngaysanxuat || new Date(),
-          trang_thai: this.mapTrangThaiFromNumber(item.trang_thai),
+          trang_thai: this.mapApprovalStatusFromString(item.trang_thai_approve || 'pending'), // Use approval status
           nguoigiacong: item.nguoigiacong || 'N/A',
           ngaygiacong: item.ngaygiacong || new Date()
         };
-        console.log('Mapped item:', mappedItem, 'Original trang_thai:', item.trang_thai);
+        console.log('Mapped item:', mappedItem, 'Original trang_thai_approve:', item.trang_thai_approve);
         return mappedItem;
       });
       
       console.log('All legacy data:', legacyData);
       
       // For KCS Check, we want to show items that are ready for inspection
-      // This means items with trang_thai = 1 (processed/completed) that need KCS approval
+      // This means items with trang_thai = 0 or 1 (new or processed) that need KCS approval
       const readyForInspection = legacyData.filter(item => {
-        const isReady = item.trang_thai === 'approved' || item.trang_thai === 'pending';
+        const isReady = item.trang_thai === 'pending';
         console.log(`Item ${item.id} trang_thai: ${item.trang_thai}, isReady: ${isReady}`);
         return isReady;
       });
@@ -277,7 +314,7 @@ export class KcsCheckComponent implements OnInit {
       
       this.totalPages = Math.ceil(this.totalCount / this.pageSize);
       
-      console.log(`Loaded ${this.boiDayCaoDataSource.data.length} BoiDayCao items ready for inspection from Firebase`);
+      console.log(`Loaded ${this.boiDayCaoDataSource.data.length} BoiDayCao pending items from Firebase`);
       this.isLoading = false;
     }).catch((error) => {
       console.error('Error loading BoiDayCao data from Firebase:', error);
@@ -563,10 +600,20 @@ export class KcsCheckComponent implements OnInit {
       const currentUser = this.authService.getCurrentUser();
       const userEmail = currentUser?.email || currentUser?.username || 'unknown';
       
+      // Get the correct masothe_bd based on the current tab
+      let masotheBd = 'N/A';
+      if (this.currentTab === 'boiDayHa') {
+        masotheBd = element.kyhieuquanday || element.masothe_bd_ha || element.id?.toString() || 'N/A';
+      } else if (this.currentTab === 'boiDayCao') {
+        masotheBd = element.kyhieuquanday || element.masothe_bd_cao || element.id?.toString() || 'N/A';
+      } else {
+        masotheBd = element.kyhieuquanday || element.masothe_bd || element.id?.toString() || 'N/A';
+      }
+      
       const kcsApproveData: KcsApproveCreateData = {
-        kyhieubangve: element.kyhieuquanday || element.tenbangve || 'N/A',
+        kyhieubangve: element.tenBangVe || element.kyhieuquanday || 'N/A',
         id_boiday: element.id?.toString() || 'N/A',
-        masothe_bd: element.masothe_bd || element.id?.toString() || 'N/A',
+        masothe_bd: masotheBd,
         user_kcs_approve: userEmail,
         kcs_approve_status: 'approved',
         ghi_chu: approvalData?.notes || 'Đạt tiêu chuẩn chất lượng KCS',
@@ -580,44 +627,8 @@ export class KcsCheckComponent implements OnInit {
           console.log('KCS approval saved successfully with ID:', docId);
           this.thongbao('Dữ liệu KCS đã được lưu vào Firebase', 'Đóng', 'success');
 
-          // After saving approval, update corresponding bảng trạng thái to 2 (đã hoàn thành)
-          const kyHieu = element.kyhieuquanday || element.tenbangve;
-          if (!kyHieu) {
-            console.warn('Không xác định được ký hiệu bảng vẽ để cập nhật trạng thái');
-            return;
-          }
-
-          if (this.currentTab === 'boiDayHa') {
-            // Update tbl_bd_ha
-            this.firebaseBdHaService.getBdHaByKyHieuBangVe(kyHieu)
-              .then(items => {
-                const target = items && items.length > 0 ? items[0] : null;
-                if (target && target.id) {
-                  return this.firebaseBdHaService.updateBdHaStatus(target.id, 2);
-                } else {
-                  console.warn('Không tìm thấy bản ghi bd_ha để cập nhật', kyHieu);
-                  return;
-                }
-              })
-              .catch(err => {
-                console.error('Lỗi khi cập nhật trạng thái bd_ha:', err);
-              });
-          } else if (this.currentTab === 'boiDayCao') {
-            // Update tbl_bd_cao
-            this.firebaseBdCaoService.getBdCaoByKyHieuBangVe(kyHieu)
-              .then(items => {
-                const target = items && items.length > 0 ? items[0] : null;
-                if (target && target.id) {
-                  return this.firebaseBdCaoService.updateBdCaoStatus(target.id, 2);
-                } else {
-                  console.warn('Không tìm thấy bản ghi bd_cao để cập nhật', kyHieu);
-                  return;
-                }
-              })
-              .catch(err => {
-                console.error('Lỗi khi cập nhật trạng thái bd_cao:', err);
-              });
-          }
+          // After saving approval, update corresponding bảng trạng thái approval to 'approved'
+          this.updateBoidayApprovalStatus(element, 'approved');
         })
         .catch(error => {
           console.error('Error saving KCS approval to Firebase:', error);
@@ -637,10 +648,20 @@ export class KcsCheckComponent implements OnInit {
       const currentUser = this.authService.getCurrentUser();
       const userEmail = currentUser?.email || currentUser?.username || 'unknown';
       
+      // Get the correct masothe_bd based on the current tab
+      let masotheBd = 'N/A';
+      if (this.currentTab === 'boiDayHa') {
+        masotheBd = element.kyhieuquanday || element.masothe_bd_ha || element.id?.toString() || 'N/A';
+      } else if (this.currentTab === 'boiDayCao') {
+        masotheBd = element.kyhieuquanday || element.masothe_bd_cao || element.id?.toString() || 'N/A';
+      } else {
+        masotheBd = element.kyhieuquanday || element.masothe_bd || element.id?.toString() || 'N/A';
+      }
+      
       const kcsRejectData: KcsApproveCreateData = {
-        kyhieubangve: element.kyhieuquanday || element.tenbangve || 'N/A',
+        kyhieubangve: element.tenBangVe || element.kyhieuquanday || 'N/A',
         id_boiday: element.id?.toString() || 'N/A',
-        masothe_bd: element.masothe_bd || element.id?.toString() || 'N/A',
+        masothe_bd: masotheBd,
         user_kcs_approve: userEmail,
         kcs_approve_status: 'rejected',
         ghi_chu: rejectionData?.ghiChu || 'Không đạt tiêu chuẩn chất lượng KCS',
@@ -653,6 +674,9 @@ export class KcsCheckComponent implements OnInit {
         .then(docId => {
           console.log('KCS rejection saved successfully with ID:', docId);
           this.thongbao('Dữ liệu từ chối KCS đã được lưu vào Firebase', 'Đóng', 'success');
+
+          // After saving rejection, update corresponding bảng trạng thái approval to 'rejected'
+          this.updateBoidayApprovalStatus(element, 'rejected');
         })
         .catch(error => {
           console.error('Error saving KCS rejection to Firebase:', error);
@@ -665,6 +689,79 @@ export class KcsCheckComponent implements OnInit {
   }
 
   // SQL save removed per requirement (use Firebase only)
+
+  /**
+   * Update boiday approval status in Firebase after KCS approval/rejection
+   * @param element - The item being approved/rejected
+   * @param approvalStatus - Approval status to set ('approved' or 'rejected')
+   */
+  private updateBoidayApprovalStatus(element: any, approvalStatus: string): void {
+    try {
+      console.log(`Updating boiday approval status to ${approvalStatus} for element:`, element);
+      
+      if (this.currentTab === 'boiDayHa') {
+        // Update tbl_bd_ha
+        const kyHieu = element.tenBangVe || element.kyhieuquanday;
+        if (!kyHieu) {
+          console.warn('Không xác định được ký hiệu bảng vẽ để cập nhật trạng thái approval bd_ha');
+          return;
+        }
+
+        this.firebaseBdHaService.getBdHaByKyHieuBangVe(kyHieu)
+          .then(items => {
+            const target = items && items.length > 0 ? items[0] : null;
+            if (target && target.id) {
+              console.log(`Updating bd_ha approval status to ${approvalStatus} for ID: ${target.id}`);
+              return this.firebaseBdHaService.updateBdHaApprovalStatus(target.id, approvalStatus);
+            } else {
+              console.warn('Không tìm thấy bản ghi bd_ha để cập nhật', kyHieu);
+              return;
+            }
+          })
+          .then(() => {
+            console.log(`Successfully updated bd_ha approval status to ${approvalStatus}`);
+            this.thongbao(`Đã cập nhật trạng thái approval bối dây hạ thành ${approvalStatus === 'approved' ? 'đã duyệt' : 'từ chối'}`, 'Đóng', 'success');
+          })
+          .catch(err => {
+            console.error('Lỗi khi cập nhật trạng thái approval bd_ha:', err);
+            this.thongbao('Lỗi khi cập nhật trạng thái approval bối dây hạ', 'Đóng', 'error');
+          });
+      } else if (this.currentTab === 'boiDayCao') {
+        // Update tbl_bd_cao
+        const kyHieu = element.tenBangVe || element.kyhieuquanday;
+        if (!kyHieu) {
+          console.warn('Không xác định được ký hiệu bảng vẽ để cập nhật trạng thái approval bd_cao');
+          return;
+        }
+
+        this.firebaseBdCaoService.getBdCaoByKyHieuBangVe(kyHieu)
+          .then(items => {
+            const target = items && items.length > 0 ? items[0] : null;
+            if (target && target.id) {
+              console.log(`Updating bd_cao approval status to ${approvalStatus} for ID: ${target.id}`);
+              return this.firebaseBdCaoService.updateBdCaoApprovalStatus(target.id, approvalStatus);
+            } else {
+              console.warn('Không tìm thấy bản ghi bd_cao để cập nhật', kyHieu);
+              return;
+            }
+          })
+          .then(() => {
+            console.log(`Successfully updated bd_cao approval status to ${approvalStatus}`);
+            this.thongbao(`Đã cập nhật trạng thái approval bối dây cao thành ${approvalStatus === 'approved' ? 'đã duyệt' : 'từ chối'}`, 'Đóng', 'success');
+          })
+          .catch(err => {
+            console.error('Lỗi khi cập nhật trạng thái approval bd_cao:', err);
+            this.thongbao('Lỗi khi cập nhật trạng thái approval bối dây cao', 'Đóng', 'error');
+          });
+      } else {
+        console.warn('Unknown tab type for approval status update:', this.currentTab);
+      }
+    } catch (error) {
+      console.error('Error updating boiday approval status:', error);
+      this.thongbao('Lỗi khi cập nhật trạng thái approval bối dây', 'Đóng', 'error');
+    }
+  }
+
 
   /**
    * Hàm thông báo chung với styling tùy chỉnh
@@ -680,9 +777,23 @@ export class KcsCheckComponent implements OnInit {
 
   private mapTrangThaiFromNumber(trangThai: number): 'pending' | 'approved' | 'rejected' {
     switch (trangThai) {
-      case 0: return 'pending';
-      case 1: return 'approved';
-      case 2: return 'rejected';
+      case 0: return 'pending'; // New
+      case 1: return 'pending'; // Processed but not yet KCS checked
+      case 2: return 'approved'; // KCS approved
+      case 3: return 'rejected'; // KCS rejected
+      default: return 'pending';
+    }
+  }
+
+  private mapApprovalStatusFromString(trangThaiApprove: string): 'pending' | 'approved' | 'rejected' {
+    if (!trangThaiApprove) {
+      return 'pending';
+    }
+    
+    switch (trangThaiApprove.toLowerCase()) {
+      case 'pending': return 'pending';
+      case 'approved': return 'approved';
+      case 'rejected': return 'rejected';
       default: return 'pending';
     }
   }

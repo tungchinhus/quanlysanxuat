@@ -29,8 +29,9 @@ export interface ProcessedDrawingData {
   ngaysanxuat: Date;
   ngaygiacong: Date;
   trang_thai: 'pending' | 'approved' | 'rejected';
+  trang_thai_approve?: string; // KCS approval status: 'pending', 'approved', 'rejected'
   nguoigiacong: string;
-  loai_boi_day: 'ha' | 'cao' | 'ep';
+  loai_boi_day: 'ha' | 'cao' | 'ep' | 'both';
   created_at?: Date;
   updated_at?: Date;
 }
@@ -78,27 +79,102 @@ export class FirebaseKcsManagerService {
     }
   }
 
-  // Map trang_thai from number to string
-  private mapTrangThai(value: any): 'pending' | 'approved' | 'rejected' {
-    if (typeof value === 'number') {
-      switch (value) {
-        case 1: return 'pending';
-        case 2: return 'approved';
-        case 3: return 'rejected';
-        default: return 'pending';
+  // Get bangve data by kyhieubangve
+  private async getBangveDataByKyHieu(kyhieubangve: string): Promise<any> {
+    try {
+      if (!kyhieubangve) return null;
+      
+      // Try to find in bangve collection first
+      const bangveQuery = query(
+        collection(this.firestore, 'bangve'),
+        where('kyhieubangve', '==', kyhieubangve)
+      );
+      const bangveSnapshot = await getDocs(bangveQuery);
+      
+      if (!bangveSnapshot.empty) {
+        const data = bangveSnapshot.docs[0].data();
+        return {
+          kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || '',
+          tenbangve: data['tenbangve'] || data['ten_bang_ve'] || '',
+          congsuat: data['congsuat'] || data['cong_suat'] || '',
+          tbkt: data['tbkt'] || data['tb_kt'] || '',
+          nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || '',
+          ngaysanxuat: data['ngaysanxuat'] || data['ngay_san_xuat']
+        };
       }
+      
+      // Try to find in quan_day collection
+      const quanDayQuery = query(
+        collection(this.firestore, 'quan_day'),
+        where('kyhieubangve', '==', kyhieubangve)
+      );
+      const quanDaySnapshot = await getDocs(quanDayQuery);
+      
+      if (!quanDaySnapshot.empty) {
+        const data = quanDaySnapshot.docs[0].data();
+        return {
+          kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || '',
+          tenbangve: data['tenbangve'] || data['ten_bang_ve'] || '',
+          congsuat: data['congsuat'] || data['cong_suat'] || '',
+          tbkt: data['tbkt'] || data['tb_kt'] || '',
+          nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || '',
+          ngaysanxuat: data['ngaysanxuat'] || data['ngay_san_xuat']
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.log(`Error getting bangve data for ${kyhieubangve}:`, error);
+      return null;
     }
+  }
+
+  // Map trang_thai_approve from string to string (for KCS approval status)
+  private mapTrangThaiApprove(value: any): 'pending' | 'approved' | 'rejected' {
+    if (!value) {
+      return 'pending';
+    }
+    
     if (typeof value === 'string') {
       switch (value.toLowerCase()) {
         case 'pending': return 'pending';
         case 'approved': return 'approved';
         case 'rejected': return 'rejected';
-        case '1': return 'pending';
-        case '2': return 'approved';
-        case '3': return 'rejected';
         default: return 'pending';
       }
     }
+    
+    // Fallback for number values (legacy support)
+    if (typeof value === 'number') {
+      switch (value) {
+        case 0: return 'pending';
+        case 1: return 'approved';
+        case 2: return 'rejected';
+        default: return 'pending';
+      }
+    }
+    
+    return 'pending';
+  }
+
+  // Determine overall status when both bd_ha and bd_cao exist
+  private determineOverallStatus(bdHaStatus: string, bdCaoStatus: string): 'pending' | 'approved' | 'rejected' {
+    // If either is rejected, overall status is rejected
+    if (bdHaStatus === 'rejected' || bdCaoStatus === 'rejected') {
+      return 'rejected';
+    }
+    
+    // If both are approved, overall status is approved
+    if (bdHaStatus === 'approved' && bdCaoStatus === 'approved') {
+      return 'approved';
+    }
+    
+    // If any is pending, overall status is pending
+    if (bdHaStatus === 'pending' || bdCaoStatus === 'pending') {
+      return 'pending';
+    }
+    
+    // Default to pending
     return 'pending';
   }
 
@@ -165,69 +241,135 @@ export class FirebaseKcsManagerService {
     try {
       console.log('Fetching real processed drawings with criteria:', criteria);
 
-      // Try to get data from the actual collections that might contain processed drawings
-      const possibleCollections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
-      const allDrawings: ProcessedDrawingData[] = [];
+      // Get data from tbl_bd_ha and tbl_bd_cao which contain the actual approval status
+      const drawingsMap = new Map<string, ProcessedDrawingData>();
+      
+      // Fetch from tbl_bd_ha
+      try {
+        console.log('Getting documents from tbl_bd_ha for KCS Manager');
+        const bdHaQuery = query(collection(this.firestore, 'tbl_bd_ha'));
+        const bdHaSnapshot = await getDocs(bdHaQuery);
+        console.log(`Found ${bdHaSnapshot.size} documents in tbl_bd_ha`);
 
-      for (const collectionName of possibleCollections) {
-        try {
-          let q = query(collection(this.firestore, collectionName));
+        for (const doc of bdHaSnapshot.docs) {
+          const data = doc.data();
+          console.log(`BdHa document:`, doc.id, data);
           
-          // Try to filter by status if the field exists (trang_thai = 1 means pending)
-          if (criteria.trang_thai === 'pending') {
-            try {
-              q = query(q, where('trang_thai', '==', 1));
-              console.log(`Filtering ${collectionName} by trang_thai=1 (pending)`);
-            } catch (error) {
-              console.log(`Collection ${collectionName} doesn't have trang_thai field or can't filter by trang_thai=1, getting all documents`);
-            }
-          }
+          // Get corresponding bangve data
+          const bangveData = await this.getBangveDataByKyHieu(data['kyhieubangve']);
+          
+          const drawing: ProcessedDrawingData = {
+            id: doc.id,
+            kyhieubangve: data['kyhieubangve'] || '',
+            kyhieuquanday: bangveData?.kyhieuquanday || data['kyhieubangve'] || '',
+            tenbangve: bangveData?.tenbangve || data['kyhieubangve'] || '',
+            congsuat: bangveData?.congsuat || '',
+            tbkt: bangveData?.tbkt || '',
+            nhasanxuat: data['nhasanxuat'] || bangveData?.nhasanxuat || '',
+            ngaysanxuat: this.toDateAny(data['ngaysanxuat'] || bangveData?.ngaysanxuat),
+            ngaygiacong: this.toDateAny(data['ngaygiacong']),
+            trang_thai: this.mapTrangThaiApprove(data['trang_thai_approve']),
+            trang_thai_approve: data['trang_thai_approve'] || 'pending',
+            nguoigiacong: data['nguoigiacong'] || '',
+            loai_boi_day: 'ha' as 'ha' | 'cao' | 'ep',
+            created_at: this.toDateAny(data['created_at']),
+            updated_at: this.toDateAny(data['updated_at'])
+          };
 
-          const snapshot = await getDocs(q);
-          console.log(`Found ${snapshot.size} documents in ${collectionName}`);
-
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            console.log(`Document from ${collectionName}:`, doc.id, data);
-            
-            // Convert to ProcessedDrawingData format
-            const drawing: ProcessedDrawingData = {
-              id: doc.id,
-              kyhieubangve: data['kyhieubangve'] || data['ky_hieu_bang_ve'] || data['kh_bv'] || '',
-              kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || data['kyhieu'] || data['ky_hieu'] || '',
-              tenbangve: data['tenbangve'] || data['ten_bang_ve'] || data['ten'] || data['ten_bv'] || '',
-              congsuat: data['congsuat'] || data['cong_suat'] || data['congSuat'] || '',
-              tbkt: data['tbkt'] || data['tb_kt'] || data['TBKT'] || '',
-              nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || data['nhaSX'] || '',
-              ngaysanxuat: this.toDateAny(data['ngaysanxuat'] || data['ngay_san_xuat'] || data['ngaySX']),
-              ngaygiacong: this.toDateAny(data['ngaygiacong'] || data['ngay_gia_cong'] || data['ngayGiaCong']),
-              trang_thai: this.mapTrangThai(data['trang_thai'] || data['status'] || 1),
-              nguoigiacong: data['nguoigiacong'] || data['nguoi_gia_cong'] || data['nguoiGiaCong'] || '',
-              loai_boi_day: (data['loai_boi_day'] || data['loai'] || 'ha') as 'ha' | 'cao' | 'ep',
-              created_at: this.toDateAny(data['created_at']),
-              updated_at: this.toDateAny(data['updated_at'])
-            };
-
-            // Always push to visualize raw data rows during debugging
-            allDrawings.push(drawing);
-          });
-        } catch (error) {
-          console.log(`Error fetching from ${collectionName}:`, error);
+          // Use kyhieubangve as key to avoid duplicates
+          drawingsMap.set(data['kyhieubangve'], drawing);
         }
+      } catch (error) {
+        console.log(`Error fetching from tbl_bd_ha:`, error);
       }
+
+      // Fetch from tbl_bd_cao
+      try {
+        console.log('Getting documents from tbl_bd_cao for KCS Manager');
+        const bdCaoQuery = query(collection(this.firestore, 'tbl_bd_cao'));
+        const bdCaoSnapshot = await getDocs(bdCaoQuery);
+        console.log(`Found ${bdCaoSnapshot.size} documents in tbl_bd_cao`);
+
+        for (const doc of bdCaoSnapshot.docs) {
+          const data = doc.data();
+          console.log(`BdCao document:`, doc.id, data);
+          
+          // Get corresponding bangve data
+          const bangveData = await this.getBangveDataByKyHieu(data['kyhieubangve']);
+          
+          const drawing: ProcessedDrawingData = {
+            id: doc.id,
+            kyhieubangve: data['kyhieubangve'] || '',
+            kyhieuquanday: bangveData?.kyhieuquanday || data['kyhieubangve'] || '',
+            tenbangve: bangveData?.tenbangve || data['kyhieubangve'] || '',
+            congsuat: bangveData?.congsuat || '',
+            tbkt: bangveData?.tbkt || '',
+            nhasanxuat: data['nhasanxuat'] || bangveData?.nhasanxuat || '',
+            ngaysanxuat: this.toDateAny(data['ngaysanxuat'] || bangveData?.ngaysanxuat),
+            ngaygiacong: this.toDateAny(data['ngaygiacong']),
+            trang_thai: this.mapTrangThaiApprove(data['trang_thai_approve']),
+            trang_thai_approve: data['trang_thai_approve'] || 'pending',
+            nguoigiacong: data['nguoigiacong'] || '',
+            loai_boi_day: 'cao' as 'ha' | 'cao' | 'ep',
+            created_at: this.toDateAny(data['created_at']),
+            updated_at: this.toDateAny(data['updated_at'])
+          };
+
+          // Check if this kyhieubangve already exists
+          if (drawingsMap.has(data['kyhieubangve'])) {
+            // If exists, determine the overall status based on both bd_ha and bd_cao
+            const existingDrawing = drawingsMap.get(data['kyhieubangve'])!;
+            const overallStatus = this.determineOverallStatus(existingDrawing.trang_thai_approve || 'pending', data['trang_thai_approve'] || 'pending');
+            
+            // Update the existing drawing with overall status
+            existingDrawing.trang_thai = overallStatus;
+            existingDrawing.trang_thai_approve = overallStatus;
+            existingDrawing.loai_boi_day = 'both'; // Indicate both types exist
+          } else {
+            // If not exists, add new drawing
+            drawingsMap.set(data['kyhieubangve'], drawing);
+          }
+        }
+      } catch (error) {
+        console.log(`Error fetching from tbl_bd_cao:`, error);
+      }
+
+      // Convert map to array
+      const allDrawings = Array.from(drawingsMap.values());
 
       // Apply search filter
       let filteredDrawings = allDrawings;
       if (criteria.searchTerm && criteria.searchTerm.trim()) {
         const searchLower = criteria.searchTerm.toLowerCase();
         filteredDrawings = allDrawings.filter(drawing =>
-          drawing.kyhieuquanday.toLowerCase().includes(searchLower) ||
-          drawing.tenbangve.toLowerCase().includes(searchLower) ||
-          drawing.congsuat.toLowerCase().includes(searchLower) ||
-          drawing.tbkt.toLowerCase().includes(searchLower) ||
-          drawing.nhasanxuat.toLowerCase().includes(searchLower) ||
-          drawing.nguoigiacong.toLowerCase().includes(searchLower)
+          (drawing.kyhieuquanday || '').toLowerCase().includes(searchLower) ||
+          (drawing.tenbangve || '').toLowerCase().includes(searchLower) ||
+          (drawing.congsuat || '').toLowerCase().includes(searchLower) ||
+          (drawing.tbkt || '').toLowerCase().includes(searchLower) ||
+          (drawing.nhasanxuat || '').toLowerCase().includes(searchLower) ||
+          (drawing.nguoigiacong || '').toLowerCase().includes(searchLower)
         );
+      }
+
+      // Apply filtering for KCS Manager based on trang_thai_approve from tbl_bd_ha and tbl_bd_cao
+      if (criteria.trang_thai === 'pending') {
+        // Show drawings that have trang_thai_approve = 'pending' (not yet KCS checked)
+        filteredDrawings = filteredDrawings.filter(drawing => {
+          return drawing.trang_thai_approve === 'pending';
+        });
+        console.log(`After filtering for KCS Manager (pending approval): ${filteredDrawings.length} items remain`);
+      } else if (criteria.trang_thai === 'approved') {
+        // Show drawings that have trang_thai_approve = 'approved'
+        filteredDrawings = filteredDrawings.filter(drawing => {
+          return drawing.trang_thai_approve === 'approved';
+        });
+        console.log(`After filtering for KCS Manager (approved): ${filteredDrawings.length} items remain`);
+      } else if (criteria.trang_thai === 'rejected') {
+        // Show drawings that have trang_thai_approve = 'rejected'
+        filteredDrawings = filteredDrawings.filter(drawing => {
+          return drawing.trang_thai_approve === 'rejected';
+        });
+        console.log(`After filtering for KCS Manager (rejected): ${filteredDrawings.length} items remain`);
       }
 
       // Apply pagination
@@ -236,6 +378,22 @@ export class FirebaseKcsManagerService {
       const paginatedDrawings = filteredDrawings.slice(startIndex, endIndex);
 
       console.log(`Returning ${paginatedDrawings.length} real processed drawings`);
+
+      // Debug logging
+      console.log('=== KCS Manager Debug Info ===');
+      console.log('Total drawings found:', allDrawings.length);
+      console.log('After search filter:', filteredDrawings.length);
+      console.log('After approval filter:', filteredDrawings.length);
+      console.log('Final paginated results:', paginatedDrawings.length);
+      
+      // Log some sample data
+      if (paginatedDrawings.length > 0) {
+        console.log('Sample drawing data:');
+        paginatedDrawings.slice(0, 3).forEach((drawing, index) => {
+          console.log(`  ${index + 1}. ${drawing.kyhieubangve} - trang_thai: ${drawing.trang_thai}, trang_thai_approve: ${drawing.trang_thai_approve}`);
+        });
+      }
+      console.log('=== End Debug Info ===');
 
       return {
         data: paginatedDrawings,
@@ -250,6 +408,44 @@ export class FirebaseKcsManagerService {
   }
 
   // Removed fetchProcessedDrawings method as it's no longer needed
+
+  /**
+   * Debug method để kiểm tra data trong các collection
+   */
+  public async debugCollectionData(): Promise<void> {
+    console.log('=== DEBUG: Checking Collection Data ===');
+    
+    const collections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
+    
+    for (const collectionName of collections) {
+      try {
+        const q = query(collection(this.firestore, collectionName));
+        const snapshot = await getDocs(q);
+        console.log(`\n📁 Collection: ${collectionName}`);
+        console.log(`   Total documents: ${snapshot.size}`);
+        
+        if (snapshot.size > 0) {
+          console.log('   Sample documents:');
+          let index = 0;
+          snapshot.forEach((doc) => {
+            if (index < 3) { // Only show first 3 documents
+              const data = doc.data();
+              console.log(`     ${index + 1}. ID: ${doc.id}`);
+              console.log(`        kyhieubangve: ${data['kyhieubangve'] || data['ky_hieu_bang_ve'] || 'N/A'}`);
+              console.log(`        trang_thai: ${data['trang_thai'] || 'N/A'}`);
+              console.log(`        trang_thai_approve: ${data['trang_thai_approve'] || 'N/A'}`);
+              console.log(`        created_at: ${data['created_at'] || 'N/A'}`);
+              index++;
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`Error checking collection ${collectionName}:`, error);
+      }
+    }
+    
+    console.log('\n=== END DEBUG ===');
+  }
 
   private async fetchProcessedDrawingByIdFromOriginalCollections(id: string): Promise<ProcessedDrawingData | null> {
     try {
@@ -274,7 +470,7 @@ export class FirebaseKcsManagerService {
               nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || data['nhaSX'] || '',
               ngaysanxuat: this.toDateAny(data['ngaysanxuat'] || data['ngay_san_xuat'] || data['ngaySX']),
               ngaygiacong: this.toDateAny(data['ngaygiacong'] || data['ngay_gia_cong'] || data['ngayGiaCong']),
-              trang_thai: this.mapTrangThai(data['trang_thai'] || data['status'] || 1),
+              trang_thai: this.mapTrangThaiApprove(data['trang_thai_approve'] || data['trang_thai'] || 'pending'),
               nguoigiacong: data['nguoigiacong'] || data['nguoi_gia_cong'] || data['nguoiGiaCong'] || '',
               loai_boi_day: (data['loai_boi_day'] || data['loai'] || 'ha') as 'ha' | 'cao' | 'ep',
               created_at: this.toDateAny(data['created_at']),
@@ -296,29 +492,68 @@ export class FirebaseKcsManagerService {
 
   private async updateStatusInOriginalCollection(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<boolean> {
     try {
-      const possibleCollections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
-
-      for (const collectionName of possibleCollections) {
+      // Find the drawing by kyhieubangve first
+      let kyhieubangve = '';
+      
+      // Try to find in tbl_bd_ha first
+      try {
+        const bdHaDoc = doc(this.firestore, 'tbl_bd_ha', id);
+        const bdHaSnap = await getDocs(query(collection(this.firestore, 'tbl_bd_ha'), where('__name__', '==', id)));
+        if (!bdHaSnap.empty) {
+          kyhieubangve = bdHaSnap.docs[0].data()['kyhieubangve'];
+        }
+      } catch (error) {
+        // Try tbl_bd_cao
         try {
-          const docRef = doc(this.firestore, collectionName, id);
-          await updateDoc(docRef, {
-            trang_thai: status,
-            updated_at: Timestamp.fromDate(new Date())
-          });
-
-          console.log(`Updated drawing ${id} status to ${status} in collection ${collectionName}`);
-          return true;
-        } catch (error) {
-          // Document not found in this collection, try next one
-          console.log(`Document ${id} not found in collection ${collectionName}, trying next...`);
+          const bdCaoSnap = await getDocs(query(collection(this.firestore, 'tbl_bd_cao'), where('__name__', '==', id)));
+          if (!bdCaoSnap.empty) {
+            kyhieubangve = bdCaoSnap.docs[0].data()['kyhieubangve'];
+          }
+        } catch (error2) {
+          console.log('Could not find document in either collection');
         }
       }
 
-      console.error(`Document ${id} not found in any collection`);
-      return false;
+      if (!kyhieubangve) {
+        console.error(`Could not find kyhieubangve for document ${id}`);
+        return false;
+      }
+
+      // Update all documents with the same kyhieubangve
+      const collections = ['tbl_bd_ha', 'tbl_bd_cao'];
+      let updatedCount = 0;
+
+      for (const collectionName of collections) {
+        try {
+          const q = query(
+            collection(this.firestore, collectionName),
+            where('kyhieubangve', '==', kyhieubangve)
+          );
+          const snapshot = await getDocs(q);
+          
+          for (const docSnapshot of snapshot.docs) {
+            await updateDoc(doc(this.firestore, collectionName, docSnapshot.id), {
+              trang_thai_approve: status,
+              updated_at: Timestamp.fromDate(new Date())
+            });
+            updatedCount++;
+            console.log(`Updated document ${docSnapshot.id} in ${collectionName} to status ${status}`);
+          }
+        } catch (error) {
+          console.log(`Error updating collection ${collectionName}:`, error);
+        }
+      }
+
+      if (updatedCount > 0) {
+        console.log(`Successfully updated ${updatedCount} documents with kyhieubangve ${kyhieubangve}`);
+        return true;
+      } else {
+        console.error(`No documents found with kyhieubangve ${kyhieubangve}`);
+        return false;
+      }
 
     } catch (error) {
-      console.error('Error updating drawing status in original collection:', error);
+      console.error('Error updating drawing approval status in original collection:', error);
       throw error;
     }
   }

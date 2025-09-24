@@ -104,6 +104,7 @@ export interface BdCaoInfo {
   ngaysanxuat: string;
   nguoigiacong: string;
   trang_thai: number;
+  trang_thai_approve?: string; // 'pending', 'approved', 'rejected'
   created_at: string;
   isActive: boolean;
 }
@@ -172,6 +173,7 @@ export interface BdHaInfo {
   dolechdientro: number;
   user_update: string;
   trang_thai: number;
+  trang_thai_approve?: string; // 'pending', 'approved', 'rejected'
   khau_sx: string;
 }
 
@@ -303,6 +305,7 @@ export class KcsCheckService {
     return items.map(item => ({
       id: item.bd_ha_id,
       kyhieuquanday: item.bd_ha?.masothe_bd_ha || 'N/A',
+      masothe_bd_ha: item.bd_ha?.masothe_bd_ha || 'N/A', // Add this field for proper masothe_bd mapping
       tenBangVe: item.bangve?.kyhieubangve || 'N/A',
       congsuat: item.bangve?.congsuat || 'N/A',
       tbkt: item.bangve?.tbkt || 'N/A',
@@ -311,7 +314,7 @@ export class KcsCheckService {
       so_soi_day: item.bd_ha?.sosoiday || 0,
       nha_san_xuat: item.bd_ha?.nhasanxuat || 'N/A',
       ngay_san_xuat: item.bd_ha?.ngaysanxuat ? new Date(item.bd_ha.ngaysanxuat) : new Date(),
-      trang_thai: this.mapTrangThaiFromNumber(item.trang_thai_bd_ha),
+      trang_thai: this.mapApprovalStatusFromString(item.bd_ha?.trang_thai_approve || 'pending'), // Use approval status
       ngaygiacong: item.bd_ha?.ngaygiacong ? new Date(item.bd_ha.ngaygiacong) : new Date(),
       nguoigiacong: item.bd_ha?.nguoigiacong || 'N/A',
       chieuquanday: item.bd_ha?.chieuquanday ? 1 : 0,
@@ -372,6 +375,8 @@ export class KcsCheckService {
     return items.map(item => ({
       id: item.bd_cao_id,
       kyhieuquanday: item.bd_cao?.masothe_bd_cao || 'N/A',
+      masothe_bd_cao: item.bd_cao?.masothe_bd_cao || 'N/A', // Add this field for proper masothe_bd mapping
+      tenBangVe: item.bangve?.kyhieubangve || 'N/A', // Add this field for proper kyhieubangve mapping
       congsuat: item.bangve?.kyhieubangve || 'N/A',
       tbkt: item.bd_cao?.quycachday || 'N/A',
       dienap: item.bd_cao?.sosoiday?.toString() || 'N/A',
@@ -379,7 +384,7 @@ export class KcsCheckService {
       so_soi_day: item.bd_cao?.sosoiday || 0,
       nha_san_xuat: item.bd_cao?.nhasanxuat || 'N/A',
       ngay_san_xuat: item.bd_cao?.ngaysanxuat ? new Date(item.bd_cao.ngaysanxuat) : new Date(),
-      trang_thai: this.mapTrangThaiFromNumber(item.trang_thai_bd_cao),
+      trang_thai: this.mapApprovalStatusFromString(item.bd_cao?.trang_thai_approve || 'pending'), // Use approval status
       nguoigiacong: item.bd_cao?.nguoigiacong || 'N/A',
       ngaygiacong: item.bd_cao?.ngaygiacong ? new Date(item.bd_cao.ngaygiacong) : new Date()
     }));
@@ -586,16 +591,30 @@ export class KcsCheckService {
     }
     
     switch (apiTrangThai) {
-      case STATUS.NEW:
+      case 0: // NEW
         return 'pending'; // 0 = mới
-      case STATUS.PROCESSING:
+      case 1: // PROCESSING
         return 'pending'; // 1 = đang xử lý
-      case STATUS.PROCESSED:
-        return 'pending'; // 2 = đã xử lý
-      case STATUS.COMPLETED:
-        return 'approved'; // 3 = hoàn thành (dùng cho KCS)
+      case 2: // PROCESSED
+        return 'approved'; // 2 = KCS approved
+      case 3: // COMPLETED
+        return 'rejected'; // 3 = KCS rejected
       default:
         return 'pending';
+    }
+  }
+
+  // Method để map trạng thái approval từ string
+  private mapApprovalStatusFromString(trangThaiApprove: string | null): 'pending' | 'approved' | 'rejected' {
+    if (!trangThaiApprove) {
+      return 'pending';
+    }
+    
+    switch (trangThaiApprove.toLowerCase()) {
+      case 'pending': return 'pending';
+      case 'approved': return 'approved';
+      case 'rejected': return 'rejected';
+      default: return 'pending';
     }
   }
 
