@@ -160,54 +160,98 @@ export class DangNhapComponent implements OnInit {
 
   // Redirect user based on their role
   private redirectBasedOnRole(user: any): void {
+    // Show loading state to prevent flashing
+    this.isLoading = true;
+    
     if (!user || !user.roles) {
-      this.router.navigate(['/dashboard']);
+      // Wait longer to ensure auth data is fully set
+      setTimeout(() => {
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+      }, 500);
       return;
     }
 
     const roles = Array.isArray(user.roles) ? user.roles : [user.roles];
     const roleNames = roles.map((role: any) => typeof role === 'string' ? role : role.name || role.role_name);
 
-    // Check for bối dây cao role
-    if (roleNames.some((role: any) => 
-      role?.toLowerCase().includes('quandaycao') || 
-      role?.toLowerCase().includes('boidaycao') ||
-      role?.toLowerCase().includes('cao')
-    )) {
-      this.router.navigate(['/ds-quan-day']);
-      return;
-    }
+    console.log('User roles for redirect:', roleNames);
 
-    // Check for bối dây hạ role
-    if (roleNames.some((role: any) => 
-      role?.toLowerCase().includes('quandayha') || 
-      role?.toLowerCase().includes('boidayha') ||
-      role?.toLowerCase().includes('ha')
-    )) {
-      this.router.navigate(['/ds-quan-day']);
-      return;
-    }
+    // Wait longer to ensure auth data is fully set, then redirect
+    setTimeout(() => {
+      // Check for super_admin role - highest priority
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('super_admin') || 
+        role?.toLowerCase().includes('superadmin')
+      )) {
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+        return;
+      }
 
-    // Check for ép bối dây role
-    if (roleNames.some((role: any) => 
-      role?.toLowerCase().includes('epboiday') || 
-      role?.toLowerCase().includes('boidayep') ||
-      role?.toLowerCase().includes('ep')
-    )) {
-      this.router.navigate(['/ds-quan-day']);
-      return;
-    }
+      // Check for admin role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('admin')
+      )) {
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+        return;
+      }
 
-    // Check for KCS role
-    if (roleNames.some((role: any) => 
-      role?.toLowerCase().includes('kcs')
-    )) {
-      this.router.navigate(['/dashboard']);
-      return;
-    }
+      // Check for manager role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('manager')
+      )) {
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+        return;
+      }
 
-    // Default redirect to dashboard
-    this.router.navigate(['/dashboard']);
+      // Check for totruong role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('totruong')
+      )) {
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+        return;
+      }
+
+      // Check for bối dây cao role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('quandaycao') || 
+        role?.toLowerCase().includes('boidaycao') ||
+        role?.toLowerCase().includes('cao')
+      )) {
+        this.router.navigateByUrl('/ds-quan-day', { skipLocationChange: false });
+        return;
+      }
+
+      // Check for bối dây hạ role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('quandayha') || 
+        role?.toLowerCase().includes('boidayha') ||
+        role?.toLowerCase().includes('ha')
+      )) {
+        this.router.navigateByUrl('/ds-quan-day', { skipLocationChange: false });
+        return;
+      }
+
+      // Check for ép bối dây role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('epboiday') || 
+        role?.toLowerCase().includes('boidayep') ||
+        role?.toLowerCase().includes('ep')
+      )) {
+        this.router.navigateByUrl('/ds-quan-day', { skipLocationChange: false });
+        return;
+      }
+
+      // Check for KCS role
+      if (roleNames.some((role: any) => 
+        role?.toLowerCase().includes('kcs')
+      )) {
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+        return;
+      }
+
+      // Default redirect to dashboard
+      this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+    }, 500);
   }
 
   // Demo accounts for testing

@@ -186,7 +186,7 @@ export class AuthService {
           const refreshedUser = await this.userManagementService.getUserById(appUser.id).toPromise();
           if (refreshedUser) {
             this.setAuthData(refreshedUser, token);
-            this.router.navigate(['/dashboard']);
+            // Don't redirect here - let the login component handle redirect based on role
             return { success: true, message: 'Đăng nhập thành công', user: refreshedUser };
           }
         } catch (refreshError) {
@@ -197,7 +197,7 @@ export class AuthService {
       // If appUser exists, use it; otherwise create a minimal user with appropriate role
       if (appUser) {
         this.setAuthData(appUser, token);
-        this.router.navigate(['/dashboard']);
+        // Don't redirect here - let the login component handle redirect based on role
         return { success: true, message: 'Đăng nhập thành công', user: appUser };
       } else {
         // Create minimal user for demo accounts
@@ -225,7 +225,7 @@ export class AuthService {
         };
 
         this.setAuthData(minimalUser, token);
-        this.router.navigate(['/dashboard']);
+        // Don't redirect here - let the login component handle redirect based on role
         return { success: true, message: 'Đăng nhập thành công', user: minimalUser };
       }
     } catch (error: any) {

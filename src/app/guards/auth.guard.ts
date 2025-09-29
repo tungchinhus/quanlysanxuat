@@ -89,11 +89,28 @@ export class AuthGuard implements CanActivate {
     console.log('Current user:', currentUser);
     
     if (!currentUser) {
-      console.log('No current user found');
-      this.router.navigate(['/unauthorized']);
-      return of(false);
+      console.log('No current user found, waiting for auth data...');
+      // Wait longer for auth data to be loaded, then retry
+      return new Observable(observer => {
+        setTimeout(() => {
+          const retryUser = this.authService.getCurrentUser();
+          if (retryUser) {
+            console.log('Retry successful, user found:', retryUser);
+            this.checkRolesInternal(retryUser, roles).subscribe(observer);
+          } else {
+            console.log('Retry failed, no user found, redirecting to login');
+            this.router.navigate(['/dang-nhap']);
+            observer.next(false);
+            observer.complete();
+          }
+        }, 500);
+      });
     }
 
+    return this.checkRolesInternal(currentUser, roles);
+  }
+
+  private checkRolesInternal(currentUser: any, roles: string[]): Observable<boolean> {
     // Ensure roles is an array
     const userRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [];
     console.log('User roles:', userRoles);
@@ -113,7 +130,7 @@ export class AuthGuard implements CanActivate {
 
     // Special check for KCS Manager route - exclude quanboiday users
     if (roles.includes('kcs') || roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager')) {
-      const isQuanBoiDay = userRoles.some(userRole => {
+      const isQuanBoiDay = userRoles.some((userRole: any) => {
         const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;
         return roleName?.toLowerCase().includes('quanboiday') || 
                roleName?.toLowerCase().includes('quandayha') || 
@@ -131,13 +148,36 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    // Check if user has any of the required roles (case insensitive)
-    const hasRequiredRole = userRoles.some(userRole => {
+    // Check if user has any of the required roles (case insensitive and flexible matching)
+    const hasRequiredRole = userRoles.some((userRole: any) => {
       const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;
       console.log('Checking role:', roleName, 'against required roles:', roles);
-      return roles.some(requiredRole => 
-        roleName.toLowerCase() === requiredRole.toLowerCase()
-      );
+      
+      return roles.some(requiredRole => {
+        const userRoleLower = roleName?.toLowerCase() || '';
+        const requiredRoleLower = requiredRole.toLowerCase();
+        
+        // Exact match
+        if (userRoleLower === requiredRoleLower) {
+          return true;
+        }
+        
+        // Flexible matching for common role variations
+        if (userRoleLower.includes(requiredRoleLower) || requiredRoleLower.includes(userRoleLower)) {
+          return true;
+        }
+        
+        // Special cases for role mappings
+        if (requiredRoleLower === 'admin' && (userRoleLower.includes('admin') || userRoleLower.includes('super'))) {
+          return true;
+        }
+        
+        if (requiredRoleLower === 'manager' && (userRoleLower.includes('manager') || userRoleLower.includes('totruong'))) {
+          return true;
+        }
+        
+        return false;
+      });
     });
 
     console.log('Has required role:', hasRequiredRole);

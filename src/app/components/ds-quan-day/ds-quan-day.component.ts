@@ -220,13 +220,18 @@ export class DsQuanDayComponent implements OnInit {
               console.log('checkAuthentication: User has quan day access, loading data...');
               this.loadQuanDayData();
             } else {
-              console.log('checkAuthentication: User does not have quan day access, redirecting to unauthorized');
+              console.log('checkAuthentication: User does not have quan day access, waiting for auth guard to handle...');
+              // Don't redirect immediately - let AuthGuard handle it
+              // Just show error message
               this.showError(
                 'Bạn không có quyền truy cập trang quản lý quấn dây',
                 'Vui lòng liên hệ quản trị viên để được cấp quyền truy cập.',
                 false
               );
-              this.router.navigate(['/unauthorized']);
+              // Wait a bit then redirect to dashboard instead of unauthorized
+              setTimeout(() => {
+                this.router.navigate(['/dashboard']);
+              }, 2000);
             }
           } else {
             console.error('User không có thông tin user_id hợp lệ:', userId);
