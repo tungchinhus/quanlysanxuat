@@ -1961,7 +1961,7 @@ export class DsBangveComponent implements OnInit {
     console.log('Opening status detail dialog for drawing:', drawing);
     
     const dialogRef = this.dialog.open(StatusDetailPopupComponent, {
-      width: '900px',
+      width: '1200px',
       maxHeight: '80vh',
       disableClose: false,
       data: {
@@ -1972,6 +1972,20 @@ export class DsBangveComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       console.log('Status detail dialog closed with result:', result);
+      
+      // Nếu hoàn thành thành công, refresh dữ liệu
+      if (result && result.completed) {
+        console.log('Drawing completed, refreshing data...');
+        this.loadDrawings();
+        
+        // Hiển thị thông báo thành công
+        this._snackBar.open('Đã hoàn thành bảng vẽ thành công!', 'Đóng', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: ['success-snackbar']
+        });
+      }
     });
   }
 

@@ -69,186 +69,119 @@
         <mat-card-content>
           <div class="status-grid">
             <!-- Bối dây hạ -->
-            <div class="status-item">
-              <div class="status-header">
-                <mat-icon>electrical_services</mat-icon>
-                <span class="status-title">Bối dây hạ</span>
+            <div class="status-item" [class.collapsed]="!isBdHaExpanded">
+              <div class="status-header" (click)="toggleBdHaExpansion()">
+                <div class="status-title-section">
+                  <mat-icon>electrical_services</mat-icon>
+                  <span class="status-title">Bối dây hạ</span>
+                </div>
+                <button mat-icon-button class="expand-button" [class.expanded]="isBdHaExpanded">
+                  <mat-icon>expand_more</mat-icon>
+                </button>
               </div>
-              <mat-chip-set>
-                <mat-chip 
-                  [color]="getStatusColor(statusData.drawing.trang_thai_bd_ha)"
-                  [matTooltip]="'Trạng thái: ' + getStatusText(statusData.drawing.trang_thai_bd_ha)">
-                  <mat-icon>{{ getStatusIcon(statusData.drawing.trang_thai_bd_ha) }}</mat-icon>
-                  {{ getStatusText(statusData.drawing.trang_thai_bd_ha) }}
-                </mat-chip>
-                <mat-chip 
-                  *ngIf="statusData.drawing.trang_thai_approve"
-                  [color]="getApprovalStatusColor(statusData.drawing.trang_thai_approve)"
-                  [matTooltip]="'Phê duyệt: ' + getApprovalStatusText(statusData.drawing.trang_thai_approve)">
-                  <mat-icon>{{ getApprovalStatusIcon(statusData.drawing.trang_thai_approve) }}</mat-icon>
-                  {{ getApprovalStatusText(statusData.drawing.trang_thai_approve) }}
-                </mat-chip>
-              </mat-chip-set>
+              <div class="status-chips">
+                <mat-chip-set>
+                  <mat-chip 
+                    [color]="getStatusColor(statusData.bdHaStatus?.trang_thai)"
+                    [matTooltip]="'Trạng thái: ' + getStatusText(statusData.bdHaStatus?.trang_thai)">
+                    <mat-icon>{{ getStatusIcon(statusData.bdHaStatus?.trang_thai) }}</mat-icon>
+                    {{ getStatusText(statusData.bdHaStatus?.trang_thai) }}
+                  </mat-chip>
+                  <mat-chip 
+                    *ngIf="statusData.bdHaStatus?.trang_thai_approve"
+                    [color]="getApprovalStatusColor(statusData.bdHaStatus?.trang_thai_approve)"
+                    [matTooltip]="'Phê duyệt: ' + getApprovalStatusText(statusData.bdHaStatus?.trang_thai_approve)">
+                    <mat-icon>{{ getApprovalStatusIcon(statusData.bdHaStatus?.trang_thai_approve) }}</mat-icon>
+                    {{ getApprovalStatusText(statusData.bdHaStatus?.trang_thai_approve) }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+              <div class="status-details" *ngIf="isBdHaExpanded && statusData.bdHaStatus">
+                <div class="detail-item">
+                  <label>Mã số:</label>
+                  <span>{{ statusData.bdHaStatus.masothe_bd_ha }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Người gia công:</label>
+                  <span>{{ statusData.bdHaStatus.nguoigiacong }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Ngày gia công:</label>
+                  <span>{{ formatDate(statusData.bdHaStatus.ngaygiacong) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Quy cách dây:</label>
+                  <span>{{ statusData.bdHaStatus.quycachday }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Số sợi dây:</label>
+                  <span>{{ statusData.bdHaStatus.sosoiday }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Nhà sản xuất:</label>
+                  <span>{{ statusData.bdHaStatus.nhasanxuat }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- Bối dây cao -->
-            <div class="status-item">
-              <div class="status-header">
-                <mat-icon>power</mat-icon>
-                <span class="status-title">Bối dây cao</span>
+            <div class="status-item" [class.collapsed]="!isBdCaoExpanded">
+              <div class="status-header" (click)="toggleBdCaoExpansion()">
+                <div class="status-title-section">
+                  <mat-icon>power</mat-icon>
+                  <span class="status-title">Bối dây cao</span>
+                </div>
+                <button mat-icon-button class="expand-button" [class.expanded]="isBdCaoExpanded">
+                  <mat-icon>expand_more</mat-icon>
+                </button>
               </div>
-              <mat-chip-set>
-                <mat-chip 
-                  [color]="getStatusColor(statusData.drawing.trang_thai_bd_cao)"
-                  [matTooltip]="'Trạng thái: ' + getStatusText(statusData.drawing.trang_thai_bd_cao)">
-                  <mat-icon>{{ getStatusIcon(statusData.drawing.trang_thai_bd_cao) }}</mat-icon>
-                  {{ getStatusText(statusData.drawing.trang_thai_bd_cao) }}
-                </mat-chip>
-                <mat-chip 
-                  *ngIf="statusData.drawing.trang_thai_approve"
-                  [color]="getApprovalStatusColor(statusData.drawing.trang_thai_approve)"
-                  [matTooltip]="'Phê duyệt: ' + getApprovalStatusText(statusData.drawing.trang_thai_approve)">
-                  <mat-icon>{{ getApprovalStatusIcon(statusData.drawing.trang_thai_approve) }}</mat-icon>
-                  {{ getApprovalStatusText(statusData.drawing.trang_thai_approve) }}
-                </mat-chip>
-              </mat-chip-set>
+              <div class="status-chips">
+                <mat-chip-set>
+                  <mat-chip 
+                    [color]="getStatusColor(statusData.bdCaoStatus?.trang_thai)"
+                    [matTooltip]="'Trạng thái: ' + getStatusText(statusData.bdCaoStatus?.trang_thai)">
+                    <mat-icon>{{ getStatusIcon(statusData.bdCaoStatus?.trang_thai) }}</mat-icon>
+                    {{ getStatusText(statusData.bdCaoStatus?.trang_thai) }}
+                  </mat-chip>
+                  <mat-chip 
+                    *ngIf="statusData.bdCaoStatus?.trang_thai_approve"
+                    [color]="getApprovalStatusColor(statusData.bdCaoStatus?.trang_thai_approve)"
+                    [matTooltip]="'Phê duyệt: ' + getApprovalStatusText(statusData.bdCaoStatus?.trang_thai_approve)">
+                    <mat-icon>{{ getApprovalStatusIcon(statusData.bdCaoStatus?.trang_thai_approve) }}</mat-icon>
+                    {{ getApprovalStatusText(statusData.bdCaoStatus?.trang_thai_approve) }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+              <div class="status-details" *ngIf="isBdCaoExpanded && statusData.bdCaoStatus">
+                <div class="detail-item">
+                  <label>Mã số:</label>
+                  <span>{{ statusData.bdCaoStatus.masothe_bd_cao }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Người gia công:</label>
+                  <span>{{ statusData.bdCaoStatus.nguoigiacong }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Ngày gia công:</label>
+                  <span>{{ formatDate(statusData.bdCaoStatus.ngaygiacong) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Quy cách dây:</label>
+                  <span>{{ statusData.bdCaoStatus.quycachday }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Số sợi dây:</label>
+                  <span>{{ statusData.bdCaoStatus.sosoiday }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Nhà sản xuất:</label>
+                  <span>{{ statusData.bdCaoStatus.nhasanxuat }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
-
-      <!-- Detailed Status Information -->
-      <div class="detailed-status">
-        <!-- Bối dây hạ details -->
-        <mat-card *ngIf="statusData.bdHaStatus" class="detail-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>electrical_services</mat-icon>
-              Chi tiết bối dây hạ
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Mã số:</label>
-                <span>{{ statusData.bdHaStatus.masothe_bd_ha }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Người gia công:</label>
-                <span>{{ statusData.bdHaStatus.nguoigiacong }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Ngày gia công:</label>
-                <span>{{ formatDate(statusData.bdHaStatus.ngaygiacong) }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Quy cách dây:</label>
-                <span>{{ statusData.bdHaStatus.quycachday }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Số sợi dây:</label>
-                <span>{{ statusData.bdHaStatus.sosoiday }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Nhà sản xuất:</label>
-                <span>{{ statusData.bdHaStatus.nhasanxuat }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Ngày sản xuất:</label>
-                <span>{{ formatDate(statusData.bdHaStatus.ngaysanxuat) }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Chu vi khuôn:</label>
-                <span>{{ statusData.bdHaStatus.chuvikhuon }} mm</span>
-              </div>
-              <div class="detail-item">
-                <label>Điện trở Ra:</label>
-                <span>{{ statusData.bdHaStatus.dientroRa }} Ω</span>
-              </div>
-              <div class="detail-item">
-                <label>Điện trở Rb:</label>
-                <span>{{ statusData.bdHaStatus.dientroRb }} Ω</span>
-              </div>
-              <div class="detail-item">
-                <label>Điện trở Rc:</label>
-                <span>{{ statusData.bdHaStatus.dientroRc }} Ω</span>
-              </div>
-              <div class="detail-item">
-                <label>Độ lệch điện trở:</label>
-                <span>{{ statusData.bdHaStatus.dolechdientro }}%</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <!-- Bối dây cao details -->
-        <mat-card *ngIf="statusData.bdCaoStatus" class="detail-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>power</mat-icon>
-              Chi tiết bối dây cao
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Mã số:</label>
-                <span>{{ statusData.bdCaoStatus.masothe_bd_cao }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Người gia công:</label>
-                <span>{{ statusData.bdCaoStatus.nguoigiacong }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Ngày gia công:</label>
-                <span>{{ formatDate(statusData.bdCaoStatus.ngaygiacong) }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Quy cách dây:</label>
-                <span>{{ statusData.bdCaoStatus.quycachday }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Số sợi dây:</label>
-                <span>{{ statusData.bdCaoStatus.sosoiday }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Nhà sản xuất:</label>
-                <span>{{ statusData.bdCaoStatus.nhasanxuat }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Ngày sản xuất:</label>
-                <span>{{ formatDate(statusData.bdCaoStatus.ngaysanxuat) }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Chu vi bối dây:</label>
-                <span>{{ statusData.bdCaoStatus.chuvi_bd_tt }} mm</span>
-              </div>
-              <div class="detail-item">
-                <label>Điện trở Ra:</label>
-                <span>{{ statusData.bdCaoStatus.dientroRa }} Ω</span>
-              </div>
-              <div class="detail-item">
-                <label>Điện trở Rb:</label>
-                <span>{{ statusData.bdCaoStatus.dientroRb }} Ω</span>
-              </div>
-              <div class="detail-item">
-                <label>Điện trở Rc:</label>
-                <span>{{ statusData.bdCaoStatus.dientroRc }} Ω</span>
-              </div>
-              <div class="detail-item">
-                <label>Độ lệch điện trở:</label>
-                <span>{{ statusData.bdCaoStatus.dolechdientro }}%</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <!-- No detailed data message -->
-        <div *ngIf="!statusData.bdHaStatus && !statusData.bdCaoStatus" class="no-data-message">
-          <mat-icon>info</mat-icon>
-          <p>Chưa có thông tin chi tiết về quá trình quấn dây</p>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -257,6 +190,16 @@
     <button mat-button (click)="onClose()" class="close-btn">
       <mat-icon>close</mat-icon>
       Đóng
+    </button>
+    <button 
+      *ngIf="canShowCompleteButton()" 
+      mat-raised-button 
+      color="primary" 
+      (click)="onComplete()" 
+      [disabled]="isLoading"
+      class="complete-btn">
+      <mat-icon>check_circle</mat-icon>
+      Hoàn thành
     </button>
   </div>
 </div>

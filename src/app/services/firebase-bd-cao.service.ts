@@ -230,10 +230,20 @@ export class FirebaseBdCaoService {
       console.log('Updating bd_cao approval status for ID:', id, 'to approval status:', trangThaiApprove);
       
       const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
-      await updateDoc(docRef, {
+      
+      // Prepare update data
+      const updateData: any = {
         trang_thai_approve: trangThaiApprove,
         updated_at: Timestamp.fromDate(new Date())
-      });
+      };
+      
+      // If approved, also update trang_thai from 1 to 2
+      if (trangThaiApprove === 'approved') {
+        updateData.trang_thai = 2;
+        console.log('Also updating trang_thai to 2 for approved status');
+      }
+      
+      await updateDoc(docRef, updateData);
       
       console.log('BdCao approval status updated successfully');
     } catch (error) {

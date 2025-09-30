@@ -278,6 +278,49 @@ export class FirebaseBangVeService {
   }
 
   /**
+   * Update bang ve status by kyhieubangve
+   * @param kyhieubangve - The kyhieubangve to find the document
+   * @param trangThai - The new status
+   * @returns Promise<void>
+   */
+  async updateBangVeStatusByKyHieu(kyhieubangve: string, trangThai: number): Promise<void> {
+    try {
+      console.log('Updating bang ve status by kyhieubangve:', kyhieubangve, 'to status:', trangThai);
+      
+      // Tìm document bằng kyhieubangve
+      const q = query(
+        collection(this.firestore, this.COLLECTION_NAME),
+        where('kyhieubangve', '==', kyhieubangve)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.error('No document found with kyhieubangve:', kyhieubangve);
+        throw new Error(`No document found with kyhieubangve ${kyhieubangve}`);
+      }
+      
+      // Lấy document đầu tiên (nếu có nhiều thì lấy cái đầu tiên)
+      const docSnap = querySnapshot.docs[0];
+      const docRef = docSnap.ref;
+      
+      console.log('Found document with ID:', docSnap.id);
+      
+      // Cập nhật document
+      await updateDoc(docRef, {
+        trang_thai: trangThai,
+        updated_at: Timestamp.fromDate(new Date())
+      });
+      
+      console.log('Bang ve status updated successfully by kyhieubangve');
+      
+    } catch (error) {
+      console.error('Error updating bang ve status by kyhieubangve:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Check if collection exists and create it if it doesn't
    * @returns Promise<void>
    */

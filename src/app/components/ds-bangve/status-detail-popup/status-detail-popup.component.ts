@@ -12,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { FirebaseUserBangVeService } from '../../../services/firebase-user-bangve.service';
 import { FirebaseBdHaService } from '../../../services/firebase-bd-ha.service';
 import { FirebaseBdCaoService } from '../../../services/firebase-bd-cao.service';
+import { FirebaseBangVeService } from '../../../services/firebase-bangve.service';
 import { BangVeData } from '../ds-bangve.component';
 
 export interface StatusDetailData {
@@ -41,6 +42,10 @@ export interface StatusDetailData {
 })
 export class StatusDetailPopupComponent implements OnInit {
   isLoading = false;
+  
+  // Expansion states
+  isBdHaExpanded = false;
+  isBdCaoExpanded = false;
   statusData: StatusDetailData;
 
   constructor(
@@ -49,6 +54,7 @@ export class StatusDetailPopupComponent implements OnInit {
     private firebaseUserBangVeService: FirebaseUserBangVeService,
     private firebaseBdHaService: FirebaseBdHaService,
     private firebaseBdCaoService: FirebaseBdCaoService,
+    private firebaseBangVeService: FirebaseBangVeService,
     @Inject(MAT_DIALOG_DATA) public data: { drawing: BangVeData }
   ) {
     this.statusData = {
@@ -105,8 +111,8 @@ export class StatusDetailPopupComponent implements OnInit {
     if (status === null || status === undefined) return 'Chưa bắt đầu';
     switch (status) {
       case 0: return 'Chưa bắt đầu';
-      case 1: return 'Đang thực hiện';
-      case 2: return 'Đã hoàn thành';
+      case 1: return 'Đã thi công';
+      case 2: return 'KCS đã approve';
       default: return 'Không xác định';
     }
   }
@@ -125,8 +131,8 @@ export class StatusDetailPopupComponent implements OnInit {
     if (status === null || status === undefined) return 'schedule';
     switch (status) {
       case 0: return 'schedule';
-      case 1: return 'hourglass_empty';
-      case 2: return 'check_circle';
+      case 1: return 'build';
+      case 2: return 'verified';
       default: return 'help';
     }
   }
@@ -175,5 +181,63 @@ export class StatusDetailPopupComponent implements OnInit {
 
   onClose() {
     this.dialogRef.close();
+  }
+
+  // Toggle expansion methods
+  toggleBdHaExpansion(): void {
+    this.isBdHaExpanded = !this.isBdHaExpanded;
+  }
+
+  toggleBdCaoExpansion(): void {
+    this.isBdCaoExpanded = !this.isBdCaoExpanded;
+  }
+
+  // Kiểm tra xem có thể hiển thị nút "Hoàn thành" không
+  canShowCompleteButton(): boolean {
+    // Kiểm tra cả bối dây hạ và cao đã được KCS approved (trang_thai_approve = 'approved')
+    const bdHaApproved = this.statusData.bdHaStatus?.trang_thai_approve === 'approved';
+    const bdCaoApproved = this.statusData.bdCaoStatus?.trang_thai_approve === 'approved';
+    
+    // Chỉ hiển thị nút khi cả hai đều đã được approved
+    return bdHaApproved && bdCaoApproved;
+  }
+
+  // Xử lý khi bấm nút "Hoàn thành"
+  async onComplete(): Promise<void> {
+    try {
+      this.isLoading = true;
+      
+      // Xử lý ID để đảm bảo đúng format
+      const docId = typeof this.statusData.drawing.id === 'string' 
+        ? this.statusData.drawing.id 
+        : this.statusData.drawing.id.toString();
+      
+      console.log('Attempting to update bangve with ID:', docId);
+      console.log('Drawing data:', this.statusData.drawing);
+      
+      // Cập nhật trang_thai từ 1 thành 2 trong collection bangve bằng kyhieubangve
+      await this.firebaseBangVeService.updateBangVeStatusByKyHieu(this.statusData.drawing.kyhieubangve, 2);
+      
+      this.snackBar.open('Đã hoàn thành thành công!', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['success-snackbar']
+      });
+      
+      // Đóng popup và trả về kết quả để parent component có thể refresh
+      this.dialogRef.close({ completed: true });
+      
+    } catch (error) {
+      console.error('Lỗi khi hoàn thành:', error);
+      this.snackBar.open('Có lỗi xảy ra khi hoàn thành', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        panelClass: ['error-snackbar']
+      });
+    } finally {
+      this.isLoading = false;
+    }
   }
 }
