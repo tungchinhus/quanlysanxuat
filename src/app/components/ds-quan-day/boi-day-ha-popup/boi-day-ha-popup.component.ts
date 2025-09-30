@@ -17,7 +17,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
 import { QuanDayData } from '../ds-quan-day.component';
-import { Constant } from '../../../constant/constant';
+import { Constant, MANUFACTURER_OPTIONS, Manufacturer } from '../../../constant/constant';
 import { DialogComponent } from '../../shared/dialogs/dialog/dialog.component';
 import { KcsQualityService, KcsQualityCheckFailure } from '../../../services/kcs-quality.service';
 import { FirebaseBdHaService, BdHaData } from '../../../services/firebase-bd-ha.service';
@@ -156,12 +156,8 @@ export class BoiDayHaPopupComponent implements OnInit {
   showKcsFailureForm = false; // Hiển thị form KCS failure
   kcsFailureForm: FormGroup; // Form cho KCS failure
 
-  // Danh sách nhà sản xuất
-  manufacturers = [
-    { value: 'nha_sx1', name: 'Nha sx 1' },
-    { value: 'nha_sx2', name: 'Nha sx 2' },
-    { value: 'nha_sx3', name: 'Nha sx 3' }
-  ];
+  // Danh sách nhà sản xuất - sử dụng enum chung
+  manufacturers = MANUFACTURER_OPTIONS;
 
   constructor(
     private fb: FormBuilder,
@@ -182,7 +178,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       // Các field bắt buộc
       quy_cach_day: ['', Validators.required],
       so_soi_day: [1, [Validators.required, Validators.min(1)]],
-      nha_san_xuat: ['nha_sx1', Validators.required],
+      nha_san_xuat: [Manufacturer.bsHN, Validators.required],
       nha_san_xuat_other: [''],
       ngay_san_xuat: [new Date(), Validators.required],
       
@@ -264,14 +260,11 @@ export class BoiDayHaPopupComponent implements OnInit {
       }
     }
     
-    // Kiểm tra nhà sản xuất khác nếu chọn "OTHER"
+    // Kiểm tra nhà sản xuất
     const nhaSanXuat = this.boiDayHaForm.get('nha_san_xuat')?.value;
-    if (nhaSanXuat === 'OTHER') {
-      const nhaSanXuatOther = this.boiDayHaForm.get('nha_san_xuat_other')?.value;
-      if (!nhaSanXuatOther || !nhaSanXuatOther.trim()) {
-        console.log('Chưa nhập tên nhà sản xuất khác');
-        return false;
-      }
+    if (!nhaSanXuat || !nhaSanXuat.trim()) {
+      console.log('Chưa chọn nhà sản xuất');
+      return false;
     }
     
     console.log('Form có thể submit - tất cả field bắt buộc đã được nhập');
@@ -280,21 +273,8 @@ export class BoiDayHaPopupComponent implements OnInit {
 
   // Xử lý khi thay đổi nhà sản xuất
   onManufacturerChange(event: any) {
-    const selectedValue = event.value;
-    const otherField = this.boiDayHaForm.get('nha_san_xuat_other');
-    
-    if (selectedValue === 'OTHER') {
-      // Nếu chọn "Khác", thêm validation required cho field nhà sản xuất khác
-      otherField?.setValidators([Validators.required]);
-      otherField?.markAsUntouched();
-    } else {
-      // Nếu chọn nhà sản xuất có sẵn, bỏ validation required
-      otherField?.clearValidators();
-      otherField?.setValue('');
-      otherField?.markAsUntouched();
-    }
-    
-    otherField?.updateValueAndValidity();
+    // Không cần xử lý đặc biệt vì không còn option 'OTHER'
+    console.log('Manufacturer changed to:', event.value);
   }
 
   // Validate dữ liệu trước khi gửi API
@@ -353,8 +333,8 @@ export class BoiDayHaPopupComponent implements OnInit {
 
   // Chuyển đổi từ form data sang API request format
   private convertToApiRequest(formData: any): BoiDayHaApiRequest {
-    const nhaSanXuat = formData.nha_san_xuat === 'OTHER' ? formData.nha_san_xuat_other : formData.nha_san_xuat;
-    const nhaSanXuatName = formData.nha_san_xuat === 'OTHER' ? formData.nha_san_xuat_other : this.getManufacturerName(formData.nha_san_xuat);
+    const nhaSanXuat = formData.nha_san_xuat;
+    const nhaSanXuatName = this.getManufacturerName(formData.nha_san_xuat);
     
     return {
       masothe_bd_ha: `${this.data.quanDay.kyhieuquanday}-065`,
@@ -423,7 +403,7 @@ export class BoiDayHaPopupComponent implements OnInit {
         quycachday: formData.quy_cach_day,
         sosoiday: formData.so_soi_day,
         ngaysanxuat: formData.ngay_san_xuat,
-        nhasanxuat: formData.nha_san_xuat === 'OTHER' ? formData.nha_san_xuat_other : formData.nha_san_xuat,
+        nhasanxuat: formData.nha_san_xuat,
         chuvikhuon: formData.chu_vi_khuon,
         kt_bung_bd: formData.kt_bung_bd_truoc || 0,
         chieuquanday: formData.chieu_quan_day,

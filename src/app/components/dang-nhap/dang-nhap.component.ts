@@ -167,7 +167,7 @@ export class DangNhapComponent implements OnInit {
       // Wait longer to ensure auth data is fully set
       setTimeout(() => {
         this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
-      }, 500);
+      }, 1000); // Increased timeout
       return;
     }
 

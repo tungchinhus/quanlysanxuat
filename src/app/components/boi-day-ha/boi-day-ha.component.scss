@@ -1,10 +1,17 @@
 .main-container {
   padding: 8px; // Giảm padding từ 16px xuống 8px
   width: 100%;
-  overflow-x: hidden;
+  min-width: 855px; // Đặt chiều rộng tối thiểu cho màn hình
+  overflow-x: auto; // Cho phép scroll ngang khi cần thiết
   box-sizing: border-box;
   max-width: 210mm; // Kích thước A4 width
   margin: 0 auto;
+  
+  // Đảm bảo không bị responsive khi màn hình nhỏ
+  @media (max-width: 855px) {
+    width: 855px !important;
+    min-width: 855px !important;
+  }
 }
 
 .boi-day-ha-header {
@@ -53,8 +60,15 @@ mat-card-content {
 .form-card {
   padding: 8px; // Giảm padding từ 12px xuống 8px
   margin-bottom: 16px; // Giảm margin từ 20px xuống 16px
+  min-width: 855px; // Đặt chiều rộng tối thiểu cho form card
   max-width: 210mm; // Kích thước A4 width
   margin: 0 auto;
+  
+  // Đảm bảo không bị responsive khi màn hình nhỏ
+  @media (max-width: 855px) {
+    width: 855px !important;
+    min-width: 855px !important;
+  }
 }
 
 .text-center {
@@ -713,5 +727,85 @@ mat-card-content {
   
   ::ng-deep .mat-form-field-appearance-outline .mat-form-field-label {
     color: #000 !important;
+  }
+}
+
+// Responsive design cho màn hình nhỏ hơn 855px
+@media (max-width: 855px) {
+  .main-container {
+    min-width: 855px !important; // Force chiều rộng tối thiểu
+    overflow-x: auto; // Cho phép scroll ngang
+    width: 855px !important; // Force width cố định
+  }
+  
+  .form-card {
+    min-width: 855px !important; // Force chiều rộng tối thiểu của form
+    width: 855px !important; // Force width cố định
+  }
+  
+  // Force các grid không bị wrap và giữ nguyên layout
+  .compact-grid-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  .compact-grid-3 {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  .compact-grid-4 {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  .compact-grid-5 {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  // Force các form field không bị thu nhỏ
+  .form-field,
+  .form-field-full {
+    min-width: 120px !important;
+    flex: 1 1 0 !important;
+  }
+  
+  // Force các label không bị wrap
+  .form-group-label {
+    white-space: nowrap !important;
+    min-width: 140px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  // Force các input field có kích thước tối thiểu
+  .fixed-field-group {
+    min-width: 180px !important;
+    flex: 1 1 0 !important;
+  }
+  
+  .fixed-field-group .fixed-input {
+    min-width: 80px !important;
+  }
+  
+  // Force các form row không bị wrap
+  .form-row,
+  .form-row-full,
+  .form-row-3-cols,
+  .form-row-4-cols,
+  .form-row-5-cols,
+  .form-row-bv,
+  .form-row-bv-outside,
+  .form-row-flex-label {
+    flex-wrap: nowrap !important;
+  }
+  
+  // Force compact form group
+  .compact-form-group {
+    flex-wrap: nowrap !important;
   }
 }

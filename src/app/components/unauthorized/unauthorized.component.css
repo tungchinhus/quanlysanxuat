@@ -12,6 +12,23 @@
   max-width: 500px;
 }
 
+.loading-container {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.6s ease-out;
+}
+
+.loading-text {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 500;
+}
+
 .unauthorized-card {
   text-align: center;
   padding: 3rem 2rem;

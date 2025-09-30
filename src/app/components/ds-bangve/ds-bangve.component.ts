@@ -5,6 +5,7 @@ import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { DialogComponent } from '../shared/dialogs/dialog/dialog.component';
 import { BangVeComponent } from '../bang-ve/bang-ve.component';
 import { GiaCongPopupComponent } from './gia-cong-popup/gia-cong-popup.component';
+import { StatusDetailPopupComponent } from './status-detail-popup/status-detail-popup.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonService } from '../../services/common.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -33,6 +34,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSortModule } from '@angular/material/sort';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatCardModule } from '@angular/material/card';
 
 export interface BangVeData {
   id: number | string;
@@ -96,7 +98,8 @@ export interface ProcessedBangVeData extends BangVeData {
     MatChipsModule,
     MatAutocompleteModule,
     MatSortModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatCardModule
 ]
 })
 export class DsBangveComponent implements OnInit {
@@ -1951,6 +1954,24 @@ export class DsBangveComponent implements OnInit {
           }
         });
       }
+    });
+  }
+
+  openStatusDetailDialog(drawing: BangVeData): void {
+    console.log('Opening status detail dialog for drawing:', drawing);
+    
+    const dialogRef = this.dialog.open(StatusDetailPopupComponent, {
+      width: '900px',
+      maxHeight: '80vh',
+      disableClose: false,
+      data: {
+        drawing: drawing
+      },
+      panelClass: 'status-detail-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('Status detail dialog closed with result:', result);
     });
   }
 

@@ -10,6 +10,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +39,9 @@ import { FirebaseKcsManagerService, ProcessedDrawingData, ProcessedDrawingSearch
     MatInputModule,
     MatProgressSpinnerModule,
     MatToolbarModule,
+    MatTabsModule,
+    MatChipsModule,
+    MatSelectModule,
     DatePipe
   ],
   standalone: true
@@ -48,6 +54,7 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
     'ngaySanXuat',
     'ngayGiaCong',
     'trangThai',
+    'loaiBoiDay',
     'actions'
   ];
 
@@ -61,6 +68,16 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
   pageSize = 10;
   totalCount = 0;
   totalPages = 0;
+  
+  // Status filtering
+  selectedStatus: 'all' | 'pending' | 'approved' | 'rejected' = 'pending';
+  statusOptions = [
+    { value: 'all', label: 'Tất cả', icon: 'list' },
+    { value: 'pending', label: 'Chờ kiểm duyệt', icon: 'schedule' },
+    { value: 'approved', label: 'Đã duyệt', icon: 'check_circle' },
+    { value: 'rejected', label: 'Từ chối', icon: 'cancel' }
+  ];
+
 
   private searchSubject = new Subject<string>();
 
@@ -149,7 +166,7 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
       searchTerm: this.searchTerm.trim() || undefined,
       pageNumber: this.currentPage,
       pageSize: this.pageSize,
-      trang_thai: 'pending' // Filter for pending status (trang_thai = 1)
+      trang_thai: this.selectedStatus === 'all' ? undefined : this.selectedStatus
     };
 
     console.log('Loading processed drawings with criteria:', searchCriteria);
@@ -162,6 +179,7 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
         this.totalCount = response.totalCount;
         this.totalPages = Math.ceil(this.totalCount / this.pageSize);
         this.isLoading = false;
+
 
         console.log(`✅ Loaded ${response.data.length} processed drawings from Firebase`);
         
@@ -196,6 +214,13 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
     this.pageSize = event.pageSize;
     this.loadData();
   }
+
+  onStatusChange(status: 'all' | 'pending' | 'approved' | 'rejected'): void {
+    this.selectedStatus = status;
+    this.currentPage = 1;
+    this.loadData();
+  }
+
 
   onApproveKcs(element: ProcessedDrawingData): void {
     console.log('Approving KCS for element:', element);
@@ -263,8 +288,25 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
         return 'Bối dây cao';
       case 'ep':
         return 'Ép bối dây';
+      case 'both':
+        return 'Cả hai loại';
       default:
         return 'Không xác định';
+    }
+  }
+
+  getLoaiBoiDayClass(loai: string): string {
+    switch (loai) {
+      case 'ha':
+        return 'chip-ha';
+      case 'cao':
+        return 'chip-cao';
+      case 'ep':
+        return 'chip-ep';
+      case 'both':
+        return 'chip-both';
+      default:
+        return 'chip-unknown';
     }
   }
 

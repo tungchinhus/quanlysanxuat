@@ -14,16 +14,35 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Search Section -->
-    <div class="search-section">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Tìm kiếm bảng vẽ...</mat-label>
-        <input matInput 
-               [(ngModel)]="searchTerm"
-               (input)="onSearchChange($event)"
-               placeholder="Nhập ký hiệu quấn dây, tên bảng vẽ, công suất...">
-        <mat-icon matSuffix>search</mat-icon>
-      </mat-form-field>
+
+    <!-- Filter and Search Section -->
+    <div class="filter-section">
+      <div class="filter-controls">
+        <!-- Status Filter -->
+        <div class="status-filter">
+          <mat-form-field appearance="outline">
+            <mat-label>Trạng thái</mat-label>
+            <mat-select [(value)]="selectedStatus" (selectionChange)="onStatusChange($event.value)">
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                <mat-icon>{{option.icon}}</mat-icon>
+                {{option.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Search Field -->
+        <div class="search-field">
+          <mat-form-field appearance="outline">
+            <mat-label>Tìm kiếm bảng vẽ...</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchTerm"
+                   (input)="onSearchChange($event)"
+                   placeholder="Nhập ký hiệu quấn dây, tên bảng vẽ, công suất...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
     </div>
 
     <!-- Data Table -->
@@ -94,6 +113,18 @@
               <span class="status-dot"></span>
               <span class="status-text">{{getStatusText(element.trang_thai)}}</span>
             </div>
+          </td>
+        </ng-container>
+
+        <!-- Loại bối dây Column -->
+        <ng-container matColumnDef="loaiBoiDay">
+          <th mat-header-cell *matHeaderCellDef>Loại bối dây</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-chip-set>
+              <mat-chip [ngClass]="getLoaiBoiDayClass(element.loai_boi_day)">
+                {{getLoaiBoiDayText(element.loai_boi_day)}}
+              </mat-chip>
+            </mat-chip-set>
           </td>
         </ng-container>
 

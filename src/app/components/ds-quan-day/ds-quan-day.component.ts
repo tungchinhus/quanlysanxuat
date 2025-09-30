@@ -127,9 +127,9 @@ export class DsQuanDayComponent implements OnInit {
   isGiaCongEp: boolean = false;
   isLoading: boolean = false; 
 
-  displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
-  displayedColumnsInProgress: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
-  displayedColumnsCompleted: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'trang_thai', 'actions'];
+  displayedColumns: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
+  displayedColumnsInProgress: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
+  displayedColumnsCompleted: string[] = ['kyhieuquanday', 'congsuat', 'tbkt', 'dienap', 'created_at', 'actions'];
   
   searchTerm: string = '';
   filteredQuanDays: QuanDayData[] = [];

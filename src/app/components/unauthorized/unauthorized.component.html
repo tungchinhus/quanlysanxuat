@@ -1,6 +1,13 @@
 <div class="unauthorized-container">
   <div class="unauthorized-content">
-    <mat-card class="unauthorized-card">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p class="loading-text">Đang kiểm tra quyền truy cập...</p>
+    </div>
+    
+    <!-- Unauthorized state -->
+    <mat-card *ngIf="!isLoading && !isAuthenticated" class="unauthorized-card">
       <div class="icon-container">
         <mat-icon class="error-icon">block</mat-icon>
       </div>

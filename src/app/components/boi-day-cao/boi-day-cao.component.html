@@ -5,8 +5,8 @@
    </div>
     <mat-card-content>
       <form [formGroup]="windingForm" (ngSubmit)="onSubmit()">
-          <div class="grid-2x2">
-          <!-- Hàng 1 -->
+        <!-- Thông tin cơ bản - 2 cột -->
+        <div class="compact-grid-2">
           <div class="form-item">
             <span class="label">Công suất:</span>
             <mat-form-field class="input-field" disabled>
@@ -22,7 +22,6 @@
             </mat-form-field>
           </div>
 
-          <!-- Hàng 2 -->
           <div class="form-item">
             <span class="label">Điện áp:</span>
             <mat-form-field class="input-field" disabled>
@@ -33,38 +32,34 @@
 
           <div class="form-item">
             <span class="label">Số bối dây:</span>
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Số bối dây</mat-label>
-              <input matInput type="number" formControlName="soBoiDay" readonly>
+            <mat-form-field class="input-field" disabled>
+              <input matInput formControlName="soBoiDay">
             </mat-form-field>
           </div>
         </div>
         
         <hr class="section-separator" />
-        <div class="form-row">
-          <!-- Ngày gia công -->
+        
+        <!-- Thông tin gia công - 3 cột -->
+        <div class="compact-grid-3">
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Ngày gia công</mat-label>
             <input matInput formControlName="ngayGiaCong" readonly>
           </mat-form-field>
 
-          <!-- Người gia công -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Người gia công</mat-label>
             <input matInput formControlName="nguoiGiaCong" readonly>
           </mat-form-field>
-        </div>
 
-        <!-- Ký hiệu BV -->
-        <div class="form-row-full">
-          <mat-form-field appearance="outline" class="form-field-full">
+          <mat-form-field appearance="outline" class="form-field">
             <mat-label>Ký hiệu BV</mat-label>
             <input matInput formControlName="kyHieuBV" readonly>
           </mat-form-field>
         </div>
 
-        <div class="form-row">
-          <!-- Quy cách dây -->
+        <!-- Thông tin dây - 3 cột -->
+        <div class="compact-grid-3">
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Quy cách dây</mat-label>
             <input matInput formControlName="quyCachDay" placeholder="Nhập quy cách dây">
@@ -73,9 +68,8 @@
             </mat-error>
           </mat-form-field>
 
-          <!-- Số sợi dây -->
           <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Số sợi dây</mat-label>
+            <mat-label>Số sợi chập</mat-label>
             <input matInput type="number" formControlName="soSoiDay" placeholder="Nhập số sợi dây">
             <mat-error *ngIf="windingForm.get('soSoiDay')?.hasError('required') && windingForm.get('soSoiDay')?.touched">
               Số sợi dây là bắt buộc.
@@ -84,10 +78,18 @@
               Số sợi dây phải lớn hơn 0.
             </mat-error>
           </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Nhà sản xuất</mat-label>
+            <input matInput formControlName="nhaSanXuat" placeholder="Nhập nhà sản xuất">
+            <mat-error *ngIf="windingForm.get('nhaSanXuat')?.hasError('required') && windingForm.get('nhaSanXuat')?.touched">
+              Nhà sản xuất là bắt buộc.
+            </mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="form-row">
-          <!-- Ngày sản xuất -->
+        <!-- Thông tin sản xuất và khuôn - 4 cột -->
+        <div class="compact-grid-4">
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Ngày sản xuất</mat-label>
             <input matInput [matDatepicker]="pickerNgaySanXuat" formControlName="ngaySanXuat">
@@ -98,18 +100,6 @@
             </mat-error>
           </mat-form-field>
 
-          <!-- Nhà sản xuất -->
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Nhà sản xuất</mat-label>
-            <input matInput formControlName="nhaSanXuat" placeholder="Nhập nhà sản xuất">
-            <mat-error *ngIf="windingForm.get('nhaSanXuat')?.hasError('required') && windingForm.get('nhaSanXuat')?.touched">
-              Nhà sản xuất là bắt buộc.
-            </mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row form-row-3-cols">
-          <!-- Chu vi khuôn -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Chu vi khuôn</mat-label>
             <input matInput type="number" formControlName="chuViKhuon" placeholder="Nhập chu vi khuôn">
@@ -121,13 +111,11 @@
             </mat-error>
           </mat-form-field>
 
-          <!-- KT bụng bd trước -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>KT bụng bd trước</mat-label>
             <input matInput type="number" formControlName="ktBungBdTruoc" placeholder="Nhập KT bụng bd trước">
           </mat-form-field>
 
-          <!-- Bụng bd sau -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Bụng bd sau</mat-label>
             <input matInput type="number" formControlName="bungBdSau" placeholder="Nhập bụng bd sau">
@@ -137,8 +125,8 @@
           </mat-form-field>
         </div>
 
-        <div class="form-row">
-          <!-- Chiều quấn dây -->
+        <!-- Chiều quấn và máy quấn - 2 cột -->
+        <div class="compact-grid-2">
           <div class="form-field">
             <mat-label class="block-label">Chiều quấn dây</mat-label>
             <mat-radio-group aria-label="Chiều quấn dây" formControlName="chieuQuanDay" class="radio-group">
@@ -150,7 +138,6 @@
             </mat-error>
           </div>
 
-          <!-- Máy quấn dây -->
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Máy quấn dây</mat-label>
             <input matInput formControlName="mayQuanDay" placeholder="Nhập máy quấn dây">
@@ -160,134 +147,139 @@
           </mat-form-field>
         </div>
 
-        <div class="form-row">
+        <!-- Xung quanh dày - 1 hàng -->
+        <div class="compact-form-group">
           <div class="form-group-label">Xung quanh, dày (mm):</div>
-            <div class="form-row form-row-5-cols">
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>2mm</mat-label>
-                <input matInput type="number" formControlName="xqDay2" placeholder="Nhập số">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>3mm</mat-label>
-                <input matInput type="number" formControlName="xqDay3" placeholder="Nhập số">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>4mm</mat-label>
-                <input matInput type="number" formControlName="xqDay4" placeholder="Nhập số">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>6mm</mat-label>
-                <input matInput type="number" formControlName="xqDay6" placeholder="Nhập số">
-              </mat-form-field>
-            </div>
+          <div class="compact-grid-4">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>2mm</mat-label>
+              <input matInput type="number" formControlName="xqDay2" placeholder="Nhập số">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>3mm</mat-label>
+              <input matInput type="number" formControlName="xqDay3" placeholder="Nhập số">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>4mm</mat-label>
+              <input matInput type="number" formControlName="xqDay4" placeholder="Nhập số">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>6mm</mat-label>
+              <input matInput type="number" formControlName="xqDay6" placeholder="Nhập số">
+            </mat-form-field>
+          </div>
         </div>
 
-        <div class="form-row">
+        <!-- Hai đầu dày - 1 hàng -->
+        <div class="compact-form-group">
           <div class="form-group-label">Hai đầu, dày (mm):</div>
-            <div class="form-row form-row-5-cols">
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>2mm</mat-label>
-                <input matInput type="number" formControlName="hdDay2" placeholder="Nhập số">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>3mm</mat-label>
-                <input matInput type="number" formControlName="hdDay3" placeholder="Nhập số">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>4mm</mat-label>
-                <input matInput type="number" formControlName="hdDay4" placeholder="Nhập số">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>6mm</mat-label>
-                <input matInput type="number" formControlName="hdDay6" placeholder="Nhập số">
-              </mat-form-field>
-            </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-row form-row-5-cols">
-              <span class="label-text">KT bd Hạ trong BV: Bảng vẽ 123</span>
-              <span class="label-text">TT</span>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaTrongBv1" placeholder="Nhập giá trị">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaTrongBv2" placeholder="Nhập giá trị">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaTrongBv3" placeholder="Nhập giá trị">
-              </mat-form-field>
+          <div class="compact-grid-4">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>2mm</mat-label>
+              <input matInput type="number" formControlName="hdDay2" placeholder="Nhập số">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>3mm</mat-label>
+              <input matInput type="number" formControlName="hdDay3" placeholder="Nhập số">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>4mm</mat-label>
+              <input matInput type="number" formControlName="hdDay4" placeholder="Nhập số">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>6mm</mat-label>
+              <input matInput type="number" formControlName="hdDay6" placeholder="Nhập số">
+            </mat-form-field>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-row form-row-5-cols">
-              <mat-label class="block-label-inline">Chu vi bd Hạ trong 1 - 3p:</mat-label>
-              <div class="form-row form-row-3-cols flex-grow">
-                <mat-form-field appearance="outline" class="form-field">
-                  <input matInput formControlName="cvBdHa1p" placeholder="Pha 1">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="form-field">
-                  <input matInput formControlName="cvBdHa2p" placeholder="Pha 2">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="form-field">
-                  <input matInput formControlName="cvBdHa3p" placeholder="Pha 3">
-                </mat-form-field>
-              </div>
+        <!-- KT bd Cao trong BV - 1 hàng -->
+        <div class="compact-form-group">
+          <div class="form-group-label">KT bd Cao trong BV: Bảng vẽ 123</div>
+          <div class="compact-grid-4">
+            <span class="label-text">TT</span>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaTrongBv1" placeholder="Nhập giá trị">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaTrongBv2" placeholder="Nhập giá trị">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaTrongBv3" placeholder="Nhập giá trị">
+            </mat-form-field>
           </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-row form-row-5-cols">
-              <span class="label-text">KT bd Hạ ngoài BV: Bảng vẽ 123</span>
-              <span class="label-text">TT</span>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaNgoaiBv1" placeholder="Nhập giá trị">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaNgoaiBv2" placeholder="Nhập giá trị">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaNgoaiBv3" placeholder="Nhập giá trị">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <input matInput formControlName="ktBdHaNgoaiBv4" placeholder="Nhập giá trị">
-              </mat-form-field>
-            </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-row form-row-4-cols">
-            <span class="label-text">Điện trở hạ: </span>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>Ra</mat-label>
-                <input matInput type="number" formControlName="dienTroRa" placeholder="Nhập Ra">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>Rb</mat-label>
-                <input matInput type="number" formControlName="dienTroRb" placeholder="Nhập Rb">
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="form-field">
-                <mat-label>Rc</mat-label>
-                <input matInput type="number" formControlName="dienTroRc" placeholder="Nhập Rc">
-              </mat-form-field>
+        <!-- Chu vi bd Cao - 1 hàng -->
+        <div class="compact-form-group">
+          <div class="form-group-label">Chu vi bd Cao trong 1 - 3p:</div>
+          <div class="compact-grid-3">
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="cvBdHa1p" placeholder="Pha 1">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="cvBdHa2p" placeholder="Pha 2">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="cvBdHa3p" placeholder="Pha 3">
+            </mat-form-field>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-row form-row-3-cols">
-            <mat-label class="label-text">Độ lệch điện trở giữa các pha:</mat-label>
-            <mat-form-field appearance="outline" class="form-field flex-grow">
+        <!-- KT bd Cao ngoài BV - 1 hàng -->
+        <div class="compact-form-group">
+          <div class="form-group-label">KT bd Cao ngoài BV: Bảng vẽ 123</div>
+          <div class="compact-grid-5">
+            <span class="label-text">TT</span>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaNgoaiBv1" placeholder="Nhập giá trị">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaNgoaiBv2" placeholder="Nhập giá trị">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaNgoaiBv3" placeholder="Nhập giá trị">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <input matInput formControlName="ktBdHaNgoaiBv4" placeholder="Nhập giá trị">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Điện trở cao - 1 hàng -->
+        <div class="compact-form-group">
+          <div class="form-group-label">Điện trở cao:</div>
+          <div class="compact-grid-4">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Ra</mat-label>
+              <input matInput type="number" formControlName="dienTroRa" placeholder="Nhập Ra">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Rb</mat-label>
+              <input matInput type="number" formControlName="dienTroRb" placeholder="Nhập Rb">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Rc</mat-label>
+              <input matInput type="number" formControlName="dienTroRc" placeholder="Nhập Rc">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Độ lệch điện trở - 1 hàng -->
+        <div class="compact-form-group">
+          <div class="form-group-label">Độ lệch điện trở giữa các pha:</div>
+          <div class="compact-grid-3">
+            <mat-form-field appearance="outline" class="form-field" style="margin-top: 25px;">
               <input matInput type="number" formControlName="doLechDienTro" placeholder="Nhập độ lệch">
             </mat-form-field>
             <span class="label-text">(TC: &lt;=2%)</span>
-          </div>           
+          </div>
         </div>
       </form>
     </mat-card-content>
 
     <div class="form-footer">
-     <button mat-raised-button color="primary" (click)="giacongboidaycao()">Chuyển bối dây cao</button>
+     <button mat-raised-button color="primary" (click)="giacongboidaycao()">Hoàn thành</button>
    </div>
   </mat-card>
 </div>

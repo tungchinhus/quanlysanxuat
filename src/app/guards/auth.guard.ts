@@ -92,6 +92,7 @@ export class AuthGuard implements CanActivate {
       console.log('No current user found, waiting for auth data...');
       // Wait longer for auth data to be loaded, then retry
       return new Observable(observer => {
+        // Wait longer to ensure auth data is fully loaded after login
         setTimeout(() => {
           const retryUser = this.authService.getCurrentUser();
           if (retryUser) {
@@ -103,7 +104,7 @@ export class AuthGuard implements CanActivate {
             observer.next(false);
             observer.complete();
           }
-        }, 500);
+        }, 1000); // Increased timeout to 1 second
       });
     }
 
