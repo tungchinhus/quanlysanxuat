@@ -108,9 +108,9 @@ export class StatusDetailPopupComponent implements OnInit {
   }
 
   getStatusText(status: number | null | undefined): string {
-    if (status === null || status === undefined) return 'Chưa bắt đầu';
+    if (status === null || status === undefined) return 'Chưa thi công';
     switch (status) {
-      case 0: return 'Chưa bắt đầu';
+      case 0: return 'Chưa thi công';
       case 1: return 'Đã thi công';
       case 2: return 'KCS đã approve';
       default: return 'Không xác định';
