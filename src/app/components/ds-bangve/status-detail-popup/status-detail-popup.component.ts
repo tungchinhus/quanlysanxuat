@@ -41,9 +41,7 @@ export interface StatusDetailData {
 })
 export class StatusDetailPopupComponent implements OnInit {
   isLoading = false;
-  statusData: StatusDetailData = {
-    drawing: this.data.drawing
-  };
+  statusData: StatusDetailData;
 
   constructor(
     private dialogRef: MatDialogRef<StatusDetailPopupComponent>,
@@ -52,7 +50,11 @@ export class StatusDetailPopupComponent implements OnInit {
     private firebaseBdHaService: FirebaseBdHaService,
     private firebaseBdCaoService: FirebaseBdCaoService,
     @Inject(MAT_DIALOG_DATA) public data: { drawing: BangVeData }
-  ) {}
+  ) {
+    this.statusData = {
+      drawing: this.data.drawing
+    };
+  }
 
   ngOnInit() {
     this.loadStatusDetails();
