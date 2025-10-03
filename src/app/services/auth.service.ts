@@ -45,17 +45,45 @@ export class AuthService {
           const matchedUser = (users || []).find(u => u.email?.toLowerCase() === (fbUser.email || '').toLowerCase() || u.username?.toLowerCase() === (fbUser.email || '').toLowerCase());
 
           if (matchedUser) {
-            // Refresh user data to ensure roles are properly loaded
-            try {
-              const refreshedUser = await this.userManagementService.getUserById(matchedUser.id).toPromise();
-              if (refreshedUser) {
-                this.setAuthData(refreshedUser, token);
-              } else {
+            console.log('Found matched user in Firestore:', matchedUser);
+            console.log('Matched user roles:', matchedUser.roles);
+            
+            // Check if we already have user data loaded from localStorage
+            const currentUser = this.currentUserSubject.value;
+            console.log('Current user from localStorage:', currentUser);
+            console.log('Current user roles:', currentUser?.roles);
+            
+            const isDataFresh = currentUser && 
+              currentUser.id === matchedUser.id && 
+              currentUser.email === matchedUser.email &&
+              currentUser.roles && 
+              currentUser.roles.length > 0;
+
+            console.log('Is data fresh?', isDataFresh);
+
+            if (isDataFresh) {
+              console.log('User data is already fresh, skipping refresh');
+              // Just update the token
+              this.tokenSubject.next(token);
+              this.isAuthenticatedSubject.next(true);
+            } else {
+              console.log('User data needs refresh, refreshing from Firestore...');
+              // Refresh user data to ensure roles are properly loaded
+              try {
+                const refreshedUser = await this.userManagementService.getUserById(matchedUser.id).toPromise();
+                if (refreshedUser) {
+                  console.log('Refreshed user from getUserById:', refreshedUser);
+                  console.log('Refreshed user roles:', refreshedUser.roles);
+                  this.setAuthData(refreshedUser, token);
+                  console.log('User data refreshed from Firestore:', refreshedUser);
+                } else {
+                  console.log('No refreshed user, using matched user data:', matchedUser);
+                  this.setAuthData(matchedUser, token);
+                }
+              } catch (refreshError) {
+                console.warn('Could not refresh user data, using original user:', refreshError);
                 this.setAuthData(matchedUser, token);
               }
-            } catch (refreshError) {
-              console.warn('Could not refresh user data, using original user:', refreshError);
-              this.setAuthData(matchedUser, token);
             }
           } else {
             // Check if this is a special demo user and assign appropriate role
@@ -115,6 +143,13 @@ export class AuthService {
           this.isAuthenticatedSubject.next(true);
           this.tokenSubject.next(storedToken);
           console.log('Auth data loaded from localStorage:', user);
+          
+          // Schedule a refresh of user data to ensure roles are up-to-date
+          console.log('Scheduling user data refresh in 1 second...');
+          setTimeout(() => {
+            console.log('Starting scheduled user data refresh...');
+            this.refreshUserDataFromFirestore();
+          }, 1000); // Wait 1 second for Firebase to initialize
         } else {
           console.log('Stored token is invalid, clearing auth data');
           this.clearAuthData();
@@ -123,6 +158,52 @@ export class AuthService {
         console.error('Error parsing stored user data:', error);
         this.clearAuthData();
       }
+    }
+  }
+
+  /**
+   * Refresh user data from Firestore to ensure roles are up-to-date
+   */
+  private async refreshUserDataFromFirestore(): Promise<void> {
+    try {
+      const currentUser = this.currentUserSubject.value;
+      if (!currentUser) {
+        console.log('No current user to refresh');
+        return;
+      }
+
+      console.log('Refreshing user data from Firestore for:', currentUser.email);
+      console.log('Current user roles:', currentUser.roles);
+      
+      // Get fresh user data from Firestore
+      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise();
+      console.log('Total users loaded from Firestore:', users?.length || 0);
+      
+      const freshUser = (users || []).find(u => 
+        u.email?.toLowerCase() === currentUser.email?.toLowerCase() || 
+        u.username?.toLowerCase() === currentUser.username?.toLowerCase() ||
+        u.id === currentUser.id
+      );
+
+      if (freshUser) {
+        console.log('Found fresh user data:', freshUser);
+        console.log('Fresh user roles:', freshUser.roles);
+        
+        // Get the current token
+        const currentToken = this.tokenSubject.value;
+        if (currentToken) {
+          // Update auth data with fresh user information
+          this.setAuthData(freshUser, currentToken);
+          console.log('User data refreshed successfully with roles:', freshUser.roles);
+        } else {
+          console.warn('No current token available for refresh');
+        }
+      } else {
+        console.warn('Could not find fresh user data in Firestore');
+        console.log('Available users:', users?.map(u => ({ id: u.id, email: u.email, username: u.username })));
+      }
+    } catch (error) {
+      console.error('Error refreshing user data from Firestore:', error);
     }
   }
 
@@ -497,6 +578,64 @@ export class AuthService {
     return this.isTokenValidFromString(token);
   }
 
+  /**
+   * Debug method to check current user state
+   */
+  debugCurrentUserState(): void {
+    const currentUser = this.currentUserSubject.value;
+    const isAuthenticated = this.isAuthenticatedSubject.value;
+    const token = this.tokenSubject.value;
+    
+    console.log('=== DEBUG CURRENT USER STATE ===');
+    console.log('Current user:', currentUser);
+    console.log('User roles:', currentUser?.roles);
+    console.log('Is authenticated:', isAuthenticated);
+    console.log('Has token:', !!token);
+    console.log('localStorage user:', JSON.parse(localStorage.getItem('currentUser') || 'null'));
+    console.log('localStorage token:', !!localStorage.getItem('authToken'));
+    console.log('================================');
+  }
+
+  /**
+   * Force refresh current user data from Firestore
+   * Useful when user roles might have been updated
+   */
+  async forceRefreshUserData(): Promise<void> {
+    const currentUser = this.currentUserSubject.value;
+    if (!currentUser) {
+      console.warn('No current user to refresh');
+      return;
+    }
+
+    try {
+      console.log('Force refreshing user data for:', currentUser.email);
+      
+      // Get fresh user data from Firestore
+      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise();
+      const freshUser = (users || []).find(u => 
+        u.email?.toLowerCase() === currentUser.email?.toLowerCase() || 
+        u.username?.toLowerCase() === currentUser.username?.toLowerCase() ||
+        u.id === currentUser.id
+      );
+
+      if (freshUser) {
+        console.log('Found fresh user data:', freshUser);
+        
+        // Get the current token
+        const currentToken = this.tokenSubject.value;
+        if (currentToken) {
+          // Update auth data with fresh user information
+          this.setAuthData(freshUser, currentToken);
+          console.log('User data force refreshed successfully');
+        }
+      } else {
+        console.warn('Could not find fresh user data in Firestore for force refresh');
+      }
+    } catch (error) {
+      console.error('Error force refreshing user data:', error);
+    }
+  }
+
   async refreshUserData(): Promise<void> {
     const currentUser = this.getCurrentUser();
     if (!currentUser) return;
@@ -512,11 +651,17 @@ export class AuthService {
   }
 
   private setAuthData(user: User, token: string): void {
+    console.log('Setting auth data for user:', user.email);
+    console.log('User roles being set:', user.roles);
+    
     this.currentUserSubject.next(user);
     this.isAuthenticatedSubject.next(true);
     this.tokenSubject.next(token);
     localStorage.setItem('currentUser', JSON.stringify(user));
     localStorage.setItem('authToken', token);
+    
+    console.log('Auth data set successfully');
+    console.log('Current user roles after set:', this.currentUserSubject.value?.roles);
   }
 
   private clearAuthData(): void {

@@ -39,6 +39,9 @@ export class UserFormDialogComponent implements OnInit {
   userForm: FormGroup;
   selectedRoles: string[] = [];
   isEdit: boolean = false;
+  createWithAuth: boolean = false;
+  hidePassword: boolean = true;
+  hideConfirmPassword: boolean = true;
 
   constructor(
     private fb: FormBuilder,
@@ -55,8 +58,14 @@ export class UserFormDialogComponent implements OnInit {
       phone: [''],
       department: [''],
       position: [''],
-      isActive: [true]
-    });
+      isActive: [true],
+      createWithAuth: [false],
+      password: ['', [
+        Validators.minLength(6),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)
+      ]],
+      confirmPassword: ['']
+    }, { validators: this.passwordMatchValidator });
   }
 
   ngOnInit(): void {
@@ -71,6 +80,22 @@ export class UserFormDialogComponent implements OnInit {
         isActive: this.data.user.isActive
       });
     }
+  }
+
+  passwordMatchValidator(form: FormGroup) {
+    const password = form.get('password');
+    const confirmPassword = form.get('confirmPassword');
+    const createWithAuth = form.get('createWithAuth');
+    
+    // Only validate if createWithAuth is true
+    if (createWithAuth?.value && password && confirmPassword) {
+      if (password.value !== confirmPassword.value) {
+        confirmPassword.setErrors({ passwordMismatch: true });
+        return { passwordMismatch: true };
+      }
+    }
+    
+    return null;
   }
 
   onRoleSelectionChange(roleId: string, isSelected: boolean): void {
@@ -90,9 +115,24 @@ export class UserFormDialogComponent implements OnInit {
   onSubmit(): void {
     if (this.userForm.valid && this.selectedRoles.length > 0) {
       const formValue = this.userForm.value;
+      
+      // Validate password if createWithAuth is true
+      if (formValue.createWithAuth) {
+        if (!formValue.password || formValue.password.length < 6) {
+          alert('Mật khẩu phải có ít nhất 6 ký tự');
+          return;
+        }
+        if (formValue.password !== formValue.confirmPassword) {
+          alert('Mật khẩu xác nhận không khớp');
+          return;
+        }
+      }
+      
       const userData = {
         ...formValue,
-        roles: this.selectedRoles
+        roles: this.selectedRoles,
+        createWithAuth: formValue.createWithAuth,
+        password: formValue.createWithAuth ? formValue.password : undefined
       };
       
       this.dialogRef.close(userData);
@@ -114,6 +154,14 @@ export class UserFormDialogComponent implements OnInit {
     if (field?.hasError('minlength')) {
       const requiredLength = field.errors?.['minlength'].requiredLength;
       return `Tối thiểu ${requiredLength} ký tự`;
+    }
+    if (field?.hasError('pattern')) {
+      if (fieldName === 'password') {
+        return 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số';
+      }
+    }
+    if (field?.hasError('passwordMismatch')) {
+      return 'Mật khẩu xác nhận không khớp';
     }
     return '';
   }

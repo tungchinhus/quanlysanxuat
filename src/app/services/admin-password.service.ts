@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { FirebaseService } from './firebase.service';
 
 export interface ChangePasswordRequest {
   userId: string;
@@ -19,9 +20,14 @@ export interface ChangePasswordResponse {
 })
 export class AdminPasswordService {
   // Sử dụng Firebase Cloud Functions
-  private readonly FUNCTIONS_URL = 'https://us-central1-your-project-id.cloudfunctions.net';
+  private readonly FUNCTIONS_URL: string;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private firebaseService: FirebaseService) {
+    // Lấy Project ID từ Firebase config
+    const projectId = (this.firebaseService as any).getProjectId?.() || 'your-project-id';
+    this.FUNCTIONS_URL = `https://us-central1-${projectId}.cloudfunctions.net`;
+    console.log('Cloud Functions URL:', this.FUNCTIONS_URL);
+  }
 
   /**
    * Đổi mật khẩu của user thông qua Firebase Cloud Functions

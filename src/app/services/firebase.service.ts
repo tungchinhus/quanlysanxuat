@@ -44,4 +44,9 @@ export class FirebaseService {
   getStorage() {
     return this.storage;
   }
+
+  // Get Firebase Project ID
+  getProjectId(): string {
+    return app.options.projectId || '';
+  }
 }

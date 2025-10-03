@@ -23,6 +23,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { SidenavService } from '../../services/sidenav.service';
 import { UserManagementFirebaseService } from '../../services/user-management-firebase.service';
 import { AdminPasswordService } from '../../services/admin-password.service';
+import { FreePasswordService } from '../../services/free-password.service';
+import { AuthService } from '../../services/auth.service';
 import { User, Role, PREDEFINED_ROLES } from '../../models/user.model';
 import { UserFormDialogComponent } from './user-form-dialog/user-form-dialog.component';
 import { UserRoleDialogComponent } from './user-role-dialog/user-role-dialog.component';
@@ -86,7 +88,9 @@ export class QuanLyUserComponent implements OnInit {
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private userManagementService: UserManagementFirebaseService,
-    private adminPasswordService: AdminPasswordService
+    private adminPasswordService: AdminPasswordService,
+    private freePasswordService: FreePasswordService,
+    private authService: AuthService
   ) {}
 
   /**
@@ -170,14 +174,23 @@ export class QuanLyUserComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.userManagementService.createUser(result).subscribe(newUser => {
-          this.loadUsers();
-          this.snackBar.open('Người dùng đã được tạo thành công!', 'Đóng', {
-            duration: 3000,
-            horizontalPosition: 'right',
-            verticalPosition: 'top'
+        if (result.createWithAuth && result.password) {
+          // Tạo user với Firebase Authentication và password từ form
+          this.createUserWithAuthAndPassword(result);
+        } else if (result.createWithAuth) {
+          // Tạo user với Firebase Authentication (fallback - mở dialog nhập mật khẩu)
+          this.createUserWithAuth(result);
+        } else {
+          // Tạo user thông thường
+          this.userManagementService.createUser(result).subscribe(newUser => {
+            this.loadUsers();
+            this.snackBar.open('Người dùng đã được tạo thành công!', 'Đóng', {
+              duration: 3000,
+              horizontalPosition: 'right',
+              verticalPosition: 'top'
+            });
           });
-        });
+        }
       }
     });
   }
@@ -349,52 +362,243 @@ export class QuanLyUserComponent implements OnInit {
           error: (error) => {
             console.error('Error changing password:', error);
             
-            // Fallback to old method if Cloud Functions fail
-            console.log('Cloud Functions failed, trying fallback method...');
-            this.userManagementService.changeUserPassword(user.id, result.newPassword).subscribe({
-              next: (fallbackSuccess) => {
-                if (fallbackSuccess) {
-                  this.snackBar.open(
-                    `✅ Đã đổi mật khẩu thành công (fallback) cho ${user.fullName || user.username}!`, 
-                    'Đóng', 
-                    {
-                      duration: 3000,
-                      horizontalPosition: 'right',
-                      verticalPosition: 'top',
-                      panelClass: ['success-snackbar']
-                    }
-                  );
-                } else {
-                  this.snackBar.open(
-                    '❌ Không thể đổi mật khẩu. Vui lòng kiểm tra Cloud Functions hoặc Firebase UID!', 
-                    'Đóng', 
-                    {
-                      duration: 5000,
-                      horizontalPosition: 'right',
-                      verticalPosition: 'top',
-                      panelClass: ['error-snackbar']
-                    }
-                  );
-                }
-              },
-              error: (fallbackError) => {
-                console.error('Fallback also failed:', fallbackError);
-                this.snackBar.open(
-                  '❌ Cả Cloud Functions và fallback đều thất bại. Vui lòng kiểm tra console!', 
-                  'Đóng', 
-                  {
-                    duration: 5000,
-                    horizontalPosition: 'right',
-                    verticalPosition: 'top',
-                    panelClass: ['error-snackbar']
-                  }
-                );
-              }
-            });
+            // Fallback to FreePasswordService if Cloud Functions fail
+            console.log('Cloud Functions failed, trying FreePasswordService...');
+            this.tryFreePasswordService(user, result.newPassword);
           }
         });
       }
     });
+  }
+
+  /**
+   * Fallback method sử dụng FreePasswordService
+   */
+  private async tryFreePasswordService(user: User, newPassword: string): Promise<void> {
+    try {
+      console.log(`Trying FreePasswordService for user: ${user.fullName || user.username}`);
+      
+      // Kiểm tra xem user đã có Firebase Auth account chưa
+      const hasAuthAccount = await this.freePasswordService.checkUserAuthStatus(user.id);
+      console.log(`User ${user.fullName || user.username} has Firebase Auth account: ${hasAuthAccount}`);
+      
+      if (hasAuthAccount) {
+        // User đã có Firebase Auth account - không thể đổi mật khẩu bằng FreePasswordService
+        this.snackBar.open(
+          `⚠️ User ${user.fullName || user.username} đã có Firebase Auth account. Cần Cloud Functions để đổi mật khẩu.`, 
+          'Đóng', 
+          {
+            duration: 5000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['warning-snackbar']
+          }
+        );
+        return;
+      }
+      
+      // User chưa có Firebase Auth account - thử tạo mới với mật khẩu mới
+      const result = await this.freePasswordService.changeUserPasswordFree(user.id, newPassword);
+      
+      if (result.success) {
+        this.snackBar.open(
+          `✅ ${result.message} cho ${user.fullName || user.username}!`, 
+          'Đóng', 
+          {
+            duration: 3000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['success-snackbar']
+          }
+        );
+      } else {
+        // Nếu FreePasswordService thất bại, hiển thị thông báo rõ ràng
+        this.snackBar.open(
+          `❌ ${result.message}`, 
+          'Đóng', 
+          {
+            duration: 5000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['error-snackbar']
+          }
+        );
+        
+        // Nếu user chưa có Firebase Auth account, mở dialog thiết lập
+        if (result.message.includes('chưa có Firebase Auth account') || 
+            result.message.includes('Cần mật khẩu hiện tại')) {
+          this.openPasswordSetupDialog(user);
+        }
+      }
+      
+    } catch (error) {
+      console.error('FreePasswordService also failed:', error);
+      this.snackBar.open(
+        '❌ Cả Cloud Functions và FreePasswordService đều thất bại. Vui lòng kiểm tra console!', 
+        'Đóng', 
+        {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        }
+      );
+    }
+  }
+
+  /**
+   * Mở dialog để thiết lập mật khẩu tạm thời
+   */
+  private openPasswordSetupDialog(user: User): void {
+    // Import PasswordSetupDialogComponent
+    import('./password-setup-dialog/password-setup-dialog.component').then(module => {
+      const dialogRef = this.dialog.open(module.PasswordSetupDialogComponent, {
+        width: '600px',
+        data: { user: user }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result && result.success) {
+          this.snackBar.open(
+            `✅ ${result.message}`, 
+            'Đóng', 
+            {
+              duration: 3000,
+              horizontalPosition: 'right',
+              verticalPosition: 'top',
+              panelClass: ['success-snackbar']
+            }
+          );
+        }
+      });
+    });
+  }
+
+  /**
+   * Tạo user với Firebase Authentication và password từ form
+   */
+  private async createUserWithAuthAndPassword(userData: any): Promise<void> {
+    try {
+      console.log('Creating user with Firebase Authentication and password from form:', userData.email);
+      
+      // Tạo user với Firebase Authentication
+      const authResult = await this.authService.createUserWithAuth(userData, userData.password);
+      
+      if (authResult.success) {
+        this.loadUsers();
+        this.snackBar.open(
+          `✅ ${authResult.message}`, 
+          'Đóng', 
+          {
+            duration: 3000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['success-snackbar']
+          }
+        );
+      } else {
+        this.snackBar.open(
+          `❌ ${authResult.message}`, 
+          'Đóng', 
+          {
+            duration: 5000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['error-snackbar']
+          }
+        );
+      }
+    } catch (error: any) {
+      console.error('Error creating user with auth and password:', error);
+      this.snackBar.open(
+        `❌ Lỗi tạo user: ${error.message}`, 
+        'Đóng', 
+        {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        }
+      );
+    }
+  }
+
+  /**
+   * Tạo user với Firebase Authentication
+   */
+  private async createUserWithAuth(userData: any): Promise<void> {
+    try {
+      // Mở dialog để nhập mật khẩu
+      const passwordDialogRef = this.dialog.open(ChangePasswordDialogComponent, {
+        width: '500px',
+        data: { 
+          user: { 
+            id: 'temp', 
+            username: userData.username, 
+            email: userData.email, 
+            fullName: userData.fullName 
+          },
+          isNewUser: true
+        }
+      });
+
+      passwordDialogRef.afterClosed().subscribe(async (result) => {
+        if (result && result.newPassword) {
+          try {
+            // Tạo user với Firebase Authentication
+            const authResult = await this.authService.createUserWithAuth(userData, result.newPassword);
+            
+            if (authResult.success) {
+              this.loadUsers();
+              this.snackBar.open(
+                `✅ ${authResult.message}`, 
+                'Đóng', 
+                {
+                  duration: 3000,
+                  horizontalPosition: 'right',
+                  verticalPosition: 'top',
+                  panelClass: ['success-snackbar']
+                }
+              );
+            } else {
+              this.snackBar.open(
+                `❌ ${authResult.message}`, 
+                'Đóng', 
+                {
+                  duration: 5000,
+                  horizontalPosition: 'right',
+                  verticalPosition: 'top',
+                  panelClass: ['error-snackbar']
+                }
+              );
+            }
+          } catch (error: any) {
+            this.snackBar.open(
+              `❌ Lỗi tạo user: ${error.message}`, 
+              'Đóng', 
+              {
+                duration: 5000,
+                horizontalPosition: 'right',
+                verticalPosition: 'top',
+                panelClass: ['error-snackbar']
+              }
+            );
+          }
+        }
+      });
+      
+    } catch (error: any) {
+      this.snackBar.open(
+        `❌ Lỗi: ${error.message}`, 
+        'Đóng', 
+        {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        }
+      );
+    }
   }
 
   // Selection methods
