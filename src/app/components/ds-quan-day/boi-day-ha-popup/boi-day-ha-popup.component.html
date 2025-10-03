@@ -61,16 +61,16 @@
           <!-- Wire specification and number of strands on same row -->
           <div class="form-field wire-spec-row">
             <mat-form-field appearance="outline" class="wire-spec-field">
-              <mat-label>Quy cách dây</mat-label>
-              <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm²">
+              <mat-label>Quy cách dây *</mat-label>
+              <input matInput formControlName="quy_cach_day" placeholder="VD: 2.5mm², 4.0mm², 6.0mm²">
               <mat-error *ngIf="boiDayHaForm.get('quy_cach_day')?.hasError('required') && boiDayHaForm.get('quy_cach_day')?.touched">
                 Quy cách dây là bắt buộc
               </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="strand-count-field">
-              <mat-label>Số sợi chập</mat-label>
-              <input matInput type="number" formControlName="so_soi_day" placeholder="Nhập số sợi dây">
+              <mat-label>Số sợi chập *</mat-label>
+              <input matInput type="number" formControlName="so_soi_day" placeholder="VD: 1, 2, 3" min="1">
               <mat-error *ngIf="boiDayHaForm.get('so_soi_day')?.hasError('required') && boiDayHaForm.get('so_soi_day')?.touched">
                 Số sợi dây là bắt buộc
               </mat-error>
@@ -80,7 +80,7 @@
           <!-- Manufacturer and Production Date on same row -->
           <div class="form-field manufacturer-date-row">
             <mat-form-field appearance="outline" class="manufacturer-field">
-              <mat-label>Nhà sản xuất</mat-label>
+              <mat-label>Nhà sản xuất *</mat-label>
               <mat-select formControlName="nha_san_xuat" (selectionChange)="onManufacturerChange($event)">
                 <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.value">
                   {{ manufacturer.name }}
@@ -92,7 +92,7 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="date-field">
-              <mat-label>Ngày sản xuất</mat-label>
+              <mat-label>Ngày sản xuất *</mat-label>
               <input matInput [matDatepicker]="pickerNgaySanXuat" formControlName="ngay_san_xuat">
               <mat-datepicker-toggle matSuffix [for]="pickerNgaySanXuat"></mat-datepicker-toggle>
               <mat-datepicker #pickerNgaySanXuat></mat-datepicker>
@@ -133,8 +133,8 @@
             </div>
 
             <mat-form-field appearance="outline" class="winding-machine-field">
-              <mat-label>Máy quấn dây</mat-label>
-              <input matInput formControlName="may_quan_day" placeholder="Nhập máy quấn dây">
+              <mat-label>Máy quấn dây *</mat-label>
+              <input matInput formControlName="may_quan_day" placeholder="VD: Máy 01, Máy 02, Máy A">
               <mat-error *ngIf="boiDayHaForm.get('may_quan_day')?.hasError('required') && boiDayHaForm.get('may_quan_day')?.touched">
                 Máy quấn dây là bắt buộc
               </mat-error>

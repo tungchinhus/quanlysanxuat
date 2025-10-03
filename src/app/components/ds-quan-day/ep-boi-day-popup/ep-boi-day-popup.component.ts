@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, MAT_DATE_FORMATS, DateAdapter, NativeDateAdapter } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -16,6 +16,19 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
+
+// Vietnamese date format
+export const VIETNAMESE_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: 'app-ep-boi-day-popup',
@@ -37,6 +50,11 @@ import { AuthService } from '../../../services/auth.service';
     MatSnackBarModule,
     MatSelectModule,
     MatRadioModule
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
+    { provide: MAT_DATE_FORMATS, useValue: VIETNAMESE_DATE_FORMATS },
+    { provide: DateAdapter, useClass: NativeDateAdapter }
   ]
 })
 export class EpBoiDayPopupComponent implements OnInit {

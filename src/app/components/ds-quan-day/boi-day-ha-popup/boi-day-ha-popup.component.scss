@@ -19,7 +19,18 @@
   .popup-content {
     padding: 16px;
     overflow-y: auto;
-    overflow-x: hidden; // Không cho scroll ngang
+    overflow-x: visible; // Cho phép date picker hiển thị
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Đảm bảo date picker có z-index cao nhất
+  ::ng-deep .mat-datepicker-content {
+    z-index: 9999999 !important;
+  }
+
+  ::ng-deep .mat-datepicker-popup {
+    z-index: 9999999 !important;
   }
 
   .info-section {
@@ -70,7 +81,7 @@
   }
 
   .form-section {
-    margin-bottom: 24px;
+    margin-bottom: 16px; // Giảm từ 24px xuống 16px
   }
 
   .form-grid {
@@ -83,6 +94,7 @@
     width: 100%;
     min-width: 0; // Bỏ min-width mặc định của Material để tránh đẩy rộng cột
     box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
+    margin-bottom: 8px; // Giảm từ 16px xuống 8px
   }
 
   // Special styling for wire specification row
@@ -107,7 +119,7 @@
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    margin-top: 20px; // Hạ thấp hàng cho thẳng với baseline các trường bên cạnh
+    margin-top: 8px; // Giảm từ 20px xuống 8px
 
     .dimension-field {
       flex: 1;
@@ -119,7 +131,8 @@
   .winding-controls-row {
     display: flex;
     gap: 16px;
-    align-items: flex-end; // Align to bottom to match input field height
+    align-items: flex-start; // Thay đổi từ flex-end thành flex-start để căn chỉnh với phần Độ dày
+    margin-bottom: 4px; // Giảm khoảng cách với row tiếp theo
 
     .winding-direction-group {
       flex: 1;
@@ -198,7 +211,8 @@
   .thickness-controls {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px; // Giảm từ 12px xuống 8px
+    margin-top: 0; // Loại bỏ margin-top để căn chỉnh với Chiều quấn dây
   }
 
   .thickness-group {
@@ -323,22 +337,72 @@
   font-size: 13px;
 }
 
-::ng-deep .mat-form-field-wrapper {
-  padding-bottom: 0px !important;
+// CSS để hiển thị border đỏ khi có lỗi
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+  .mat-mdc-form-field-outline {
+    color: #f44336 !important;
+  }
+  
+  .mat-mdc-form-field-outline-thick {
+    color: #f44336 !important;
+    border-width: 2px !important;
+  }
 }
 
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline {
+  color: #f44336 !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
+  color: #f44336 !important;
+  border-width: 2px !important;
+}
+
+// Đảm bảo mat-error luôn hiển thị khi có lỗi
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+  height: auto !important;
+  min-height: 24px !important;
+  margin-bottom: 8px !important;
+}
+
+// Đảm bảo form field có đủ không gian cho error message
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: 8px !important; // Giảm từ 16px xuống 8px
+  display: block !important;
+}
+
+// Đảm bảo form field wrapper có đủ không gian
+::ng-deep .mat-mdc-form-field-wrapper {
+  padding-bottom: 8px !important; // Giảm từ 16px xuống 8px
+}
+
+// CSS mạnh để đảm bảo mat-error hiển thị đúng vị trí
+::ng-deep .mat-mdc-form-field-error {
+  position: relative !important;
+  display: block !important;
+  margin-top: 2px !important; // Giảm từ 4px xuống 2px
+  margin-bottom: 4px !important; // Giảm từ 8px xuống 4px
+  font-size: 12px !important;
+  color: #f44336 !important;
+  line-height: 1.2 !important;
+}
+
+// Đảm bảo subscript wrapper không bị absolute positioning
 ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  position: absolute; // Định vị tuyệt đối
-  bottom: 0px;       // Đặt ở sát đáy của wrapper
-  left: 0;
-  right: 0;
+  position: relative !important;
+  margin-top: 4px !important;
+  min-height: 20px !important;
+  height: auto !important;
 }
 
 ::ng-deep mat-error {
-  margin-top: 4px; // Điều chỉnh giá trị này
+  margin-top: 2px; // Giảm từ 4px xuống 2px
   font-size: 12px;
   line-height: 1.2;
-  // Các thuộc tính khác nếu cần
-  display: block !important; // Đảm bảo luôn hiển thị
+  color: #f44336 !important;
+  display: block !important;
   position: relative;
+  font-weight: 500;
+  padding: 2px 0;
+  margin-bottom: 4px; // Giảm từ 8px xuống 4px
 }

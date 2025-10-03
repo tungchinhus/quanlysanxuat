@@ -15,7 +15,20 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSelectModule } from '@angular/material/select';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, MAT_DATE_FORMATS, DateAdapter, NativeDateAdapter } from '@angular/material/core';
+
+// Vietnamese date format
+export const VIETNAMESE_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 interface Worker {
   id: number;
@@ -52,7 +65,12 @@ interface ApiResponse {
     MatSelectModule,
     MatNativeDateModule
   ],
-  standalone: true
+  standalone: true,
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
+    { provide: MAT_DATE_FORMATS, useValue: VIETNAMESE_DATE_FORMATS },
+    { provide: DateAdapter, useClass: NativeDateAdapter }
+  ]
 })
 export class BoiDayCaoComponent implements OnInit {
   @Input() isActive: boolean = false;

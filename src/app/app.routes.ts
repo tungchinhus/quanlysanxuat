@@ -22,16 +22,6 @@ export const routes: Routes = [
     data: { roles: ['admin', 'super_admin', 'manager', 'kcs', 'totruong'] }
   },
   {
-    path: 'quan-ly-tuyen-duong',
-    loadComponent: () => import('./components/quan-ly-tuyen-duong/quan-ly-tuyen-duong.component').then(m => m.QuanLyTuyenDuongComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'quan-ly-xe-dua-don',
-    loadComponent: () => import('./components/quan-ly-xe-dua-don/quan-ly-xe-dua-don.component').then(m => m.QuanLyXeDuaDonComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'quan-ly-nhan-vien',
     loadComponent: () => import('./components/quan-ly-nhan-vien/quan-ly-nhan-vien.component').then(m => m.QuanLyNhanVienComponent),
     canActivate: [AuthGuard]
@@ -61,15 +51,6 @@ export const routes: Routes = [
     data: { 
       roles: ['super_admin'],
       permissions: ['system_config']
-    }
-  },
-  {
-    path: 'user-import-export',
-    loadComponent: () => import('./components/user-import-export/user-import-export.component').then(m => m.UserImportExportComponent),
-    canActivate: [AuthGuard],
-    data: { 
-      roles: ['super_admin', 'admin'],
-      permissions: ['user_view']
     }
   },
   {
@@ -113,23 +94,8 @@ export const routes: Routes = [
     loadComponent: () => import('./debug-admin.component').then(m => m.DebugAdminComponent)
   },
   {
-    path: 'debug-quan-day-assignment',
-    loadComponent: () => import('./components/debug-quan-day-assignment/debug-quan-day-assignment.component').then(m => m.DebugQuanDayAssignmentComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'test-quan-day-assignment',
-    loadComponent: () => import('./components/test-quan-day-assignment/test-quan-day-assignment.component').then(m => m.TestQuanDayAssignmentComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'simple-debug',
     loadComponent: () => import('./components/simple-debug/simple-debug.component').then(m => m.SimpleDebugComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'step-by-step-debug',
-    loadComponent: () => import('./components/step-by-step-debug/step-by-step-debug.component').then(m => m.StepByStepDebugComponent),
     canActivate: [AuthGuard]
   },
   {
@@ -138,23 +104,8 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'data-flow-debug',
-    loadComponent: () => import('./components/data-flow-debug/data-flow-debug.component').then(m => m.DataFlowDebugComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'ui-debug',
     loadComponent: () => import('./components/ui-debug/ui-debug.component').then(m => m.UiDebugComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'debug-user-bangve',
-    loadComponent: () => import('./components/debug-user-bangve/debug-user-bangve.component').then(m => m.DebugUserBangVeComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'test-assignment',
-    loadComponent: () => import('./components/test-assignment/test-assignment.component').then(m => m.TestAssignmentComponent),
     canActivate: [AuthGuard]
   },
   {
@@ -174,9 +125,5 @@ export const routes: Routes = [
       roles: ['kcs'],
       permissions: ['kcs_check']
     }
-  },
-  {
-    path: 'menu-debug',
-    loadComponent: () => import('./components/menu-debug/menu-debug.component').then(m => m.MenuDebugComponent)
   },
 ];

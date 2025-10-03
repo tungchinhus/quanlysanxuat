@@ -90,21 +90,32 @@ export class AuthGuard implements CanActivate {
     
     if (!currentUser) {
       console.log('No current user found, waiting for auth data...');
-      // Wait longer for auth data to be loaded, then retry
+      // Wait for auth data to be loaded, then retry with multiple attempts
       return new Observable(observer => {
-        // Wait longer to ensure auth data is fully loaded after login
-        setTimeout(() => {
+        let attempts = 0;
+        const maxAttempts = 5;
+        const checkInterval = 500; // Check every 500ms
+        
+        const checkAuth = () => {
+          attempts++;
           const retryUser = this.authService.getCurrentUser();
+          
           if (retryUser) {
-            console.log('Retry successful, user found:', retryUser);
+            console.log(`Retry attempt ${attempts} successful, user found:`, retryUser);
             this.checkRolesInternal(retryUser, roles).subscribe(observer);
+          } else if (attempts < maxAttempts) {
+            console.log(`Retry attempt ${attempts} failed, retrying in ${checkInterval}ms...`);
+            setTimeout(checkAuth, checkInterval);
           } else {
-            console.log('Retry failed, no user found, redirecting to login');
+            console.log('Max retry attempts reached, redirecting to login');
             this.router.navigate(['/dang-nhap']);
             observer.next(false);
             observer.complete();
           }
-        }, 1000); // Increased timeout to 1 second
+        };
+        
+        // Start checking after a short delay
+        setTimeout(checkAuth, 200);
       });
     }
 

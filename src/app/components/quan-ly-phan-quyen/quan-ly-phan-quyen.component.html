@@ -40,6 +40,38 @@
             <mat-icon>delete</mat-icon>
             Xóa Đã chọn ({{ getSelectedCount() }})
           </button>
+
+          <!-- Nút quản lý unused permissions - chỉ hiển thị cho admin -->
+          <button mat-raised-button 
+                  color="accent" 
+                  [disabled]="!isAdmin || getUnusedPermissionsCount() === 0"
+                  (click)="deleteAllUnusedPermissions()"
+                  class="action-button"
+                  *ngIf="isAdmin">
+            <mat-icon>cleanup</mat-icon>
+            Xóa Permissions Không Dùng ({{ getUnusedPermissionsCount() }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Unused Permissions Section - chỉ hiển thị cho admin -->
+      <div class="unused-permissions-section" *ngIf="isAdmin && getUnusedPermissionsCount() > 0">
+        <h3 class="section-title">
+          <mat-icon color="warn">warning</mat-icon>
+          Permissions Không Được Sử Dụng ({{ getUnusedPermissionsCount() }})
+        </h3>
+        <div class="unused-permissions-list">
+          <mat-chip-set>
+            <mat-chip *ngFor="let permission of unusedPermissions" 
+                      [color]="'warn'" 
+                      [removable]="true"
+                      (removed)="deleteUnusedPermission(permission)"
+                      class="unused-permission-chip">
+              <mat-icon matChipAvatar>security</mat-icon>
+              {{ permission.displayName }}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+          </mat-chip-set>
         </div>
       </div>
 

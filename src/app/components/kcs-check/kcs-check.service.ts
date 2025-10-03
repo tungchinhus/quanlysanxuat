@@ -136,7 +136,7 @@ export interface BangVeInfo {
   congsuat: string;
   tbkt: string;
   dienap: string;
-  soboiday: number;
+  soboiday: string;
   bd_ha_trong: number;
   bd_ha_ngoai: number;
   bd_cao: number;
@@ -409,7 +409,7 @@ export class KcsCheckService {
           congsuat: "1000",
           tbkt: "25086T",
           dienap: "22/0.4",
-          soboiday: 13,
+          soboiday: "3",
           bd_ha_trong: 244,
           bd_ha_ngoai: 436,
           bd_cao: 437,
@@ -506,7 +506,7 @@ export class KcsCheckService {
           congsuat: "1000",
           tbkt: "25086T",
           dienap: "22/0.4",
-          soboiday: 13,
+          soboiday: "3",
           bd_ha_trong: 244,
           bd_ha_ngoai: 436,
           bd_cao: 437,

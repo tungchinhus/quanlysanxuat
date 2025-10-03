@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { SidenavService } from './services/sidenav.service';
 import { AuthService } from './services/auth.service';
 import { MigrationService } from './services/migration.service';
+import { AuthDebugComponent } from './components/auth-debug/auth-debug.component';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -29,13 +30,15 @@ import { Subject, takeUntil } from 'rxjs';
     MatListModule,
     MatMenuModule,
     MatTooltipModule,
-    MatDividerModule
+    MatDividerModule,
+    AuthDebugComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App implements OnInit, OnDestroy {
   isAuthenticated = false;
+  showDebugInfo = false; // Set to true to show debug component
   private destroy$ = new Subject<void>();
 
   constructor(

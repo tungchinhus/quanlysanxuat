@@ -857,95 +857,6 @@ export class DsBangveComponent implements OnInit {
     return of([]);
   }
 
-  // Method để lấy processed drawings - KHÔNG CÒN CẦN THIẾT vì đã load tất cả data 1 lần
-  // getProcessedDrawings(): Observable<ProcessedBangVeData[]> {
-  //   // Kiểm tra authentication trước khi gọi API
-  //   const token = this.authService.getToken();
-  //   const userId = this.authService.getUserInfo()?.id || localStorage.getItem('userId');
-  //   
-  //   if (!token || !userId) {
-  //     console.error('No authentication token or user ID found for processed drawings');
-  //     return of([]);
-  //   }
-  //   
-  //   // Replace with your actual API endpoint
-  //   const apiUrl = `${this.commonService.getServerAPIURL()}api/Drawings/GetProcessedDrawings`;
-  //   const headers = new HttpHeaders()
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .set('Content-Type', 'application/json');
-  //   
-  //   // Add user-specific query parameters để filter theo user đăng nhập
-  //   const params = {
-  //     page: '1',
-  //     pageSize: '100', // Tăng page size để lấy tất cả dữ liệu
-  //     sortBy: 'process_date',
-  //     sortOrder: 'desc',
-  //     userId: userId, // Thêm userId để filter theo user
-  //     userRole: this.userRole || '', // Thêm role để filter
-  //     khau_sx: this.khau_sx || '' // Thêm khau_sx để filter
-  //   };
-  //   
-  //   console.log('Calling GetProcessedDrawings API with user context:');
-  //   console.log('User ID:', userId);
-  //   console.log('User Role:', this.userRole);
-  //   console.log('Khau SX:', this.khau_sx);
-  //   console.log('API URL:', apiUrl);
-  //   console.log('Params:', params);
-  //   
-  //   // First try with parameters
-  //   return this.http.get<any[]>(apiUrl, { headers, params }).pipe(
-  //     map((response: any[]) => {
-  //       console.log('API Response with params:', response);
-  //       // Filter dữ liệu theo user đăng nhập
-  //       const userSpecificData = this.filterDataByUser(response, userId);
-  //       console.log('Filtered processed data for user:', userSpecificData);
-  //       // Safe type casting and data transformation
-  //       return userSpecificData.map(item => this.transformProcessedDrawingData(item));
-  //     }),
-  //     catchError((error) => {
-  //       console.log('First attempt failed, trying without parameters...');
-  //       // If first attempt fails, try without parameters
-  //       return this.http.get<any[]>(apiUrl, { headers }).pipe(
-  //       map((response: any[]) => {
-  //       console.log('API Response without params:', response);
-  //       // Filter dữ liệu theo user context:');
-  //       console.log('User ID:', userId);
-  //       console.log('User Role:', this.userRole);
-  //       console.log('Khau SX:', this.khau_sx);
-  //       console.log('API URL:', apiUrl);
-  //       console.log('Params:', params);
-  //       
-  //       // First try with parameters
-  //       return this.http.get<any[]>(apiUrl, { headers, params }).pipe(
-  //         map((response: any[]) => {
-  //           console.log('API Response with params:', response);
-  //           // Filter dữ liệu theo user đăng nhập
-  //           const userSpecificData = this.filterDataByUser(response, userId);
-  //           console.log('Filtered processed data for user:', userSpecificData);
-  //           // Safe type casting and data transformation
-  //           return userSpecificData.map(item => this.transformProcessedDrawingData(item));
-  //         }),
-  //         catchError((error) => {
-  //           console.log('First attempt failed, trying without parameters...');
-  //           // If first attempt fails, try without parameters
-  //           return this.http.get<any[]>(apiUrl, { headers }).pipe(
-  //             map((response: any[]) => {
-  //               console.log('API Response without params:', response);
-  //               // Filter dữ liệu theo user đăng nhập
-  //               const userSpecificData = this.filterDataByUser(response, userId);
-  //               console.log('Filtered processed data for user:', userSpecificData);
-  //               // Safe type casting and data transformation
-  //               return userSpecificData.map(item => this.transformProcessedDrawingData(item));
-  //             })
-  //           );
-  //         })
-  //       );
-  //     }
-  //   );
-  // }
-
-
-
   // Firebase method để thêm mới bảng vẽ
   async addNewDrawing(drawingData: BangVeData): Promise<BangVeData> {
     try {
@@ -1846,7 +1757,7 @@ export class DsBangveComponent implements OnInit {
     }
 
     const dialogRef = this.dialog.open(BangVeComponent, {
-      width: '850px',
+      width: '1200px',
       disableClose: true,
       data: {
         mode: 'add'

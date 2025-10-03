@@ -87,10 +87,6 @@ export class QuanLyPhanQuyenComponent implements OnInit {
     this.sidenavService.toggle();
   }
 
-  ngOnInit(): void {
-    this.loadRoles();
-    this.loadPermissions();
-  }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
@@ -362,5 +358,101 @@ export class QuanLyPhanQuyenComponent implements OnInit {
       [PREDEFINED_ROLES.VIEWER]: 'visibility'
     };
     return iconMap[roleName] || 'security';
+  }
+
+  // ==================== UNUSED PERMISSIONS MANAGEMENT ====================
+  unusedPermissions: Permission[] = [];
+  isAdmin: boolean = false;
+
+  ngOnInit(): void {
+    this.loadRoles();
+    this.loadPermissions();
+    this.loadUnusedPermissions();
+    this.checkAdminRole();
+  }
+
+  private checkAdminRole(): void {
+    // Kiểm tra user hiện tại có quyền admin không
+    // Có thể sử dụng AuthService hoặc lấy từ localStorage
+    const currentUserRole = localStorage.getItem('role_name') || '';
+    this.isAdmin = currentUserRole === 'admin' || currentUserRole === 'super_admin';
+  }
+
+  private loadUnusedPermissions(): void {
+    this.userManagementService.getUnusedPermissions().subscribe(permissions => {
+      this.unusedPermissions = permissions;
+    });
+  }
+
+  deleteUnusedPermission(permission: Permission): void {
+    if (!this.isAdmin) {
+      this.snackBar.open('Chỉ admin mới có quyền xóa permissions!', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    if (confirm(`Bạn có chắc chắn muốn xóa permission "${permission.displayName}"?`)) {
+      this.userManagementService.deleteUnusedPermission(permission.id).subscribe(success => {
+        if (success) {
+          this.loadUnusedPermissions();
+          this.loadPermissions();
+          this.snackBar.open('Permission đã được xóa thành công!', 'Đóng', {
+            duration: 3000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top'
+          });
+        } else {
+          this.snackBar.open('Lỗi khi xóa permission!', 'Đóng', {
+            duration: 3000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top'
+          });
+        }
+      });
+    }
+  }
+
+  deleteAllUnusedPermissions(): void {
+    if (!this.isAdmin) {
+      this.snackBar.open('Chỉ admin mới có quyền xóa permissions!', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    if (this.unusedPermissions.length === 0) {
+      this.snackBar.open('Không có permission nào không được sử dụng!', 'Đóng', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    const count = this.unusedPermissions.length;
+    if (confirm(`Bạn có chắc chắn muốn xóa tất cả ${count} permissions không được sử dụng?`)) {
+      this.userManagementService.deleteAllUnusedPermissions().subscribe(result => {
+        this.loadUnusedPermissions();
+        this.loadPermissions();
+        this.snackBar.open(
+          `Đã xóa thành công ${result.success} permissions. ${result.failed > 0 ? `${result.failed} permissions xóa thất bại.` : ''}`, 
+          'Đóng', 
+          {
+            duration: 5000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top'
+          }
+        );
+      });
+    }
+  }
+
+  getUnusedPermissionsCount(): number {
+    return this.unusedPermissions.length;
   }
 }

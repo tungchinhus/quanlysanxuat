@@ -29,6 +29,9 @@ export class AuthService {
   }
 
   private initializeAuth(): void {
+    // Load from storage immediately for initial paint
+    this.loadStoredAuthData();
+
     // Subscribe Firebase auth state
     onAuthStateChanged(this.firebaseService.getAuth(), async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
@@ -46,19 +49,13 @@ export class AuthService {
             try {
               const refreshedUser = await this.userManagementService.getUserById(matchedUser.id).toPromise();
               if (refreshedUser) {
-                this.currentUserSubject.next(refreshedUser);
-                localStorage.setItem('currentUser', JSON.stringify(refreshedUser));
-                localStorage.setItem('authToken', token);
+                this.setAuthData(refreshedUser, token);
               } else {
-                this.currentUserSubject.next(matchedUser);
-                localStorage.setItem('currentUser', JSON.stringify(matchedUser));
-                localStorage.setItem('authToken', token);
+                this.setAuthData(matchedUser, token);
               }
             } catch (refreshError) {
               console.warn('Could not refresh user data, using original user:', refreshError);
-              this.currentUserSubject.next(matchedUser);
-              localStorage.setItem('currentUser', JSON.stringify(matchedUser));
-              localStorage.setItem('authToken', token);
+              this.setAuthData(matchedUser, token);
             }
           } else {
             // Check if this is a special demo user and assign appropriate role
@@ -93,9 +90,7 @@ export class AuthService {
               createdAt: new Date(),
               updatedAt: new Date()
             };
-            this.currentUserSubject.next(minimalUser);
-            localStorage.setItem('currentUser', JSON.stringify(minimalUser));
-            localStorage.setItem('authToken', token);
+            this.setAuthData(minimalUser, token);
           }
         } catch (err) {
           console.error('Error handling auth state change:', err);
@@ -105,20 +100,39 @@ export class AuthService {
         this.clearAuthData();
       }
     });
+  }
 
-    // Load from storage for initial paint (will be reconciled by onAuthStateChanged)
+  private loadStoredAuthData(): void {
     const storedUser = localStorage.getItem('currentUser');
     const storedToken = localStorage.getItem('authToken');
+    
     if (storedUser && storedToken) {
       try {
         const user = JSON.parse(storedUser);
-        this.currentUserSubject.next(user);
-        this.isAuthenticatedSubject.next(true);
-        this.tokenSubject.next(storedToken);
+        // Validate token before setting auth data
+        if (this.isTokenValidFromString(storedToken)) {
+          this.currentUserSubject.next(user);
+          this.isAuthenticatedSubject.next(true);
+          this.tokenSubject.next(storedToken);
+          console.log('Auth data loaded from localStorage:', user);
+        } else {
+          console.log('Stored token is invalid, clearing auth data');
+          this.clearAuthData();
+        }
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         this.clearAuthData();
       }
+    }
+  }
+
+  private isTokenValidFromString(token: string): boolean {
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1] || ''));
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      return tokenData && tokenData.exp && nowSeconds < tokenData.exp;
+    } catch (error) {
+      return false;
     }
   }
 
@@ -384,6 +398,36 @@ export class AuthService {
     return null;
   }
 
+  // Method to ensure auth state is properly loaded (useful for components that need to wait)
+  async ensureAuthStateLoaded(): Promise<User | null> {
+    const currentUser = this.getCurrentUser();
+    if (currentUser) {
+      return currentUser;
+    }
+
+    // If no user found, wait a bit for Firebase auth state to initialize
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkInterval = 200;
+
+      const checkAuth = () => {
+        attempts++;
+        const user = this.getCurrentUser();
+        
+        if (user) {
+          resolve(user);
+        } else if (attempts < maxAttempts) {
+          setTimeout(checkAuth, checkInterval);
+        } else {
+          resolve(null);
+        }
+      };
+
+      setTimeout(checkAuth, 100);
+    });
+  }
+
   isAuthenticated(): boolean {
     // First try to get from subject
     const isAuth = this.isAuthenticatedSubject.value;
@@ -396,9 +440,16 @@ export class AuthService {
       const token = localStorage.getItem('authToken');
       const user = localStorage.getItem('currentUser');
       if (token && user) {
-        // Update subject with stored state
-        this.isAuthenticatedSubject.next(true);
-        return true;
+        // Validate token before considering user authenticated
+        if (this.isTokenValidFromString(token)) {
+          // Update subject with stored state
+          this.isAuthenticatedSubject.next(true);
+          return true;
+        } else {
+          // Token is invalid, clear auth data
+          this.clearAuthData();
+          return false;
+        }
       }
     } catch (error) {
       console.error('Error checking authentication from localStorage:', error);
@@ -443,13 +494,7 @@ export class AuthService {
   isTokenValid(): boolean {
     const token = this.getToken();
     if (!token) return false;
-    try {
-      const tokenData = JSON.parse(atob(token.split('.')[1] || ''));
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      return tokenData && tokenData.exp && nowSeconds < tokenData.exp;
-    } catch (error) {
-      return false;
-    }
+    return this.isTokenValidFromString(token);
   }
 
   async refreshUserData(): Promise<void> {

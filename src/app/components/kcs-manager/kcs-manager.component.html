@@ -136,7 +136,9 @@
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item (click)="onApproveKcs(element)">
+              <button mat-menu-item 
+                      *ngIf="canShowKcsApproval(element)"
+                      (click)="onApproveKcs(element)">
                 <mat-icon>verified</mat-icon>
                 <span>Kiểm duyệt KCS</span>
               </button>

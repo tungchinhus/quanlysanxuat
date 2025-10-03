@@ -5,8 +5,13 @@
   padding: 16px; /* Giảm khoảng đệm bên trong từ 24px xuống 16px */
   display: flex;
   flex-direction: column;
+  min-height: auto; /* Tự động điều chỉnh chiều cao tối thiểu */
+  height: auto; /* Chiều cao tự động theo nội dung */
   max-height: 90vh; /* Giới hạn chiều cao để có thể cuộn nếu nội dung dài */
-  overflow: hidden; /* Ngăn cuộn chính của popup */
+  max-width: 95vw; /* Tăng chiều rộng tối đa */
+  overflow-y: auto; /* Cho phép cuộn dọc khi nội dung quá dài */
+  overflow-x: hidden; /* Ngăn cuộn ngang */
+  position: relative; /* Cần thiết cho resize handle */
 }
 
 /* Header của popup (tiêu đề và nút đóng) */
@@ -36,7 +41,8 @@
 /* Body của popup (chứa form) */
 .popup-body {
   flex-grow: 1; /* Cho phép body mở rộng */
-  //overflow-y: auto; /* Cho phép cuộn dọc nếu form quá dài */
+  flex-shrink: 0; /* Không cho phép body thu nhỏ */
+  overflow-y: visible; /* Hiển thị toàn bộ nội dung */
   padding-right: 8px; /* Giảm padding-right từ 10px xuống 8px */
   margin-right: -8px; /* Bù lại padding-right để thanh cuộn không bị đẩy vào */
 }
@@ -46,6 +52,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px; /* Giảm khoảng cách giữa các hàng trong form từ 10px xuống 8px */
+  min-height: 300px; /* Đảm bảo form có chiều cao tối thiểu hợp lý */
 }
 
 /* Định dạng hàng trong form để có 2 cột trên màn hình lớn */
@@ -128,6 +135,7 @@ button[mat-button] {
   to { transform: rotate(360deg); }
 }
 
+
 /* Ghi đè style của MatDialogContainer để loại bỏ đường viền và bóng mặc định */
 /* Sử dụng ::ng-deep để xuyên qua shadow DOM của MatDialogContainer */
 ::ng-deep .mat-dialog-container {
@@ -135,7 +143,16 @@ button[mat-button] {
   box-shadow: none !important; /* Loại bỏ bóng mặc định */
   padding: 0 !important; /* Loại bỏ padding mặc định của container */
   background: transparent !important; /* Đảm bảo nền trong suốt nếu cần */
-  overflow: hidden !important; /* Ngăn cuộn thừa nếu có */
+  overflow: visible !important; /* Cho phép date picker hiển thị */
+}
+
+/* Đảm bảo date picker có z-index cao nhất */
+::ng-deep .mat-datepicker-content {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .mat-datepicker-popup {
+  z-index: 9999999 !important;
 }
 
 
@@ -152,6 +169,11 @@ button[mat-button] {
 
   .bang-ve-popup-content {
     padding: 15px;
+    min-width: 95vw; /* Trên màn hình nhỏ, chiều rộng tối thiểu là 95% viewport */
+    max-width: 98vw; /* Chiều rộng tối đa là 98% viewport */
+    min-height: auto; /* Tự động điều chỉnh chiều cao tối thiểu trên màn hình nhỏ */
+    height: auto; /* Chiều cao tự động theo nội dung */
+    resize: vertical; /* Chỉ cho phép resize chiều cao trên màn hình nhỏ */
   }
 
   .popup-title {
@@ -168,4 +190,5 @@ button[mat-button] {
   button[mat-button] {
     width: 100%; /* Các nút chiếm toàn bộ chiều rộng */
   }
+
 }

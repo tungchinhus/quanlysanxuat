@@ -22,9 +22,11 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { SidenavService } from '../../services/sidenav.service';
 import { UserManagementFirebaseService } from '../../services/user-management-firebase.service';
+import { AdminPasswordService } from '../../services/admin-password.service';
 import { User, Role, PREDEFINED_ROLES } from '../../models/user.model';
 import { UserFormDialogComponent } from './user-form-dialog/user-form-dialog.component';
 import { UserRoleDialogComponent } from './user-role-dialog/user-role-dialog.component';
+import { ChangePasswordDialogComponent } from './change-password-dialog/change-password-dialog.component';
 
 @Component({
   selector: 'app-quan-ly-user',
@@ -83,8 +85,45 @@ export class QuanLyUserComponent implements OnInit {
     private sidenavService: SidenavService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private userManagementService: UserManagementFirebaseService
+    private userManagementService: UserManagementFirebaseService,
+    private adminPasswordService: AdminPasswordService
   ) {}
+
+  /**
+   * Kiểm tra xem user hiện tại có quyền admin không
+   */
+  isCurrentUserAdmin(): boolean {
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (!currentUserStr) {
+        return false;
+      }
+
+      const currentUser = JSON.parse(currentUserStr);
+      
+      // Kiểm tra roles array
+      if (currentUser.roles && Array.isArray(currentUser.roles)) {
+        return currentUser.roles.some((role: any) =>
+          typeof role === 'string' ? 
+            role.toLowerCase().includes('admin') || role.toLowerCase().includes('manager') :
+            (role.name || role.role_name || '').toLowerCase().includes('admin') || 
+            (role.name || role.role_name || '').toLowerCase().includes('manager')
+        );
+      }
+
+      // Kiểm tra email
+      if (currentUser.email && 
+          (currentUser.email.toLowerCase().includes('admin') || 
+           currentUser.email.toLowerCase().includes('manager'))) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking admin permission:', error);
+      return false;
+    }
+  }
 
   toggleSidenav(): void {
     this.isCollapsed = !this.isCollapsed;
@@ -253,6 +292,107 @@ export class QuanLyUserComponent implements OnInit {
             verticalPosition: 'top'
           }
         );
+      }
+    });
+  }
+
+  changeUserPassword(user: User): void {
+    const dialogRef = this.dialog.open(ChangePasswordDialogComponent, {
+      width: '500px',
+      data: { user: user }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        // Lấy thông tin admin hiện tại
+        const currentUserStr = localStorage.getItem('currentUser');
+        if (!currentUserStr) {
+          this.snackBar.open('❌ Không thể xác định admin hiện tại!', 'Đóng', {
+            duration: 3000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['error-snackbar']
+          });
+          return;
+        }
+
+        const currentUser = JSON.parse(currentUserStr);
+        const adminUserId = currentUser.id || currentUser.uid;
+
+        // Sử dụng AdminPasswordService để đổi mật khẩu
+        this.adminPasswordService.changeUserPassword(user.id, result.newPassword, adminUserId).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.snackBar.open(
+                `✅ ${response.message} cho ${user.fullName || user.username}!`, 
+                'Đóng', 
+                {
+                  duration: 3000,
+                  horizontalPosition: 'right',
+                  verticalPosition: 'top',
+                  panelClass: ['success-snackbar']
+                }
+              );
+            } else {
+              this.snackBar.open(
+                `❌ ${response.message}`, 
+                'Đóng', 
+                {
+                  duration: 5000,
+                  horizontalPosition: 'right',
+                  verticalPosition: 'top',
+                  panelClass: ['error-snackbar']
+                }
+              );
+            }
+          },
+          error: (error) => {
+            console.error('Error changing password:', error);
+            
+            // Fallback to old method if Cloud Functions fail
+            console.log('Cloud Functions failed, trying fallback method...');
+            this.userManagementService.changeUserPassword(user.id, result.newPassword).subscribe({
+              next: (fallbackSuccess) => {
+                if (fallbackSuccess) {
+                  this.snackBar.open(
+                    `✅ Đã đổi mật khẩu thành công (fallback) cho ${user.fullName || user.username}!`, 
+                    'Đóng', 
+                    {
+                      duration: 3000,
+                      horizontalPosition: 'right',
+                      verticalPosition: 'top',
+                      panelClass: ['success-snackbar']
+                    }
+                  );
+                } else {
+                  this.snackBar.open(
+                    '❌ Không thể đổi mật khẩu. Vui lòng kiểm tra Cloud Functions hoặc Firebase UID!', 
+                    'Đóng', 
+                    {
+                      duration: 5000,
+                      horizontalPosition: 'right',
+                      verticalPosition: 'top',
+                      panelClass: ['error-snackbar']
+                    }
+                  );
+                }
+              },
+              error: (fallbackError) => {
+                console.error('Fallback also failed:', fallbackError);
+                this.snackBar.open(
+                  '❌ Cả Cloud Functions và fallback đều thất bại. Vui lòng kiểm tra console!', 
+                  'Đóng', 
+                  {
+                    duration: 5000,
+                    horizontalPosition: 'right',
+                    verticalPosition: 'top',
+                    panelClass: ['error-snackbar']
+                  }
+                );
+              }
+            });
+          }
+        });
       }
     });
   }

@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, MAT_DATE_FORMATS, DateAdapter, NativeDateAdapter } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -16,6 +16,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
+import { FirebaseService } from '../../../services/firebase.service';
 import { QuanDayData } from '../ds-quan-day.component';
 import { Constant, MANUFACTURER_OPTIONS, Manufacturer } from '../../../constant/constant';
 import { DialogComponent } from '../../shared/dialogs/dialog/dialog.component';
@@ -24,6 +25,19 @@ import { FirebaseBdCaoService, BdCaoData } from '../../../services/firebase-bd-c
 import { FirebaseUserBangVeService } from '../../../services/firebase-user-bangve.service';
 import { UserManagementFirebaseService } from '../../../services/user-management-firebase.service';
 import { take } from 'rxjs/operators';
+
+// Vietnamese date format
+export const VIETNAMESE_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: 'app-boi-day-cao-popup',
@@ -45,6 +59,11 @@ import { take } from 'rxjs/operators';
     MatSnackBarModule,
     MatSelectModule,
     MatRadioModule
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
+    { provide: MAT_DATE_FORMATS, useValue: VIETNAMESE_DATE_FORMATS },
+    { provide: DateAdapter, useClass: NativeDateAdapter }
   ]
 })
 export class BoiDayCaoPopupComponent implements OnInit {
@@ -67,6 +86,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
     private dialog: MatDialog,
     private commonService: CommonService,
     private authService: AuthService,
+    private firebaseService: FirebaseService,
     private changeDetectorRef: ChangeDetectorRef,
     private kcsQualityService: KcsQualityService,
     private firebaseBdCaoService: FirebaseBdCaoService,
@@ -81,13 +101,14 @@ export class BoiDayCaoPopupComponent implements OnInit {
       nha_san_xuat: [Manufacturer.bsHN, Validators.required],
       nha_san_xuat_other: [''],
       ngay_san_xuat: [new Date(), Validators.required],
+      soboiday: ['', Validators.required], // Bỏ Validators.pattern để cho phép nhập text
       
       // Các field kỹ thuật
       chu_vi_khuon: [0, [Validators.min(0)]],
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
       chieu_quan_day: [true],
-      may_quan_day: [''],
+      may_quan_day: ['', Validators.required],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
@@ -133,12 +154,14 @@ export class BoiDayCaoPopupComponent implements OnInit {
   canSubmitForm(): boolean {
     if (this.isLoading) return false;
     
-    // Chỉ kiểm tra các field thực sự cần thiết cho business logic
+    // Kiểm tra tất cả các field bắt buộc
     const requiredFields = [
       'quy_cach_day',
       'so_soi_day', 
       'nha_san_xuat',
-      'ngay_san_xuat'
+      'ngay_san_xuat',
+      'soboiday',
+      'may_quan_day'
     ];
     
     // Kiểm tra các field bắt buộc
@@ -169,6 +192,9 @@ export class BoiDayCaoPopupComponent implements OnInit {
 
   // Submit form
   async onSubmit() {
+    // Mark all fields as touched to show validation errors
+    this.boiDayCaoForm.markAllAsTouched();
+    
     if (!this.canSubmitForm()) {
       console.log('Form không hợp lệ, không thể submit');
       return;
@@ -224,7 +250,10 @@ export class BoiDayCaoPopupComponent implements OnInit {
       const bdCaoId = await this.firebaseBdCaoService.createBdCao(bdCaoData);
       console.log('BdCao created with ID:', bdCaoId);
 
-      // 2. Cập nhật trạng thái trong user_bangve với bd_cao_id mới
+      // 2. Cập nhật số bối dây vào bangve
+      await this.updateBangVeSoboiday(this.data.quanDay.id, formData.soboiday);
+
+      // 3. Cập nhật trạng thái trong user_bangve với bd_cao_id mới
       await this.updateUserBangVeStatus(userFromFirestore.id, this.data.quanDay.id, bdCaoId);
       
       // Hiển thị thông báo thành công
@@ -546,5 +575,58 @@ export class BoiDayCaoPopupComponent implements OnInit {
     } finally {
       this.isLoading = false;
     }
+  }
+
+  // Cập nhật số bối dây vào bangve
+  private async updateBangVeSoboiday(bangveId: string, soboiday: string): Promise<void> {
+    try {
+      console.log('Updating soboiday in bangve:', bangveId, 'soboiday:', soboiday);
+      
+      // Validate input - chỉ kiểm tra không được để trống
+      if (!soboiday || soboiday.trim() === '') {
+        throw new Error('Số bối dây không được để trống');
+      }
+      
+      // Import FirebaseBangVeService để cập nhật bangve
+      const { FirebaseBangVeService } = await import('../../../services/firebase-bangve.service');
+      const firebaseBangVeService = new FirebaseBangVeService(this.firebaseService);
+      
+      // Cập nhật số bối dây trong bangve
+      await firebaseBangVeService.updateBangVe(bangveId, { soboiday: soboiday.trim() });
+      
+      console.log('Successfully updated soboiday in bangve:', soboiday);
+    } catch (error: any) {
+      console.error('Error updating soboiday in bangve:', error);
+      throw new Error(`Không thể cập nhật số bối dây: ${error.message}`);
+    }
+  }
+
+  // Test method để kiểm tra chức năng lưu số bối dây
+  testSoboidaySave(): void {
+    console.log('Testing soboiday save functionality...');
+    
+    // Test với dữ liệu hợp lệ
+    this.boiDayCaoForm.patchValue({
+      quy_cach_day: '2.5mm²',
+      so_soi_day: 1,
+      nha_san_xuat: Manufacturer.bsHN,
+      ngay_san_xuat: new Date(),
+      soboiday: '3',
+      chu_vi_khuon: 100,
+      kt_bung_bd_truoc: 50,
+      bung_bd_sau: 60,
+      chieu_quan_day: true,
+      may_quan_day: 'Máy 1',
+      chu_vi_bd_cao_1p: 200,
+      chu_vi_bd_cao_2p: 200,
+      chu_vi_bd_cao_3p: 200,
+      dien_tro_cao_ra: 1.5,
+      dien_tro_cao_rb: 1.5,
+      dien_tro_cao_rc: 1.5
+    });
+    
+    console.log('Form patched with test data');
+    console.log('Form valid:', this.boiDayCaoForm.valid);
+    console.log('Soboiday value:', this.boiDayCaoForm.get('soboiday')?.value);
   }
 }

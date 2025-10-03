@@ -758,3 +758,12 @@ mat-card-content {
     flex-wrap: nowrap !important;
   }
 }
+
+/* Đảm bảo date picker có z-index cao nhất */
+::ng-deep .mat-datepicker-content {
+  z-index: 9999999 !important;
+}
+
+::ng-deep .mat-datepicker-popup {
+  z-index: 9999999 !important;
+}

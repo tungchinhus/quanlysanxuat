@@ -310,6 +310,15 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Kiểm tra xem có thể hiển thị option "Kiểm duyệt KCS" không
+   * Chỉ hiển thị khi cả hai loại bối dây (ha và cao) đã được xử lý
+   */
+  canShowKcsApproval(element: ProcessedDrawingData): boolean {
+    // Chỉ hiển thị khi loai_boi_day = 'both' (cả hai loại đã được xử lý)
+    return element.loai_boi_day === 'both';
+  }
+
   private debugDatabaseData(): void {
     this.firebaseKcsManagerService.debugDatabaseData().then(() => {
       console.log('Debug completed');

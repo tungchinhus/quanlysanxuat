@@ -158,6 +158,12 @@
                       <mat-icon>edit</mat-icon>
                       <span>Chỉnh sửa</span>
                     </button>
+                    <button mat-menu-item 
+                            *ngIf="isCurrentUserAdmin()"
+                            (click)="changeUserPassword(user)">
+                      <mat-icon>lock_reset</mat-icon>
+                      <span>Đổi mật khẩu</span>
+                    </button>
                     <button mat-menu-item (click)="manageUserRoles(user)">
                       <mat-icon>admin_panel_settings</mat-icon>
                       <span>Quản lý vai trò</span>

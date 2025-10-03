@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -24,6 +24,19 @@ import { FirebaseBdHaService, BdHaData } from '../../../services/firebase-bd-ha.
 import { FirebaseUserBangVeService } from '../../../services/firebase-user-bangve.service';
 import { UserManagementFirebaseService } from '../../../services/user-management-firebase.service';
 import { take } from 'rxjs/operators';
+
+// Vietnamese date format
+export const VIETNAMESE_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 export interface BoiDayHaData {
   id?: number;
@@ -145,6 +158,11 @@ export interface BoiDayHaApiRequest {
     MatSnackBarModule,
     MatSelectModule,
     MatRadioModule
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
+    { provide: MAT_DATE_FORMATS, useValue: VIETNAMESE_DATE_FORMATS },
+    { provide: DateAdapter, useClass: NativeDateAdapter }
   ]
 })
 export class BoiDayHaPopupComponent implements OnInit {
@@ -187,7 +205,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
       chieu_quan_day: [true],
-      may_quan_day: [''],
+      may_quan_day: ['', Validators.required],
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
@@ -243,12 +261,13 @@ export class BoiDayHaPopupComponent implements OnInit {
   canSubmitForm(): boolean {
     if (this.isLoading) return false;
     
-    // Chỉ kiểm tra các field thực sự cần thiết cho business logic
+    // Kiểm tra tất cả các field bắt buộc
     const requiredFields = [
       'quy_cach_day',
       'so_soi_day', 
       'nha_san_xuat',
-      'ngay_san_xuat'
+      'ngay_san_xuat',
+      'may_quan_day'
     ];
     
     // Kiểm tra các field bắt buộc
@@ -371,6 +390,9 @@ export class BoiDayHaPopupComponent implements OnInit {
 
   // Submit form
   async onSubmit() {
+    // Mark all fields as touched to show validation errors
+    this.boiDayHaForm.markAllAsTouched();
+    
     if (!this.canSubmitForm()) {
       console.log('Form không hợp lệ, không thể submit');
       return;

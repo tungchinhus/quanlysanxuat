@@ -112,6 +112,17 @@ export class UserManagementFirebaseService {
     });
   }
 
+  changeUserPassword(userId: string, newPassword: string): Observable<boolean> {
+    return new Observable(observer => {
+      this.firebaseUserService.changeUserPassword(userId, newPassword).then(success => {
+        observer.next(success);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
   // ==================== ROLE METHODS ====================
   getRoles(): Observable<Role[]> {
     return this.roles$;
@@ -198,6 +209,40 @@ export class UserManagementFirebaseService {
         console.error('Error checking user permission:', error);
         observer.next(false);
         observer.complete();
+      });
+    });
+  }
+
+  // ==================== UNUSED PERMISSIONS MANAGEMENT ====================
+  getUnusedPermissions(): Observable<Permission[]> {
+    return new Observable(observer => {
+      this.firebaseUserService.getUnusedPermissions().then(permissions => {
+        observer.next(permissions);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
+  deleteUnusedPermission(permissionId: string): Observable<boolean> {
+    return new Observable(observer => {
+      this.firebaseUserService.deleteUnusedPermission(permissionId).then(success => {
+        observer.next(success);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
+  deleteAllUnusedPermissions(): Observable<{ success: number; failed: number }> {
+    return new Observable(observer => {
+      this.firebaseUserService.deleteAllUnusedPermissions().then(result => {
+        observer.next(result);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
       });
     });
   }
