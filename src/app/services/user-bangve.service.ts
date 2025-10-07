@@ -6,8 +6,8 @@ import { AuthService } from './auth.service';
 
 export interface UserBangVeData {
   id?: number | string;
-  user_id: number; // Foreign Key to users table
-  firebase_uid?: string; // Firebase Authentication UID
+  user_id: number; // Foreign Key to users table (primary user)
+  firebase_uid?: string | string[]; // Firebase Authentication UID (single or array for multiple users)
   bangve_id: string; // Foreign Key to tbl_bangve (Firebase document ID)
   bd_ha_id?: string; // Foreign Key to tbl_bd_ha (Firebase document ID as string)
   bd_cao_id?: string; // Foreign Key to tbl_bd_cao (Firebase document ID as string)
@@ -19,7 +19,7 @@ export interface UserBangVeData {
   trang_thai_bd_cao?: number; // Status for high winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
   trang_thai_bd_ep?: number; // Status for pressing winding assignment (0 = chưa bắt đầu, 1 = đang thi công, 2 = đã hoàn thành)
   assigned_at?: Date; // Assignment timestamp
-  assigned_by_user_id?: string; // User who made the assignment (Firebase UID)
+  assigned_by_user_id?: string | string[]; // User who made the assignment (Firebase UID - single or array for multiple users)
   created_at?: Date;
   updated_at?: Date;
   created_by?: number;

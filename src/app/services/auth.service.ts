@@ -370,6 +370,10 @@ export class AuthService {
    * @returns Promise<{ success: boolean; message: string; user?: User; firebaseUID?: string }>
    */
   async createUserWithAuth(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, password: string): Promise<{ success: boolean; message: string; user?: User; firebaseUID?: string }> {
+    // Store current user session to restore later
+    const currentUser = this.getCurrentUser();
+    const currentToken = this.tokenSubject.value;
+    
     try {
       console.log('Creating user with authentication:', userData.email);
       
@@ -383,6 +387,10 @@ export class AuthService {
       const firebaseUID = firebaseUser.uid;
       
       console.log('Firebase Authentication user created with UID:', firebaseUID);
+      
+      // Immediately sign out the newly created user to prevent session change
+      await signOut(this.firebaseService.getAuth());
+      console.log('Signed out newly created user to preserve current session');
       
       // Bước 2: Tạo user data với Firebase UID làm ID
       const newUser: User = {
@@ -402,6 +410,26 @@ export class AuthService {
         ).pipe(take(1)).toPromise();
         console.log('User data saved to Firestore:', createdUser);
         
+        // Restore original user session if there was one
+        if (currentUser && currentToken) {
+          try {
+            // Restore the current user session
+            this.currentUserSubject.next(currentUser);
+            this.tokenSubject.next(currentToken);
+            this.isAuthenticatedSubject.next(true);
+            
+            // Store in localStorage to persist across page reloads
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('authToken', currentToken);
+            localStorage.setItem('isAuthenticated', 'true');
+            
+            console.log('Restored original user session after creating new user');
+          } catch (restoreError) {
+            console.error('Error restoring user session:', restoreError);
+            // Don't fail the user creation if session restoration fails
+          }
+        }
+        
         return { 
           success: true, 
           message: 'Tạo user thành công', 
@@ -418,6 +446,23 @@ export class AuthService {
           console.error('Error deleting Firebase Authentication user:', deleteError);
         }
         
+        // Restore original user session even if user creation failed
+        if (currentUser && currentToken) {
+          try {
+            this.currentUserSubject.next(currentUser);
+            this.tokenSubject.next(currentToken);
+            this.isAuthenticatedSubject.next(true);
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('authToken', currentToken);
+            localStorage.setItem('isAuthenticated', 'true');
+            
+            console.log('Restored original user session after failed user creation');
+          } catch (restoreError) {
+            console.error('Error restoring user session after failure:', restoreError);
+          }
+        }
+        
         return { 
           success: false, 
           message: 'Tạo user thất bại: Không thể lưu dữ liệu user' 
@@ -425,6 +470,24 @@ export class AuthService {
       }
     } catch (error: any) {
       console.error('Error creating user with authentication:', error);
+      
+      // Restore original user session even if authentication fails
+      if (currentUser && currentToken) {
+        try {
+          this.currentUserSubject.next(currentUser);
+          this.tokenSubject.next(currentToken);
+          this.isAuthenticatedSubject.next(true);
+          
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          localStorage.setItem('authToken', currentToken);
+          localStorage.setItem('isAuthenticated', 'true');
+          
+          console.log('Restored original user session after authentication error');
+        } catch (restoreError) {
+          console.error('Error restoring user session after auth error:', restoreError);
+        }
+      }
+      
       let message = 'Không thể tạo user';
       
       switch (error?.code) {

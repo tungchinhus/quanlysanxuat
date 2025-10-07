@@ -14,6 +14,8 @@ import { AuthService } from '../../services/auth.service';
 import { FirebaseUserBangVeService } from '../../services/firebase-user-bangve.service';
 import { FirebaseBangVeService } from '../../services/firebase-bangve.service';
 import { UserManagementFirebaseService } from '../../services/user-management-firebase.service';
+import { FirebaseBdHaService } from '../../services/firebase-bd-ha.service';
+import { FirebaseBdCaoService } from '../../services/firebase-bd-cao.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { EpBoiDayPopupComponent } from './ep-boi-day-popup/ep-boi-day-popup.component';
 import { CommonModule } from '@angular/common';
@@ -33,6 +35,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ErrorDialogComponent, ErrorDialogData } from './error-dialog/error-dialog.component';
 import { SuccessDialogComponent, SuccessDialogData } from './success-dialog/success-dialog.component';
+import { UserRole as UserRoleEnum, KhauSx, RoleHelper } from '../../models/user-roles.enum';
 
 export interface QuanDayData {
   id: string; // Firebase document ID (string)
@@ -55,6 +58,9 @@ export interface QuanDayData {
   bd_ha_id?: number | null; // ID của bối dây hạ từ tbl_bd_ha
   bd_cao_id?: number | null; // ID của bối dây cao từ tbl_bd_cao
   bd_ep_id?: number | null; // ID của bối dây ép từ tbl_bd_ep
+  user_update_ha?: string | null; // User đã cập nhật bối dây hạ
+  user_update_cao?: string | null; // User đã cập nhật bối dây cao
+  user_update_ep?: string | null; // User đã cập nhật bối dây ép
   created_at: Date;
   username: string;
   email: string;
@@ -62,7 +68,7 @@ export interface QuanDayData {
   khau_sx?: string; // Thêm khau_sx để lưu thông tin khâu sản xuất
 }
 
-export interface UserRole {
+export interface UserRoleData {
   id: string | number;
   username: string;
   email: string;
@@ -121,7 +127,7 @@ export class DsQuanDayComponent implements OnInit {
    
   isAuthenticated: boolean = false;
   currentUser: any = null;
-  userRole: UserRole | null = null;
+  userRole: UserRoleData | null = null;
   isGiaCongHa: boolean = false;
   isGiaCongCao: boolean = false;
   isGiaCongEp: boolean = false;
@@ -162,7 +168,9 @@ export class DsQuanDayComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private firebaseUserBangVeService: FirebaseUserBangVeService,
     private firebaseBangVeService: FirebaseBangVeService,
-    private userManagementService: UserManagementFirebaseService
+    private userManagementService: UserManagementFirebaseService,
+    private firebaseBdHaService: FirebaseBdHaService,
+    private firebaseBdCaoService: FirebaseBdCaoService
   ) {}
 
   ngOnInit(): void {
@@ -383,14 +391,26 @@ export class DsQuanDayComponent implements OnInit {
       
       // Filter assignments theo user đang login
       const relevantAssignments = userAssignments.filter(assignment => {
-        const isAssignedToCurrentUser = assignment.assigned_by_user_id && currentUserUID && 
-                                       assignment.assigned_by_user_id === currentUserUID;
+        // Handle both string and array cases for assigned_by_user_id
+        let isAssignedToCurrentUser = false;
+        if (assignment.assigned_by_user_id && currentUserUID) {
+          if (Array.isArray(assignment.assigned_by_user_id)) {
+            // If it's an array, check if currentUserUID is in the array
+            isAssignedToCurrentUser = assignment.assigned_by_user_id.includes(currentUserUID);
+          } else {
+            // If it's a string, do direct comparison
+            isAssignedToCurrentUser = assignment.assigned_by_user_id === currentUserUID;
+          }
+        }
         
         console.log('Assignment user check:', {
           assignment_id: assignment.id,
           assigned_by_user_id: assignment.assigned_by_user_id,
           currentUserUID: currentUserUID,
-          isAssignedToCurrentUser: isAssignedToCurrentUser
+          isAssignedToCurrentUser: isAssignedToCurrentUser,
+          bd_ha_id: assignment.bd_ha_id,
+          bd_cao_id: assignment.bd_cao_id,
+          bd_ep_id: assignment.bd_ep_id
         });
         
         return isAssignedToCurrentUser;
@@ -448,7 +468,43 @@ export class DsQuanDayComponent implements OnInit {
       });
       console.log('Assignment map created with', assignmentMap.size, 'entries');
       
-      // 6. Map dữ liệu từ Firebase sang QuanDayData format
+      // 6. Load thông tin user_update từ các bảng tbl_bd_ha, tbl_bd_cao, tbl_bd_ep
+      console.log('Loading user_update information from winding tables...');
+      
+      // Lấy tất cả bd_ha_id, bd_cao_id, bd_ep_id từ assignments
+      const allBdHaIds = relevantAssignments.map(a => a.bd_ha_id).filter(id => id) as string[];
+      const allBdCaoIds = relevantAssignments.map(a => a.bd_cao_id).filter(id => id) as string[];
+      const allBdEpIds = relevantAssignments.map(a => a.bd_ep_id).filter(id => id) as string[];
+      
+      console.log('BD IDs to load:', { allBdHaIds, allBdCaoIds, allBdEpIds });
+      
+      // Load dữ liệu từ các bảng winding
+      const [bdHaData, bdCaoData] = await Promise.all([
+        allBdHaIds.length > 0 ? this.firebaseBdHaService.getBdHaByIds(allBdHaIds) : Promise.resolve([]),
+        allBdCaoIds.length > 0 ? this.firebaseBdCaoService.getBdCaoByIds(allBdCaoIds) : Promise.resolve([])
+      ]);
+      
+      // Tạm thời bỏ qua bd_ep vì chưa có service
+      const bdEpData: any[] = [];
+      
+      console.log('Loaded winding data:', { bdHaData: bdHaData.length, bdCaoData: bdCaoData.length, bdEpData: bdEpData.length });
+      
+      // Tạo map để lookup user_update
+      const bdHaUserMap = new Map();
+      const bdCaoUserMap = new Map();
+      const bdEpUserMap = new Map();
+      
+      bdHaData.forEach((item: any) => {
+        if (item.id) bdHaUserMap.set(item.id, item.user_update);
+      });
+      bdCaoData.forEach((item: any) => {
+        if (item.id) bdCaoUserMap.set(item.id, item.user_update);
+      });
+      bdEpData.forEach((item: any) => {
+        if (item.id) bdEpUserMap.set(item.id, item.user_update);
+      });
+      
+      // 7. Map dữ liệu từ Firebase sang QuanDayData format
       const mappedData = assignedBangVe.map(bangVe => {
         const assignment = assignmentMap.get(String(bangVe.id)); // Đảm bảo cả hai đều là string
         return {
@@ -472,6 +528,9 @@ export class DsQuanDayComponent implements OnInit {
           bd_ha_id: assignment?.bd_ha_id || null,
           bd_cao_id: assignment?.bd_cao_id || null,
           bd_ep_id: assignment?.bd_ep_id || null,
+          user_update_ha: assignment?.bd_ha_id ? bdHaUserMap.get(assignment.bd_ha_id) : null,
+          user_update_cao: assignment?.bd_cao_id ? bdCaoUserMap.get(assignment.bd_cao_id) : null,
+          user_update_ep: assignment?.bd_ep_id ? bdEpUserMap.get(assignment.bd_ep_id) : null,
           created_at: bangVe.created_at || new Date(),
           username: bangVe.username || bangVe.user_create || '',
           email: bangVe.email || '',
@@ -498,45 +557,43 @@ export class DsQuanDayComponent implements OnInit {
         isGiaCongEp: this.isGiaCongEp
       });
       
-      // Tab "Quấn dây mới" - hiển thị bảng vẽ chưa xử lý (trang_thai != 2)
+      // Tab "Quấn dây mới" - hiển thị bảng vẽ chưa xử lý bởi user hiện tại
       this.quanDays = filteredData.filter(item => {
-        let result = false;
+        const currentUserEmail = this.currentUser?.email || '';
+        
         if (this.isGiaCongHa) {
-          // Chưa xử lý bối dây hạ (trang_thai_bd_ha != 2)
-          result = item.trang_thai_bd_ha !== 2;
+          // Chỉ hiển thị nếu chưa có ai xử lý (user_update_ha rỗng)
+          return !item.user_update_ha || item.user_update_ha.trim() === '';
         } else if (this.isGiaCongCao) {
-          // Chưa xử lý bối dây cao (trang_thai_bd_cao != 2)
-          result = item.trang_thai_bd_cao !== 2;
+          return !item.user_update_cao || item.user_update_cao.trim() === '';
         } else if (this.isGiaCongEp) {
-          // Chưa xử lý bối dây ép (trang_thai_bd_ep != 2)
-          result = item.trang_thai_bd_ep !== 2;
+          return !item.user_update_ep || item.user_update_ep.trim() === '';
         }
-        console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, trang_thai_bd_cao=${item.trang_thai_bd_cao}, trang_thai_bd_ep=${item.trang_thai_bd_ep}, included in new tab: ${result}`);
-        return result;
+        
+        return false;
       });
       
-      // Tab "Quấn dây đã xử lý" - hiển thị bảng vẽ đã xử lý (trang_thai = 2)
+      // Tab "Quấn dây đã xử lý" - hiển thị bảng vẽ đã xử lý bởi user hiện tại
       let processedData: any[] = [];
+      const currentUserEmail = this.currentUser?.email || '';
       
       if (this.isGiaCongHa) {
-        // Đã xử lý bối dây hạ (trang_thai_bd_ha = 2)
+        // Hiển thị công việc đã được xử lý bởi user hiện tại (có user_update_ha)
         processedData = filteredData.filter(item => {
-          const result = item.trang_thai_bd_ha === 2;
-          console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ha=${item.trang_thai_bd_ha}, included in processed tab: ${result}`);
+          const result = item.user_update_ha === currentUserEmail && item.user_update_ha && item.user_update_ha.trim() !== '';
+          console.log(`Item ${item.kyhieuquanday}: user_update_ha=${item.user_update_ha}, currentUserEmail=${currentUserEmail}, included in processed tab: ${result}`);
           return result;
         });
       } else if (this.isGiaCongCao) {
-        // Đã xử lý bối dây cao (trang_thai_bd_cao = 2)
         processedData = filteredData.filter(item => {
-          const result = item.trang_thai_bd_cao === 2;
-          console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_cao=${item.trang_thai_bd_cao}, included in processed tab: ${result}`);
+          const result = item.user_update_cao === currentUserEmail && item.user_update_cao && item.user_update_cao.trim() !== '';
+          console.log(`Item ${item.kyhieuquanday}: user_update_cao=${item.user_update_cao}, currentUserEmail=${currentUserEmail}, included in processed tab: ${result}`);
           return result;
         });
       } else if (this.isGiaCongEp) {
-        // Đã xử lý bối dây ép (trang_thai_bd_ep = 2)
         processedData = filteredData.filter(item => {
-          const result = item.trang_thai_bd_ep === 2;
-          console.log(`Item ${item.kyhieuquanday}: trang_thai_bd_ep=${item.trang_thai_bd_ep}, included in processed tab: ${result}`);
+          const result = item.user_update_ep === currentUserEmail && item.user_update_ep && item.user_update_ep.trim() !== '';
+          console.log(`Item ${item.kyhieuquanday}: user_update_ep=${item.user_update_ep}, currentUserEmail=${currentUserEmail}, included in processed tab: ${result}`);
           return result;
         });
       }
@@ -994,32 +1051,32 @@ export class DsQuanDayComponent implements OnInit {
         khau_sx: this.currentUser?.khau_sx || ''
       };
       
-      // Xác định loại gia công dựa trên khau_sx, role_name và roles array
-      const khauSx = this.userRole.khau_sx?.toLowerCase() || '';
-      const roleName = this.userRole.role_name?.toLowerCase() || '';
+      // Xác định loại gia công dựa trên roles array sử dụng enum
       const userRoles = this.currentUser?.roles || [];
       const rolesString = userRoles.join(',').toLowerCase();
+      const khauSx = this.userRole.khau_sx?.toLowerCase() || '';
+      const roleName = this.userRole.role_name?.toLowerCase() || '';
       
-      console.log('determineUserRole: Raw values - khau_sx:', khauSx, 'role_name:', roleName, 'roles:', userRoles);
+      console.log('determineUserRole: Raw values - roles:', userRoles, 'rolesString:', rolesString, 'khau_sx:', khauSx, 'role_name:', roleName);
       console.log('determineUserRole: User role object:', this.userRole);
       
-      // Kiểm tra quyền gia công hạ - kiểm tra cả role_name và roles array
-      this.isGiaCongHa = khauSx.includes('quandayha') || 
+      // Sử dụng RoleHelper để kiểm tra quyền
+      this.isGiaCongHa = RoleHelper.isGiaCongHa(userRoles) ||
+                         // Fallback: kiểm tra khau_sx và role_name
+                         khauSx.includes('quandayha') || 
                          khauSx.includes('boidayha') || 
                          khauSx.includes('ha') ||
                          roleName.includes('boidayha') ||
-                         roleName.includes('quandayha') ||
-                         rolesString.includes('boidayha') ||
-                         rolesString.includes('quandayha');
+                         roleName.includes('quandayha');
       
-      // Kiểm tra quyền gia công cao - kiểm tra cả role_name và roles array
-      this.isGiaCongCao = khauSx.includes('quandaycao') || 
+      // Kiểm tra quyền gia công cao - sử dụng RoleHelper
+      this.isGiaCongCao = RoleHelper.isGiaCongCao(userRoles) ||
+                          // Fallback: kiểm tra khau_sx và role_name
+                          khauSx.includes('quandaycao') || 
                           khauSx.includes('boidaycao') || 
                           khauSx.includes('cao') ||
                           roleName.includes('boidaycao') ||
-                          roleName.includes('quandaycao') ||
-                          rolesString.includes('boidaycao') ||
-                          rolesString.includes('quandaycao');
+                          roleName.includes('quandaycao');
 
       this.isGiaCongEp = khauSx.includes('epboiday') || 
                           khauSx.includes('boidayep') || 

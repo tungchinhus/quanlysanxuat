@@ -18,7 +18,7 @@ import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
 import { FirebaseService } from '../../../services/firebase.service';
 import { QuanDayData } from '../ds-quan-day.component';
-import { Constant, MANUFACTURER_OPTIONS, Manufacturer } from '../../../constant/constant';
+import { Constant, MANUFACTURER_OPTIONS, Manufacturer, WINDING_MACHINE_CAO_OPTIONS } from '../../../constant/constant';
 import { DialogComponent } from '../../shared/dialogs/dialog/dialog.component';
 import { KcsQualityService, KcsQualityCheckFailure } from '../../../services/kcs-quality.service';
 import { FirebaseBdCaoService, BdCaoData } from '../../../services/firebase-bd-cao.service';
@@ -77,6 +77,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
 
   // Danh sách nhà sản xuất - sử dụng enum chung
   manufacturers = MANUFACTURER_OPTIONS;
+  windingMachines = WINDING_MACHINE_CAO_OPTIONS;
 
   constructor(
     private fb: FormBuilder,
@@ -117,6 +118,10 @@ export class BoiDayCaoPopupComponent implements OnInit {
       hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       
       // Chu vi bối dây cao
       chu_vi_bd_cao_1p: [0, [Validators.min(0)]],
@@ -232,6 +237,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
         mayquanday: formData.may_quan_day,
         xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
         haidau: this.getSelectedThickness(formData, 'hai_dau'),
+        mot_dau: this.getSelectedThickness(formData, 'mot_dau'),
         bd_tt: `${formData.chu_vi_bd_cao_1p},${formData.chu_vi_bd_cao_2p},${formData.chu_vi_bd_cao_3p}`,
         chuvi_bd_tt: formData.chu_vi_bd_cao_1p,
         dientroRa: formData.dien_tro_cao_ra,
@@ -473,6 +479,11 @@ export class BoiDayCaoPopupComponent implements OnInit {
       if (formData.hai_dau_day_3 && formData.hai_dau_day_3 > 0) return 3;
       if (formData.hai_dau_day_4 && formData.hai_dau_day_4 > 0) return 4;
       if (formData.hai_dau_day_6 && formData.hai_dau_day_6 > 0) return 6;
+    } else if (fieldName === 'mot_dau') {
+      if (formData.mot_dau_day_2 && formData.mot_dau_day_2 > 0) return 2;
+      if (formData.mot_dau_day_3 && formData.mot_dau_day_3 > 0) return 3;
+      if (formData.mot_dau_day_4 && formData.mot_dau_day_4 > 0) return 4;
+      if (formData.mot_dau_day_6 && formData.mot_dau_day_6 > 0) return 6;
     }
     return 2; // Default value
   }

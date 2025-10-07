@@ -8,8 +8,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { User, Role } from '../../../models/user.model';
+import { UserManagementFirebaseService } from '../../../services/user-management-firebase.service';
+import { take } from 'rxjs/operators';
 
 export interface UserFormData {
   user?: User;
@@ -42,18 +44,20 @@ export class UserFormDialogComponent implements OnInit {
   createWithAuth: boolean = false;
   hidePassword: boolean = true;
   hideConfirmPassword: boolean = true;
+  isCheckingDuplicates: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<UserFormDialogComponent>,
+    private userManagementService: UserManagementFirebaseService,
     @Inject(MAT_DIALOG_DATA) public data: UserFormData
   ) {
     this.isEdit = data.isEdit;
     this.selectedRoles = data.user?.roles || [];
     
     this.userForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
+      username: ['', [Validators.required, Validators.minLength(3)], this.isEdit ? [] : [this.usernameDuplicateValidator]],
+      email: ['', [Validators.required, Validators.email], this.isEdit ? [] : [this.emailDuplicateValidator]],
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       phone: [''],
       department: [''],
@@ -97,6 +101,56 @@ export class UserFormDialogComponent implements OnInit {
     
     return null;
   }
+
+  // Custom validator for username duplicates
+  usernameDuplicateValidator = (control: AbstractControl): Promise<ValidationErrors | null> => {
+    return new Promise((resolve) => {
+      if (!control.value || this.isEdit) {
+        resolve(null);
+        return;
+      }
+
+      this.userManagementService.getUserByUsername(control.value)
+        .pipe(take(1))
+        .subscribe({
+          next: (user) => {
+            if (user) {
+              resolve({ usernameDuplicate: true });
+            } else {
+              resolve(null);
+            }
+          },
+          error: () => {
+            resolve(null); // Don't fail validation on service error
+          }
+        });
+    });
+  };
+
+  // Custom validator for email duplicates
+  emailDuplicateValidator = (control: AbstractControl): Promise<ValidationErrors | null> => {
+    return new Promise((resolve) => {
+      if (!control.value || this.isEdit) {
+        resolve(null);
+        return;
+      }
+
+      this.userManagementService.getUserByEmail(control.value)
+        .pipe(take(1))
+        .subscribe({
+          next: (user) => {
+            if (user) {
+              resolve({ emailDuplicate: true });
+            } else {
+              resolve(null);
+            }
+          },
+          error: () => {
+            resolve(null); // Don't fail validation on service error
+          }
+        });
+    });
+  };
 
   onRoleSelectionChange(roleId: string, isSelected: boolean): void {
     if (isSelected) {
@@ -162,6 +216,12 @@ export class UserFormDialogComponent implements OnInit {
     }
     if (field?.hasError('passwordMismatch')) {
       return 'Mật khẩu xác nhận không khớp';
+    }
+    if (field?.hasError('usernameDuplicate')) {
+      return 'Tên đăng nhập đã được sử dụng';
+    }
+    if (field?.hasError('emailDuplicate')) {
+      return 'Email đã được sử dụng';
     }
     return '';
   }

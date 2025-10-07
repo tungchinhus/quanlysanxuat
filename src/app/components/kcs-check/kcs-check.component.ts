@@ -438,6 +438,8 @@ export class KcsCheckComponent implements OnInit {
   // Action methods
   viewBangVeDetails(element: any): void {
     console.log('Viewing KCS details for:', element);
+    console.log('Element soboiday:', element.soboiday);
+    console.log('Element keys:', Object.keys(element));
     
     const dialogData: KcsDetailData = {
       item: element,

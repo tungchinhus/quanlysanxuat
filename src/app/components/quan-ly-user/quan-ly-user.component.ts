@@ -362,9 +362,34 @@ export class QuanLyUserComponent implements OnInit {
           error: (error) => {
             console.error('Error changing password:', error);
             
-            // Fallback to FreePasswordService if Cloud Functions fail
-            console.log('Cloud Functions failed, trying FreePasswordService...');
-            this.tryFreePasswordService(user, result.newPassword);
+            // Kiểm tra loại lỗi để hiển thị thông báo phù hợp
+            if (error.status === 0 || error.status === 404) {
+              console.log('Cloud Functions not available (404/0), trying FreePasswordService...');
+              this.snackBar.open(
+                '⚠️ Cloud Functions không khả dụng, đang thử phương pháp khác...', 
+                'Đóng', 
+                {
+                  duration: 3000,
+                  horizontalPosition: 'right',
+                  verticalPosition: 'top',
+                  panelClass: ['warning-snackbar']
+                }
+              );
+              this.tryFreePasswordService(user, result.newPassword);
+            } else {
+              // Lỗi khác (CORS, network, etc.)
+              this.snackBar.open(
+                `❌ Lỗi kết nối: ${error.statusText || 'Unknown Error'}. Đang thử phương pháp khác...`, 
+                'Đóng', 
+                {
+                  duration: 5000,
+                  horizontalPosition: 'right',
+                  verticalPosition: 'top',
+                  panelClass: ['error-snackbar']
+                }
+              );
+              this.tryFreePasswordService(user, result.newPassword);
+            }
           }
         });
       }

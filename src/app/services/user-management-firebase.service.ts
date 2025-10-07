@@ -79,6 +79,28 @@ export class UserManagementFirebaseService {
     });
   }
 
+  getUserByUsername(username: string): Observable<User | null> {
+    return new Observable(observer => {
+      this.firebaseUserService.getUserByUsername(username).then(user => {
+        observer.next(user);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
+  checkUserDuplicates(username: string, email: string, excludeUserId?: string): Observable<{ usernameExists: boolean; emailExists: boolean; existingUser?: User }> {
+    return new Observable(observer => {
+      this.firebaseUserService.checkUserDuplicates(username, email, excludeUserId).then(result => {
+        observer.next(result);
+        observer.complete();
+      }).catch(error => {
+        observer.error(error);
+      });
+    });
+  }
+
   createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Observable<User> {
     return new Observable(observer => {
       this.firebaseUserService.createUser(userData).then(user => {

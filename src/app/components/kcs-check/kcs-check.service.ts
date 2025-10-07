@@ -192,6 +192,7 @@ export interface BoiDayHaData {
   congsuat: string;
   tbkt: string;
   dienap: string;
+  soboiday: string; // Add soboiday field
   quy_cach_day: string;
   so_soi_day: number;
   nha_san_xuat: string;
@@ -215,6 +216,7 @@ export interface BoiDayCaoData {
   congsuat: string;
   tbkt: string;
   dienap: string;
+  soboiday: string; // Add soboiday field
   quy_cach_day: string;
   so_soi_day: number;
   nha_san_xuat: string;
@@ -310,6 +312,7 @@ export class KcsCheckService {
       congsuat: item.bangve?.congsuat || 'N/A',
       tbkt: item.bangve?.tbkt || 'N/A',
       dienap: item.bangve?.dienap || 'N/A',
+      soboiday: item.bangve?.soboiday || 'N/A', // Add soboiday from bangve
       quy_cach_day: item.bd_ha?.quycachday || 'N/A',
       so_soi_day: item.bd_ha?.sosoiday || 0,
       nha_san_xuat: item.bd_ha?.nhasanxuat || 'N/A',
@@ -380,6 +383,7 @@ export class KcsCheckService {
       congsuat: item.bangve?.kyhieubangve || 'N/A',
       tbkt: item.bd_cao?.quycachday || 'N/A',
       dienap: item.bd_cao?.sosoiday?.toString() || 'N/A',
+      soboiday: item.bangve?.soboiday || 'N/A', // Add soboiday from bangve
       quy_cach_day: item.bd_cao?.quycachday || 'N/A',
       so_soi_day: item.bd_cao?.sosoiday || 0,
       nha_san_xuat: item.bd_cao?.nhasanxuat || 'N/A',
@@ -679,6 +683,7 @@ export class KcsCheckService {
         tbkt: item.quycachday || item.QuyCachDay || item.tbkt || '',
         // Sử dụng sosoiday làm dienap (theo API response thực tế)
         dienap: item.sosoiday || item.SoSoiDay || item.dienap || '',
+        soboiday: item.soboiday || item.SoBoiDay || 'N/A', // Add soboiday field
         // Sử dụng nhasanxuat làm quy_cach_day (theo API response thực tế)
         quy_cach_day: item.nhasanxuat || item.NhaSanXuat || item.quy_cach_day || '',
         // Sử dụng ngaysanxuat làm so_soi_day (theo API response thực tế)
@@ -702,6 +707,7 @@ export class KcsCheckService {
         congsuat: '100',
         tbkt: 'TBKT001',
         dienap: '22kV',
+        soboiday: '3',
         quy_cach_day: '1.5mm²',
         so_soi_day: 1,
         nha_san_xuat: 'Công ty C',
@@ -714,6 +720,7 @@ export class KcsCheckService {
         congsuat: '150',
         tbkt: 'TBKT003',
         dienap: '22kV',
+        soboiday: '5',
         quy_cach_day: '2.0mm²',
         so_soi_day: 1,
         nha_san_xuat: 'Công ty E',

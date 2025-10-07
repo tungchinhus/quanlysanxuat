@@ -23,9 +23,8 @@ export class AdminPasswordService {
   private readonly FUNCTIONS_URL: string;
 
   constructor(private http: HttpClient, private firebaseService: FirebaseService) {
-    // Lấy Project ID từ Firebase config
-    const projectId = (this.firebaseService as any).getProjectId?.() || 'your-project-id';
-    this.FUNCTIONS_URL = `https://us-central1-${projectId}.cloudfunctions.net`;
+    // Sử dụng project ID từ firebase.config.ts
+    this.FUNCTIONS_URL = 'https://us-central1-quanlysanxuat.cloudfunctions.net';
     console.log('Cloud Functions URL:', this.FUNCTIONS_URL);
   }
 

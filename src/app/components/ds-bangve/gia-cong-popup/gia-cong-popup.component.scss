@@ -252,6 +252,33 @@
   color: #f44336;
 }
 
+/* Multiple selection styling */
+::ng-deep .mat-select-multiple .mat-select-value {
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+::ng-deep .mat-select-multiple .mat-select-value-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+::ng-deep .mat-select-multiple .mat-select-value-text .mat-chip {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-size: 12px;
+  height: 24px;
+  line-height: 24px;
+}
+
+/* Hint styling for multiple selection */
+.mat-hint {
+  color: #666;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 /* Override Material Dialog container for this specific popup */
 ::ng-deep .mat-dialog-container {
   padding: 0 !important;

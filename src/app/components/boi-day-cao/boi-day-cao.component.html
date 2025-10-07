@@ -140,7 +140,11 @@
 
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Máy quấn dây</mat-label>
-            <input matInput formControlName="mayQuanDay" placeholder="Nhập máy quấn dây">
+            <mat-select formControlName="mayQuanDay">
+              <mat-option *ngFor="let machine of windingMachines" [value]="machine.value">
+                {{ machine.name }}
+              </mat-option>
+            </mat-select>
             <mat-error *ngIf="windingForm.get('mayQuanDay')?.hasError('required') && windingForm.get('mayQuanDay')?.touched">
               Máy quấn dây là bắt buộc.
             </mat-error>

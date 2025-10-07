@@ -143,7 +143,11 @@
 
             <mat-form-field appearance="outline" class="winding-machine-field">
               <mat-label>Máy quấn dây *</mat-label>
-              <input matInput formControlName="may_quan_day" placeholder="VD: Máy 01, Máy 02, Máy A">
+              <mat-select formControlName="may_quan_day">
+                <mat-option *ngFor="let machine of windingMachines" [value]="machine.value">
+                  {{ machine.name }}
+                </mat-option>
+              </mat-select>
               <mat-error *ngIf="boiDayCaoForm.get('may_quan_day')?.hasError('required') && boiDayCaoForm.get('may_quan_day')?.touched">
                 Máy quấn dây là bắt buộc
               </mat-error>
@@ -213,6 +217,39 @@
                          value="4">
                   <input type="number" 
                          formControlName="hai_dau_day_6" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="6"
+                         value="6">
+                </div>
+              </div>
+              <div class="thickness-group">
+                <span class="thickness-label">Một đầu:</span>
+                <div class="thickness-inputs">
+                  <input type="number" 
+                         formControlName="mot_dau_day_2" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="2"
+                         value="2">
+                  <input type="number" 
+                         formControlName="mot_dau_day_3" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="3"
+                         value="3">
+                  <input type="number" 
+                         formControlName="mot_dau_day_4" 
+                         class="thickness-input"
+                         min="2" 
+                         max="6" 
+                         placeholder="4"
+                         value="4">
+                  <input type="number" 
+                         formControlName="mot_dau_day_6" 
                          class="thickness-input"
                          min="2" 
                          max="6" 

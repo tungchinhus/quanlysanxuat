@@ -20,6 +20,8 @@
       https://www.googleapis.com 
       https://www.googletagmanager.com
       https://*.googleapis.com
+      https://cdnjs.cloudflare.com
+      https://unpkg.com
       blob: data:;
     script-src-elem 'self' 'unsafe-inline' 
       https://apis.google.com 
@@ -27,7 +29,9 @@
       https://accounts.google.com 
       https://www.googleapis.com 
       https://www.googletagmanager.com
-      https://*.googleapis.com;
+      https://*.googleapis.com
+      https://cdnjs.cloudflare.com
+      https://unpkg.com;
     style-src 'self' 'unsafe-inline' 
       https://fonts.googleapis.com 
       https://www.gstatic.com;
@@ -52,9 +56,11 @@
       https://firestore.googleapis.com
       https://identitytoolkit.googleapis.com
       https://*.cloudfunctions.net
-      https://us-central1-*.cloudfunctions.net
+      https://us-central1-quanlysanxuat.cloudfunctions.net
       https://localhost:7190
-      http://localhost:7190;
+      http://localhost:7190
+      ws://localhost:* 
+      http://localhost:*;
     frame-src 'self' 
       https://accounts.google.com 
       https://www.gstatic.com

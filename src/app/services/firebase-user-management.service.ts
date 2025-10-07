@@ -149,6 +149,55 @@ export class FirebaseUserManagementService {
     }
   }
 
+  async getUserByUsername(username: string): Promise<User | null> {
+    try {
+      console.log('Getting user by username:', username);
+      
+      const q = query(
+        collection(this.firestore, this.COLLECTIONS.USERS),
+        where('username', '==', username.toLowerCase())
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const user = this.convertFirestoreDocToUser(doc);
+        console.log('Found user by username:', user);
+        return user;
+      }
+      
+      console.log('No user found with username:', username);
+      return null;
+    } catch (error) {
+      console.error('Error getting user by username:', error);
+      return null;
+    }
+  }
+
+  async checkUserDuplicates(username: string, email: string, excludeUserId?: string): Promise<{ usernameExists: boolean; emailExists: boolean; existingUser?: User }> {
+    try {
+      console.log('Checking duplicates for username:', username, 'email:', email);
+      
+      // Check username duplicate
+      const existingByUsername = await this.getUserByUsername(username);
+      const usernameExists = existingByUsername && (!excludeUserId || existingByUsername.id !== excludeUserId);
+      
+      // Check email duplicate
+      const existingByEmail = await this.getUserByEmail(email);
+      const emailExists = existingByEmail && (!excludeUserId || existingByEmail.id !== excludeUserId);
+      
+      return {
+        usernameExists: !!usernameExists,
+        emailExists: !!emailExists,
+        existingUser: (existingByUsername || existingByEmail) || undefined
+      };
+    } catch (error) {
+      console.error('Error checking user duplicates:', error);
+      return { usernameExists: false, emailExists: false };
+    }
+  }
+
   async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     try {
       console.log('Creating user with data:', userData);

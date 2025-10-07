@@ -98,6 +98,10 @@
             <label>Số sợi dây:</label>
             <span class="value">{{ data.item.so_soi_day || data.item.dienap || 'N/A' }}</span>
           </div>
+          <div class="info-item">
+            <label>Số bối dây:</label>
+            <span class="value">{{ data.item.soboiday || data.item.so_boi_day || 'N/A' }}</span>
+          </div>
           <div class="info-item" *ngIf="data.itemType === 'boiDayCao'">
             <label>Chiều quấn dây:</label>
             <span class="value">{{ data.item.chieuquanday ? 'Có' : 'Không' }}</span>

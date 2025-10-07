@@ -34,6 +34,7 @@ export interface BdHaData {
   mayquanday?: string;
   xungquanh: number;
   haidau: number;
+  mot_dau?: number;
   kt_boiday_trong?: string;
   chuvi_bd_trong?: number;
   kt_bd_ngoai?: string;
@@ -131,6 +132,7 @@ export class FirebaseBdHaService {
           mayquanday: data['mayquanday'] || '',
           xungquanh: data['xungquanh'] || 0,
           haidau: data['haidau'] || 0,
+          mot_dau: data['mot_dau'] || 0,
           kt_boiday_trong: data['kt_boiday_trong'] || '',
           chuvi_bd_trong: data['chuvi_bd_trong'] || 0,
           kt_bd_ngoai: data['kt_bd_ngoai'] || '',
@@ -152,6 +154,74 @@ export class FirebaseBdHaService {
       return bdHaList;
     } catch (error) {
       console.error('Error getting bd_ha from Firebase:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get bd_ha by multiple IDs
+   */
+  async getBdHaByIds(ids: string[]): Promise<BdHaData[]> {
+    try {
+      console.log('Getting bd_ha by IDs:', ids);
+      
+      if (ids.length === 0) {
+        return [];
+      }
+      
+      const bdHaList: BdHaData[] = [];
+      
+      // Firestore 'in' queries are limited to 10 items, so we need to batch them
+      const batchSize = 10;
+      for (let i = 0; i < ids.length; i += batchSize) {
+        const batch = ids.slice(i, i + batchSize);
+        
+        const q = query(
+          collection(this.firestore, this.COLLECTION_NAME),
+          where('__name__', 'in', batch)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const bdHa: BdHaData = {
+            id: doc.id,
+            masothe_bd_ha: data['masothe_bd_ha'] || '',
+            kyhieubangve: data['kyhieubangve'] || '',
+            ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
+            nguoigiacong: data['nguoigiacong'] || '',
+            quycachday: data['quycachday'] || '',
+            sosoiday: data['sosoiday'] || 0,
+            ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
+            nhasanxuat: data['nhasanxuat'] || '',
+            chuvikhuon: data['chuvikhuon'] || 0,
+            kt_bung_bd: data['kt_bung_bd'] || 0,
+            chieuquanday: data['chieuquanday'] || false,
+            mayquanday: data['mayquanday'] || '',
+            xungquanh: data['xungquanh'] || 0,
+            haidau: data['haidau'] || 0,
+            kt_boiday_trong: data['kt_boiday_trong'] || '',
+            chuvi_bd_trong: data['chuvi_bd_trong'] || 0,
+            kt_bd_ngoai: data['kt_bd_ngoai'] || '',
+            dientroRa: data['dientroRa'] || 0,
+            dientroRb: data['dientroRb'] || 0,
+            dientroRc: data['dientroRc'] || 0,
+            dolechdientro: data['dolechdientro'] || 0,
+            trang_thai: data['trang_thai'] || 0,
+            trang_thai_approve: data['trang_thai_approve'] || 'pending',
+            user_update: data['user_update'] || '',
+            created_at: data['created_at']?.toDate() || new Date(),
+            updated_at: data['updated_at']?.toDate(),
+            khau_sx: data['khau_sx'] || ''
+          };
+          bdHaList.push(bdHa);
+        });
+      }
+      
+      console.log('Retrieved bd_ha records by IDs:', bdHaList.length);
+      return bdHaList;
+    } catch (error) {
+      console.error('Error getting bd_ha by IDs from Firebase:', error);
       throw error;
     }
   }
@@ -189,6 +259,7 @@ export class FirebaseBdHaService {
           mayquanday: data['mayquanday'] || '',
           xungquanh: data['xungquanh'] || 0,
           haidau: data['haidau'] || 0,
+          mot_dau: data['mot_dau'] || 0,
           kt_boiday_trong: data['kt_boiday_trong'] || '',
           chuvi_bd_trong: data['chuvi_bd_trong'] || 0,
           kt_bd_ngoai: data['kt_bd_ngoai'] || '',

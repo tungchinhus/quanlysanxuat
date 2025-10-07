@@ -32,6 +32,7 @@ export interface BdCaoData {
   mayquanday?: string;
   xungquanh: number;
   haidau: number;
+  mot_dau?: number;
   bd_tt?: string;
   chuvi_bd_tt?: number;
   dientroRa?: number;
@@ -125,6 +126,7 @@ export class FirebaseBdCaoService {
           mayquanday: data['mayquanday'] || '',
           xungquanh: data['xungquanh'] || 0,
           haidau: data['haidau'] || 0,
+          mot_dau: data['mot_dau'] || 0,
           bd_tt: data['bd_tt'] || '',
           chuvi_bd_tt: data['chuvi_bd_tt'] || 0,
           dientroRa: data['dientroRa'] || 0,
@@ -144,6 +146,71 @@ export class FirebaseBdCaoService {
       return bdCaoList;
     } catch (error) {
       console.error('Error getting bd_cao from Firebase:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get bd_cao by multiple IDs
+   */
+  async getBdCaoByIds(ids: string[]): Promise<BdCaoData[]> {
+    try {
+      console.log('Getting bd_cao by IDs:', ids);
+      
+      if (ids.length === 0) {
+        return [];
+      }
+      
+      const bdCaoList: BdCaoData[] = [];
+      
+      // Firestore 'in' queries are limited to 10 items, so we need to batch them
+      const batchSize = 10;
+      for (let i = 0; i < ids.length; i += batchSize) {
+        const batch = ids.slice(i, i + batchSize);
+        
+        const q = query(
+          collection(this.firestore, this.COLLECTION_NAME),
+          where('__name__', 'in', batch)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const bdCao: BdCaoData = {
+            id: doc.id,
+            masothe_bd_cao: data['masothe_bd_cao'] || '',
+            kyhieubangve: data['kyhieubangve'] || '',
+            ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
+            nguoigiacong: data['nguoigiacong'] || '',
+            quycachday: data['quycachday'] || '',
+            sosoiday: data['sosoiday'] || 0,
+            ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
+            nhasanxuat: data['nhasanxuat'] || '',
+            chieuquanday: data['chieuquanday'] || false,
+            mayquanday: data['mayquanday'] || '',
+            xungquanh: data['xungquanh'] || 0,
+            haidau: data['haidau'] || 0,
+          mot_dau: data['mot_dau'] || 0,
+            bd_tt: data['bd_tt'] || '',
+            chuvi_bd_tt: data['chuvi_bd_tt'] || 0,
+            dientroRa: data['dientroRa'] || 0,
+            dientroRb: data['dientroRb'] || 0,
+            dientroRc: data['dientroRc'] || 0,
+            trang_thai: data['trang_thai'] || 0,
+            trang_thai_approve: data['trang_thai_approve'] || 'pending',
+            user_update: data['user_update'] || '',
+            created_at: data['created_at']?.toDate() || new Date(),
+            updated_at: data['updated_at']?.toDate(),
+            khau_sx: data['khau_sx'] || ''
+          };
+          bdCaoList.push(bdCao);
+        });
+      }
+      
+      console.log('Retrieved bd_cao records by IDs:', bdCaoList.length);
+      return bdCaoList;
+    } catch (error) {
+      console.error('Error getting bd_cao by IDs from Firebase:', error);
       throw error;
     }
   }
@@ -179,6 +246,7 @@ export class FirebaseBdCaoService {
           mayquanday: data['mayquanday'] || '',
           xungquanh: data['xungquanh'] || 0,
           haidau: data['haidau'] || 0,
+          mot_dau: data['mot_dau'] || 0,
           bd_tt: data['bd_tt'] || '',
           chuvi_bd_tt: data['chuvi_bd_tt'] || 0,
           dientroRa: data['dientroRa'] || 0,

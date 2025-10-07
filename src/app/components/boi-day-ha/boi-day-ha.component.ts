@@ -16,6 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSelectModule } from '@angular/material/select';
 import { MatNativeDateModule, MAT_DATE_LOCALE, MAT_DATE_FORMATS, DateAdapter, NativeDateAdapter } from '@angular/material/core';
+import { WINDING_MACHINE_HA_OPTIONS } from '../../constant/constant';
 
 // Vietnamese date format
 export const VIETNAMESE_DATE_FORMATS = {
@@ -85,6 +86,7 @@ export class BoiDayHaComponent implements OnInit {
 
   nguoiGiaCongOptions: Worker[] = [];
   isLoadingWorkers: boolean = false;
+  windingMachines = WINDING_MACHINE_HA_OPTIONS;
 
   boiDayHaControl = new FormControl('', [Validators.required]);
 

@@ -15,37 +15,38 @@
       <!-- Bối dây hạ -->
       <mat-form-field appearance="outline" class="form-field">
         <mat-label>Bối dây hạ</mat-label>
-        <mat-select formControlName="boiDayHa" placeholder="Chọn người thực hiện bối dây hạ">
-          <mat-option value="">Chọn người thực hiện</mat-option>
+        <mat-select formControlName="boiDayHa" placeholder="Chọn người thực hiện bối dây hạ" multiple>
           <mat-option *ngFor="let worker of quandayhaUsers" [value]="worker">
             {{ getWorkerDisplayName(worker) }}
           </mat-option>
         </mat-select>
         <mat-error *ngIf="giaCongForm.get('boiDayHa')?.hasError('required') && giaCongForm.get('boiDayHa')?.touched">
-          Vui lòng chọn người thực hiện bối dây hạ
+          Vui lòng chọn ít nhất một người thực hiện bối dây hạ
         </mat-error>
         <mat-hint *ngIf="quandayhaUsers.length === 0" class="no-users-hint">
           Không có người gia công cho bối dây hạ
+        </mat-hint>
+        <mat-hint *ngIf="giaCongForm.get('boiDayHa')?.value?.length > 0">
+          Đã chọn {{ giaCongForm.get('boiDayHa')?.value?.length }} người
         </mat-hint>
       </mat-form-field>
 
       <!-- Bối dây cao -->
       <mat-form-field appearance="outline" class="form-field">
         <mat-label>Bối dây cao</mat-label>
-        <mat-select formControlName="boiDayCao" placeholder="Chọn người thực hiện bối dây cao">
-          <mat-option value="">Chọn người thực hiện</mat-option>
+        <mat-select formControlName="boiDayCao" placeholder="Chọn người thực hiện bối dây cao" multiple>
           <mat-option *ngFor="let worker of quandaycaoUsers" [value]="worker">
             {{ getWorkerDisplayName(worker) }}
           </mat-option>
         </mat-select>
         <mat-error *ngIf="giaCongForm.get('boiDayCao')?.hasError('required') && giaCongForm.get('boiDayCao')?.touched">
-          Vui lòng chọn người thực hiện bối dây cao
-        </mat-error>
-        <mat-error *ngIf="giaCongForm.get('boiDayCao')?.hasError('sameUser') && giaCongForm.get('boiDayCao')?.touched">
-          Không thể chọn cùng một người cho cả hai khâu
+          Vui lòng chọn ít nhất một người thực hiện bối dây cao
         </mat-error>
         <mat-hint *ngIf="quandaycaoUsers.length === 0" class="no-users-hint">
           Không có người gia công cho bối dây cao
+        </mat-hint>
+        <mat-hint *ngIf="giaCongForm.get('boiDayCao')?.value?.length > 0">
+          Đã chọn {{ giaCongForm.get('boiDayCao')?.value?.length }} người
         </mat-hint>
       </mat-form-field>
 

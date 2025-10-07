@@ -137,7 +137,7 @@ export class BangVeComponent implements OnInit {
         // Đóng dialog và trả về dữ liệu mới với ID từ Firebase
         const savedBangVe: BangVeData = {
           ...newBangVe,
-          id: parseInt(docId) || 0,
+          id: docId, // Sử dụng docId trực tiếp từ Firebase (string)
           username: currentUsername,
           email: userInfo?.email || '',
           role_name: userInfo?.roles?.[0] || 'user'

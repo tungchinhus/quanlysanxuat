@@ -98,6 +98,8 @@ const cspConfig = {
       https://accounts.google.com/gsi
       https://firestore.googleapis.com
       https://identitytoolkit.googleapis.com
+      https://*.cloudfunctions.net
+      https://us-central1-quanlysanxuat.cloudfunctions.net
       https://localhost:7190
       http://localhost:7190;
     frame-src 'self' 

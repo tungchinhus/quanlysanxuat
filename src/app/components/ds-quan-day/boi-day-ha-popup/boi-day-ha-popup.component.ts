@@ -17,7 +17,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
 import { QuanDayData } from '../ds-quan-day.component';
-import { Constant, MANUFACTURER_OPTIONS, Manufacturer } from '../../../constant/constant';
+import { Constant, MANUFACTURER_OPTIONS, Manufacturer, WINDING_MACHINE_HA_OPTIONS } from '../../../constant/constant';
 import { DialogComponent } from '../../shared/dialogs/dialog/dialog.component';
 import { KcsQualityService, KcsQualityCheckFailure } from '../../../services/kcs-quality.service';
 import { FirebaseBdHaService, BdHaData } from '../../../services/firebase-bd-ha.service';
@@ -127,6 +127,7 @@ export interface BoiDayHaApiRequest {
   mayquanday: string;
   xungquanh: number;
   haidau: number;
+  mot_dau?: number;
   kt_boiday_trong: string;
   chuvi_bd_trong: number;
   kt_bd_ngoai: string;
@@ -176,6 +177,7 @@ export class BoiDayHaPopupComponent implements OnInit {
 
   // Danh sách nhà sản xuất - sử dụng enum chung
   manufacturers = MANUFACTURER_OPTIONS;
+  windingMachines = WINDING_MACHINE_HA_OPTIONS;
 
   constructor(
     private fb: FormBuilder,
@@ -214,6 +216,10 @@ export class BoiDayHaPopupComponent implements OnInit {
       hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      mot_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       
       // Chu vi bối dây hạ trong
       chu_vi_bd_ha_trong_1p: [0, [Validators.min(0)]],
@@ -370,6 +376,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       mayquanday: formData.may_quan_day,
       xungquanh: formData.xung_quanh_day_2,
       haidau: formData.hai_dau_day_2,
+      mot_dau: formData.mot_dau_day_2,
       kt_boiday_trong: formData.kt_boiday_trong,
       chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p,
       kt_bd_ngoai: formData.kt_bd_ngoai,

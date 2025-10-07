@@ -119,7 +119,7 @@ export class FirebaseBangVeService {
       if (docSnap.exists()) {
         const data = docSnap.data();
         return {
-          id: parseInt(id) || 0,
+          id: id, // Sử dụng ID trực tiếp từ Firebase (string)
           kyhieubangve: data['kyhieubangve'] || '',
           congsuat: data['congsuat'] || 0,
           tbkt: data['tbkt'] || '',
