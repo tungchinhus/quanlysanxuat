@@ -136,7 +136,7 @@ export class BoiDayCaoComponent implements OnInit {
 
       ngayGiaCong: [{ value: today.toLocaleDateString('vi-VN'), disabled: true }],
       nguoiGiaCong: [{ value: currentUser.name, disabled: true }],
-      kyHieuBV: [{ value: bangVeData?.kyhieubangve + '-065', disabled: true }],
+      kyHieuBV: [{ value: bangVeData?.ky_hieu_bv_boidaycao || bangVeData?.kyhieubangve, disabled: true }],
       quyCachDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
       soSoiDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required, Validators.min(1)]],
       ngaySanXuat: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],

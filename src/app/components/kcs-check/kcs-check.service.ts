@@ -426,7 +426,7 @@ export class KcsCheckService {
         },
         bd_ha: {
           id: 1,
-          masothe_bd_ha: "1000-39N-25086T-065",
+          masothe_bd_ha: "1000-39N-25086T",
           kyhieubangve: "1000-39N-25086T",
           ngaygiacong: "2025-01-20T08:00:00Z",
           nguoigiacong: "quandayha1@thibidi.com",

@@ -60,13 +60,18 @@
 
         <!-- Thông tin dây - 3 cột -->
         <div class="compact-grid-3">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Quy cách dây</mat-label>
-            <input matInput formControlName="quyCachDay" placeholder="Nhập quy cách dây">
-            <mat-error *ngIf="windingForm.get('quyCachDay')?.hasError('required') && windingForm.get('quyCachDay')?.touched">
-              Quy cách dây là bắt buộc.
-            </mat-error>
-          </mat-form-field>
+          <div class="form-field-with-checkbox">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Quy cách dây</mat-label>
+              <input matInput formControlName="quyCachDay" placeholder="Nhập quy cách dây">
+              <mat-error *ngIf="windingForm.get('quyCachDay')?.hasError('required') && windingForm.get('quyCachDay')?.touched">
+                Quy cách dây là bắt buộc.
+              </mat-error>
+            </mat-form-field>
+            <mat-checkbox formControlName="autoPi" class="pi-checkbox">
+              Tự động thêm π
+            </mat-checkbox>
+          </div>
 
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Số sợi chập</mat-label>

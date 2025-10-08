@@ -197,7 +197,7 @@ export class BoiDayHaPopupComponent implements OnInit {
     this.boiDayHaForm = this.fb.group({
       // Các field bắt buộc
       quy_cach_day: ['', Validators.required],
-      so_soi_day: [1, [Validators.required, Validators.min(1)]],
+      so_soi_day: [1, [Validators.required, Validators.min(0)]],
       nha_san_xuat: [Manufacturer.bsHN, Validators.required],
       nha_san_xuat_other: [''],
       ngay_san_xuat: [new Date(), Validators.required],
@@ -211,20 +211,17 @@ export class BoiDayHaPopupComponent implements OnInit {
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_6: [6, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       mot_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
       mot_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       mot_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      mot_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       
       // Chu vi bối dây hạ trong
-      chu_vi_bd_ha_trong_1p: [0, [Validators.min(0)]],
-      chu_vi_bd_ha_trong_2p: [0, [Validators.min(0)]],
-      chu_vi_bd_ha_trong_3p: [0, [Validators.min(0)]],
+      chu_vi_bd_ha_trong_1p: [0, [Validators.required, Validators.min(0)]],
+      chu_vi_bd_ha_trong_2p: [0, [Validators.required, Validators.min(0)]],
+      chu_vi_bd_ha_trong_3p: [0, [Validators.required, Validators.min(0)]],
       
       // Kích thước bối dây hạ trong
       kt_bd_ha_trong_1p: [0, [Validators.min(0)]],
@@ -232,15 +229,15 @@ export class BoiDayHaPopupComponent implements OnInit {
       kt_bd_ha_trong_3p: [0, [Validators.min(0)]],
 
       // Kích thước bối dây hạ ngoài
-      kt_bd_ha_ngoai_bv_1p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv_2p: [0, [Validators.min(0)]],
-      kt_bd_ha_ngoai_bv_3p: [0, [Validators.min(0)]],
+      kt_bd_ha_ngoai_bv_1p: [0, [Validators.required, Validators.min(0)]],
+      kt_bd_ha_ngoai_bv_2p: [0, [Validators.required, Validators.min(0)]],
+      kt_bd_ha_ngoai_bv_3p: [0, [Validators.required, Validators.min(0)]],
       
       // Điện trở hạ
-      dien_tro_ha_ra: [0, [Validators.min(0)]],
-      dien_tro_ha_rb: [0, [Validators.min(0)]],
-      dien_tro_ha_rc: [0, [Validators.min(0)]],
-      do_lech_dien_tro_giua_cac_pha: [0, [Validators.min(0), Validators.max(2)]],
+      dien_tro_ha_ra: [0, [Validators.required, Validators.min(0)]],
+      dien_tro_ha_rb: [0, [Validators.required, Validators.min(0)]],
+      dien_tro_ha_rc: [0, [Validators.required, Validators.min(0)]],
+      do_lech_dien_tro_giua_cac_pha: [0, [Validators.required, Validators.min(0), Validators.max(2)]],
       
       ghi_chu: ['']
     });
@@ -254,6 +251,16 @@ export class BoiDayHaPopupComponent implements OnInit {
 
   ngOnInit() {
     console.log('BoiDayHaPopup initialized with data:', this.data);
+    console.log('quanDay data:', this.data.quanDay);
+    console.log('ky_hieu_bv_boidayha:', this.data.quanDay?.ky_hieu_bv_boidayha);
+    console.log('kyhieuquanday:', this.data.quanDay?.kyhieuquanday);
+    console.log('soboi day fields:', {
+      soboiday: this.data.quanDay?.soboiday,
+      so_boi_day: this.data.quanDay?.so_boi_day,
+      soboidayha: this.data.quanDay?.soboidayha
+    });
+    console.log('All quanDay properties:', Object.keys(this.data.quanDay || {}));
+    console.log('quanDay object full:', JSON.stringify(this.data.quanDay, null, 2));
     
     // Lấy thông tin user hiện tại
     this.currentUser = this.authService.getCurrentUser();
@@ -261,6 +268,195 @@ export class BoiDayHaPopupComponent implements OnInit {
     
     console.log('Current user:', this.currentUser);
     console.log('Auth token:', this.authToken ? 'Available' : 'Not available');
+    
+    // Populate form with data from quanDay if available
+    if (this.data.quanDay) {
+      this.populateFormWithQuanDayData();
+    }
+    
+    // Auto-populate from bangve if available
+    this.autoPopulateFromBangve();
+  }
+  
+  // Method to populate form with quanDay data
+  private populateFormWithQuanDayData(): void {
+    console.log('Populating form with quanDay data:', this.data.quanDay);
+    
+    // Populate basic fields from bangve data
+    this.boiDayHaForm.patchValue({
+      // Thông tin cơ bản từ bangve
+      quy_cach_day: this.data.quanDay.quy_cach_day || '',
+      so_soi_day: this.data.quanDay.so_soi_day || 1,
+      nha_san_xuat: this.data.quanDay.nha_san_xuat || Manufacturer.bsHN,
+      ngay_san_xuat: this.data.quanDay.ngay_san_xuat ? new Date(this.data.quanDay.ngay_san_xuat) : new Date(),
+      
+      // Thông tin kỹ thuật từ bangve
+      chu_vi_khuon: this.data.quanDay.chu_vi_khuon || 0,
+      kt_bung_bd_truoc: this.data.quanDay.bung_bd || 0,
+      bung_bd_sau: this.data.quanDay.bung_bd_sau || 0,
+      chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : true,
+      may_quan_day: this.data.quanDay.may_quan_day || '',
+      
+      // Thông số dây quấn từ bangve
+      xung_quanh_day_2: this.data.quanDay.xung_quanh_day_2 || 2,
+      xung_quanh_day_3: this.data.quanDay.xung_quanh_day_3 || 3,
+      xung_quanh_day_4: this.data.quanDay.xung_quanh_day_4 || 4,
+      hai_dau_day_2: this.data.quanDay.hai_dau_day_2 || 2,
+      hai_dau_day_3: this.data.quanDay.hai_dau_day_3 || 3,
+      hai_dau_day_4: this.data.quanDay.hai_dau_day_4 || 4,
+      mot_dau_day_2: this.data.quanDay.mot_dau_day_2 || 2,
+      mot_dau_day_3: this.data.quanDay.mot_dau_day_3 || 3,
+      mot_dau_day_4: this.data.quanDay.mot_dau_day_4 || 4,
+      
+      // Đo lường từ bangve
+      chu_vi_bd_ha_trong_1p: this.data.quanDay.chu_vi_bd_ha_trong_1p || 0,
+      chu_vi_bd_ha_trong_2p: this.data.quanDay.chu_vi_bd_ha_trong_2p || 0,
+      chu_vi_bd_ha_trong_3p: this.data.quanDay.chu_vi_bd_ha_trong_3p || 0,
+      kt_bd_ha_trong_1p: 0, // Sẽ được điền từ parseAndFillBdHaTrong
+      kt_bd_ha_trong_2p: 0, // Sẽ được điền từ parseAndFillBdHaTrong
+      kt_bd_ha_trong_3p: 0, // Sẽ được điền từ parseAndFillBdHaTrong
+      kt_bd_ha_ngoai_bv_1p: 0, // Sẽ được điền từ parseAndFillBdHaNgoai
+      kt_bd_ha_ngoai_bv_2p: 0, // Sẽ được điền từ parseAndFillBdHaNgoai
+      kt_bd_ha_ngoai_bv_3p: 0, // Sẽ được điền từ parseAndFillBdHaNgoai
+      dien_tro_ha_ra: this.data.quanDay.dien_tro_ha_ra || 0,
+      dien_tro_ha_rb: this.data.quanDay.dien_tro_ha_rb || 0,
+      dien_tro_ha_rc: this.data.quanDay.dien_tro_ha_rc || 0,
+      do_lech_dien_tro_giua_cac_pha: this.data.quanDay.do_lech_dien_tro_giua_cac_pha || 0,
+      
+      // Ghi chú
+      ghi_chu: this.data.quanDay.ghi_chu || ''
+    });
+    
+    // Disable fields that are read-only from bangve
+    if (this.data.quanDay.chu_vi_khuon && this.data.quanDay.chu_vi_khuon > 0) {
+      this.boiDayHaForm.get('chu_vi_khuon')?.disable();
+    }
+    if (this.data.quanDay.bung_bd && this.data.quanDay.bung_bd > 0) {
+      this.boiDayHaForm.get('kt_bung_bd_truoc')?.disable();
+    }
+    
+    // Make bung_bd_sau required
+    this.boiDayHaForm.get('bung_bd_sau')?.setValidators([Validators.required, Validators.min(0)]);
+    this.boiDayHaForm.get('bung_bd_sau')?.updateValueAndValidity();
+    
+    // Parse và điền dữ liệu từ các trường string format
+    this.parseAndFillBdHaTrong(this.data.quanDay.bd_ha_trong);
+    this.parseAndFillBdHaNgoai(this.data.quanDay.bd_ha_ngoai);
+    
+    console.log('Form values after population:', this.boiDayHaForm.value);
+    console.log('Available quanDay properties:', Object.keys(this.data.quanDay));
+  }
+
+  // Auto-populate form from bangve data
+  private autoPopulateFromBangve(): void {
+    console.log('Auto-populating from bangve data...');
+    
+    // Nếu có dữ liệu từ bangve, điền vào các trường tương ứng
+    if (this.data.quanDay) {
+      const bangveData = this.data.quanDay;
+      
+      // Điền thông tin từ bangve vào các trường chưa có giá trị
+      const currentFormValue = this.boiDayHaForm.value;
+      
+      // Chỉ điền nếu trường chưa có giá trị hoặc có giá trị mặc định
+      if (!currentFormValue.quy_cach_day && bangveData.quy_cach_day) {
+        this.boiDayHaForm.patchValue({ quy_cach_day: bangveData.quy_cach_day });
+      }
+      
+      if (currentFormValue.so_soi_day === 1 && bangveData.so_soi_day) {
+        this.boiDayHaForm.patchValue({ so_soi_day: bangveData.so_soi_day });
+      }
+      
+      if (!currentFormValue.may_quan_day && bangveData.may_quan_day) {
+        this.boiDayHaForm.patchValue({ may_quan_day: bangveData.may_quan_day });
+      }
+      
+      // Parse và điền dữ liệu bd_ha_trong (format: "244/436")
+      this.parseAndFillBdHaTrong(bangveData.bd_ha_trong);
+      
+      // Parse và điền dữ liệu bd_ha_ngoai nếu có
+      this.parseAndFillBdHaNgoai(bangveData.bd_ha_ngoai);
+      
+      // Điền các giá trị đo lường nếu có
+      if (bangveData.chu_vi_bd_ha_trong_1p && bangveData.chu_vi_bd_ha_trong_1p > 0) {
+        this.boiDayHaForm.patchValue({ chu_vi_bd_ha_trong_1p: bangveData.chu_vi_bd_ha_trong_1p });
+      }
+      if (bangveData.chu_vi_bd_ha_trong_2p && bangveData.chu_vi_bd_ha_trong_2p > 0) {
+        this.boiDayHaForm.patchValue({ chu_vi_bd_ha_trong_2p: bangveData.chu_vi_bd_ha_trong_2p });
+      }
+      if (bangveData.chu_vi_bd_ha_trong_3p && bangveData.chu_vi_bd_ha_trong_3p > 0) {
+        this.boiDayHaForm.patchValue({ chu_vi_bd_ha_trong_3p: bangveData.chu_vi_bd_ha_trong_3p });
+      }
+      
+      // Điền điện trở nếu có
+      if (bangveData.dien_tro_ha_ra && bangveData.dien_tro_ha_ra > 0) {
+        this.boiDayHaForm.patchValue({ dien_tro_ha_ra: bangveData.dien_tro_ha_ra });
+      }
+      if (bangveData.dien_tro_ha_rb && bangveData.dien_tro_ha_rb > 0) {
+        this.boiDayHaForm.patchValue({ dien_tro_ha_rb: bangveData.dien_tro_ha_rb });
+      }
+      if (bangveData.dien_tro_ha_rc && bangveData.dien_tro_ha_rc > 0) {
+        this.boiDayHaForm.patchValue({ dien_tro_ha_rc: bangveData.dien_tro_ha_rc });
+      }
+      
+      console.log('Auto-population completed. Form values:', this.boiDayHaForm.value);
+    }
+  }
+
+  // Parse và điền dữ liệu bd_ha_trong (format: "244/436")
+  private parseAndFillBdHaTrong(bdHaTrongData: string): void {
+    if (!bdHaTrongData) return;
+    
+    console.log('Parsing bd_ha_trong data:', bdHaTrongData);
+    
+    // Parse format "244/436" hoặc "244/436/550"
+    const values = bdHaTrongData.split('/').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    
+    if (values.length >= 2) {
+      // Điền vào KT bối dây hạ trong
+      this.boiDayHaForm.patchValue({
+        kt_bd_ha_trong_1p: values[0],
+        kt_bd_ha_trong_2p: values[1],
+        kt_bd_ha_trong_3p: values[2] || values[1] // Nếu không có pha 3, dùng giá trị pha 2
+      });
+      
+      console.log('Filled KT bối dây hạ trong:', {
+        pha1: values[0],
+        pha2: values[1], 
+        pha3: values[2] || values[1]
+      });
+      
+      // Trigger change detection để cập nhật UI
+      this.changeDetectorRef.detectChanges();
+    }
+  }
+
+  // Parse và điền dữ liệu bd_ha_ngoai (format: "244/436")
+  private parseAndFillBdHaNgoai(bdHaNgoaiData: string): void {
+    if (!bdHaNgoaiData) return;
+    
+    console.log('Parsing bd_ha_ngoai data:', bdHaNgoaiData);
+    
+    // Parse format "244/436" hoặc "244/436/550"
+    const values = bdHaNgoaiData.split('/').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    
+    if (values.length >= 2) {
+      // Điền vào KT bối dây hạ ngoài
+      this.boiDayHaForm.patchValue({
+        kt_bd_ha_ngoai_bv_1p: values[0],
+        kt_bd_ha_ngoai_bv_2p: values[1],
+        kt_bd_ha_ngoai_bv_3p: values[2] || values[1] // Nếu không có pha 3, dùng giá trị pha 2
+      });
+      
+      console.log('Filled KT bối dây hạ ngoài:', {
+        pha1: values[0],
+        pha2: values[1], 
+        pha3: values[2] || values[1]
+      });
+      
+      // Trigger change detection để cập nhật UI
+      this.changeDetectorRef.detectChanges();
+    }
   }
 
   // Kiểm tra form có thể submit được không
@@ -273,16 +469,42 @@ export class BoiDayHaPopupComponent implements OnInit {
       'so_soi_day', 
       'nha_san_xuat',
       'ngay_san_xuat',
-      'may_quan_day'
+      'may_quan_day',
+      'bung_bd_sau',
+      'chu_vi_bd_ha_trong_1p',
+      'chu_vi_bd_ha_trong_2p', 
+      'chu_vi_bd_ha_trong_3p',
+      'kt_bd_ha_ngoai_bv_1p',
+      'kt_bd_ha_ngoai_bv_2p',
+      'kt_bd_ha_ngoai_bv_3p',
+      'dien_tro_ha_ra',
+      'dien_tro_ha_rb',
+      'dien_tro_ha_rc',
+      'do_lech_dien_tro_giua_cac_pha'
     ];
     
     // Kiểm tra các field bắt buộc
     for (const fieldName of requiredFields) {
       const control = this.boiDayHaForm.get(fieldName);
-      if (!control || !control.valid || !control.value) {
-        console.log(`Field ${fieldName} không hợp lệ:`, control?.value, control?.errors);
+      if (!control || !control.valid) {
+        console.log(`❌ Field ${fieldName} không hợp lệ:`, control?.value, control?.errors);
         return false;
       }
+      
+      // Kiểm tra giá trị có tồn tại và hợp lệ không
+      const value = control.value;
+      if (value === null || value === undefined || value === '') {
+        console.log(`❌ Field ${fieldName} chưa được điền:`, value);
+        return false;
+      }
+      
+      // Chỉ kiểm tra không được âm (cho phép giá trị 0)
+      if (typeof value === 'number' && value < 0) {
+        console.log(`❌ Field ${fieldName} không được âm:`, value);
+        return false;
+      }
+      
+      console.log(`✅ Field ${fieldName} OK:`, value);
     }
     
     // Kiểm tra nhà sản xuất
@@ -292,8 +514,78 @@ export class BoiDayHaPopupComponent implements OnInit {
       return false;
     }
     
+    // Kiểm tra ngày sản xuất
+    const ngaySanXuat = this.boiDayHaForm.get('ngay_san_xuat')?.value;
+    if (!ngaySanXuat) {
+      console.log('Chưa chọn ngày sản xuất');
+      return false;
+    }
+    
     console.log('Form có thể submit - tất cả field bắt buộc đã được nhập');
     return true;
+  }
+
+  // Get KT bối dây hạ trong từ bangve data
+  getKtBdHaTrongLabel(): string {
+    if (!this.data.quanDay?.bd_ha_trong) return 'KT bối dây hạ trong (mm)';
+    return `KT bối dây hạ trong <span class="dynamic-value">(${this.data.quanDay.bd_ha_trong})</span>`;
+  }
+
+  // Get KT bối dây hạ ngoài từ bangve data
+  getKtBdHaNgoaiLabel(): string {
+    if (!this.data.quanDay?.bd_ha_ngoai) return 'KT bối dây hạ ngoài (mm)';
+    return `KT bối dây hạ ngoài <span class="dynamic-value">(${this.data.quanDay.bd_ha_ngoai})</span>`;
+  }
+
+  // Get số bối dây from quanDay data
+  getSoboiday(): string {
+    if (!this.data.quanDay) return 'N/A';
+    
+    return this.data.quanDay.soboiday || 
+           this.data.quanDay.so_boi_day || 
+           this.data.quanDay.soboidayha || 
+           this.data.quanDay.so_boi_day_ha ||
+           'N/A';
+  }
+
+  // Debug method để kiểm tra trạng thái form
+  debugFormStatus(): void {
+    console.log('=== FORM DEBUG STATUS ===');
+    console.log('Form valid:', this.boiDayHaForm.valid);
+    console.log('Form touched:', this.boiDayHaForm.touched);
+    console.log('Form dirty:', this.boiDayHaForm.dirty);
+    
+    const requiredFields = [
+      'quy_cach_day',
+      'so_soi_day', 
+      'nha_san_xuat',
+      'ngay_san_xuat',
+      'may_quan_day',
+      'bung_bd_sau',
+      'chu_vi_bd_ha_trong_1p',
+      'chu_vi_bd_ha_trong_2p', 
+      'chu_vi_bd_ha_trong_3p',
+      'kt_bd_ha_ngoai_bv_1p',
+      'kt_bd_ha_ngoai_bv_2p',
+      'kt_bd_ha_ngoai_bv_3p',
+      'dien_tro_ha_ra',
+      'dien_tro_ha_rb',
+      'dien_tro_ha_rc',
+      'do_lech_dien_tro_giua_cac_pha'
+    ];
+    
+    requiredFields.forEach(fieldName => {
+      const control = this.boiDayHaForm.get(fieldName);
+      console.log(`${fieldName}:`, {
+        value: control?.value,
+        valid: control?.valid,
+        errors: control?.errors,
+        touched: control?.touched
+      });
+    });
+    
+    console.log('Can submit:', this.canSubmitForm());
+    console.log('=== END FORM DEBUG ===');
   }
 
   // Xử lý khi thay đổi nhà sản xuất
@@ -362,8 +654,8 @@ export class BoiDayHaPopupComponent implements OnInit {
     const nhaSanXuatName = this.getManufacturerName(formData.nha_san_xuat);
     
     return {
-      masothe_bd_ha: `${this.data.quanDay.kyhieuquanday}-065`,
-      kyhieubangve: this.data.quanDay.kyhieuquanday,
+      masothe_bd_ha: this.data.quanDay.ky_hieu_bv_boidayha || `${this.data.quanDay.kyhieuquanday}-065`,
+      kyhieubangve: this.data.quanDay.ky_hieu_bv_boidayha || this.data.quanDay.kyhieuquanday,
       ngaygiacong: new Date().toISOString().split('T')[0],
       nguoigiacong: this.currentUser?.hoten || this.currentUser?.username || this.currentUser?.email || 'Unknown',
       quycachday: formData.quy_cach_day,
@@ -425,8 +717,8 @@ export class BoiDayHaPopupComponent implements OnInit {
 
       // Tạo data cho bd_ha
       const bdHaData: Omit<BdHaData, 'id'> = {
-        masothe_bd_ha: `${this.data.quanDay.kyhieuquanday}-065`,
-        kyhieubangve: this.data.quanDay.kyhieuquanday,
+        masothe_bd_ha: this.data.quanDay.ky_hieu_bv_boidayha || `${this.data.quanDay.kyhieuquanday}-065`,
+        kyhieubangve: this.data.quanDay.ky_hieu_bv_boidayha || this.data.quanDay.kyhieuquanday,
         ngaygiacong: new Date(),
         nguoigiacong: currentUser.fullName || currentUser.username || currentUser.email || 'Unknown',
         quycachday: formData.quy_cach_day,

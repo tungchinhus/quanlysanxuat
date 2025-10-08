@@ -48,7 +48,10 @@ export interface QuanDayData {
   bd_ha_ngoai: string;
   bd_cao: string;
   bd_ep: string;
+  chu_vi_khuon: number;
   bung_bd: number;
+  ky_hieu_bv_boidayha?: string; // Ký hiệu BV boidayha
+  ky_hieu_bv_boidaycao?: string; // Ký hiệu BV boidaycao
   user_create: string;
   trang_thai: number | null;
   trang_thai_bv: number | null; // Trạng thái tổng thể bảng vẽ: 1=đang xử lý, 2=đã hoàn thành
@@ -187,11 +190,15 @@ export class DsQuanDayComponent implements OnInit {
     this.checkAuthentication();
     
     // Kiểm tra và refresh dữ liệu nếu cần
-    setTimeout(() => {
+    setTimeout(async () => {
       if (this.shouldRefreshData()) {
         console.log('Auto-refreshing data...');
         this.refreshData();
       }
+      
+      // Tự động cập nhật dữ liệu bangve với field mới
+      console.log('Auto-updating bangve with new fields...');
+      await this.updateBangVeWithNewFields();
     }, 2000); // Đợi 2 giây sau khi component khởi tạo
   }
 
@@ -437,10 +444,23 @@ export class DsQuanDayComponent implements OnInit {
       // 4. Lấy chỉ những bảng vẽ được gán cho user
       console.log('Loading assigned bangve from Firebase...');
       const allBangVe = await this.firebaseBangVeService.getAllBangVe();
+      console.log('All bangve from Firebase:', allBangVe);
+      
+      // Debug: Kiểm tra field ky_hieu_bv_boidayha trong dữ liệu Firebase
+      allBangVe.forEach((bangVe, index) => {
+        console.log(`BangVe ${index}:`, {
+          id: bangVe.id,
+          kyhieubangve: bangVe.kyhieubangve,
+          ky_hieu_bv_boidayha: bangVe.ky_hieu_bv_boidayha,
+          ky_hieu_bv_boidaycao: bangVe.ky_hieu_bv_boidaycao
+        });
+      });
+      
       const assignedBangVe = allBangVe.filter(bangVe => 
         assignedBangVeIds.includes(String(bangVe.id)) // Đảm bảo cả hai đều là string
       );
       console.log('Assigned bangve loaded:', assignedBangVe.length, 'items');
+      console.log('Assigned bangve details:', assignedBangVe);
       
       // 5. Tạo map của assignments để dễ lookup (xử lý trường hợp có nhiều assignments cho cùng một bangve_id)
       const assignmentMap = new Map();
@@ -507,6 +527,7 @@ export class DsQuanDayComponent implements OnInit {
       // 7. Map dữ liệu từ Firebase sang QuanDayData format
       const mappedData = assignedBangVe.map(bangVe => {
         const assignment = assignmentMap.get(String(bangVe.id)); // Đảm bảo cả hai đều là string
+        console.log('Mapping bangVe:', bangVe.kyhieubangve, 'ky_hieu_bv_boidayha:', bangVe.ky_hieu_bv_boidayha, 'ky_hieu_bv_boidaycao:', bangVe.ky_hieu_bv_boidaycao);
         return {
           id: String(bangVe.id), // Đảm bảo ID là string
           kyhieuquanday: bangVe.kyhieubangve || '',
@@ -518,7 +539,10 @@ export class DsQuanDayComponent implements OnInit {
           bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
           bd_cao: bangVe.bd_cao || '',
           bd_ep: bangVe.bd_ep || '',
+          chu_vi_khuon: bangVe.chu_vi_khuon || 0,
           bung_bd: bangVe.bung_bd || 0,
+          ky_hieu_bv_boidayha: bangVe.ky_hieu_bv_boidayha || '', // Thêm field mới
+          ky_hieu_bv_boidaycao: bangVe.ky_hieu_bv_boidaycao || '', // Thêm field mới
           user_create: bangVe.user_create || '',
           trang_thai: bangVe.trang_thai || 0,
           trang_thai_bv: bangVe.trang_thai || 0, // Map to trang_thai as fallback
@@ -541,6 +565,15 @@ export class DsQuanDayComponent implements OnInit {
       
       console.log('Mapped data length:', mappedData.length);
       console.log('Sample mapped data:', mappedData.slice(0, 2));
+      
+      // Debug: Kiểm tra field ky_hieu_bv_boidayha trong mappedData
+      mappedData.forEach((item, index) => {
+        console.log(`MappedData ${index}:`, {
+          kyhieuquanday: item.kyhieuquanday,
+          ky_hieu_bv_boidayha: item.ky_hieu_bv_boidayha,
+          ky_hieu_bv_boidaycao: item.ky_hieu_bv_boidaycao
+        });
+      });
       
       // 5. Filter dữ liệu theo quyền của user
       const filteredData = await this.filterDataByUserPermission(mappedData);
@@ -1191,6 +1224,8 @@ export class DsQuanDayComponent implements OnInit {
   // Map dữ liệu từ tbl_bangve sang QuanDayData
   private mapBangVeToQuanDay(bangVe: any): QuanDayData {
     console.log('mapBangVeToQuanDay: Input bangVe:', bangVe);
+    console.log('ky_hieu_bv_boidayha from Firebase:', bangVe.ky_hieu_bv_boidayha);
+    console.log('ky_hieu_bv_boidaycao from Firebase:', bangVe.ky_hieu_bv_boidaycao);
     
          const mappedData = {
        id: bangVe.id || bangVe.Id,
@@ -1203,7 +1238,10 @@ export class DsQuanDayComponent implements OnInit {
        bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
        bd_cao: bangVe.bd_cao || '',
        bd_ep: bangVe.bd_ep || '',
+       chu_vi_khuon: bangVe.chu_vi_khuon || 0,
        bung_bd: bangVe.bung_bd || 0,
+       ky_hieu_bv_boidayha: bangVe.ky_hieu_bv_boidayha || '',
+       ky_hieu_bv_boidaycao: bangVe.ky_hieu_bv_boidaycao || '',
        user_create: bangVe.user_create || '',
        trang_thai: bangVe.trang_thai || 0,
        trang_thai_bv: bangVe.trang_thai_bv || 0,
@@ -1239,6 +1277,7 @@ export class DsQuanDayComponent implements OnInit {
        bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
        bd_cao: bangVe.bd_cao || '',
        bd_ep: bangVe.bd_ep || '',
+       chu_vi_khuon: bangVe.chu_vi_khuon || 0,
        bung_bd: bangVe.bung_bd || 0,
        user_create: bangVe.user_create || '',
        trang_thai: bangVe.trang_thai || 0,
@@ -1283,6 +1322,7 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '12mm', 
          bd_cao: '15mm', 
          bd_ep: '2mm', 
+         chu_vi_khuon: 100,
          bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 0, 
@@ -1310,6 +1350,7 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '10mm', 
          bd_cao: '12mm', 
          bd_ep: '1.5mm', 
+         chu_vi_khuon: 120,
          bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 0, 
@@ -1351,6 +1392,7 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '12mm', 
          bd_cao: '15mm', 
          bd_ep: '2mm', 
+         chu_vi_khuon: 100,
          bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 2, 
@@ -1381,6 +1423,7 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '14mm', 
          bd_cao: '18mm', 
          bd_ep: '2.5mm', 
+         chu_vi_khuon: 150,
          bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 2, 
@@ -1562,9 +1605,10 @@ export class DsQuanDayComponent implements OnInit {
   }
 
   // Xử lý gia công hạ
-  onGiaCongHa(element: QuanDayData): void {
+  async onGiaCongHa(element: QuanDayData): Promise<void> {
     console.log('onGiaCongHa: Processing lower winding for:', element.kyhieuquanday);
     console.log('onGiaCongHa: Element details:', element);
+    console.log('ky_hieu_bv_boidayha in element:', element.ky_hieu_bv_boidayha);
     
     // Kiểm tra quyền trước khi mở popup
     if (!this.isGiaCongHa) {
@@ -1573,8 +1617,23 @@ export class DsQuanDayComponent implements OnInit {
       return;
     }
     
+    // Refresh dữ liệu để đảm bảo có field mới nhất
+    console.log('onGiaCongHa: Refreshing data before opening popup...');
+    await this.refreshData();
+    
+    // Tìm lại element với dữ liệu mới nhất
+    const updatedElement = this.quanDays.find(item => item.id === element.id) || 
+                          this.inProgressQuanDays.find(item => item.id === element.id) ||
+                          this.completedQuanDays.find(item => item.id === element.id) ||
+                          element;
+    
+    console.log('onGiaCongHa: Updated element:', updatedElement);
+    console.log('ky_hieu_bv_boidayha in updated element:', updatedElement.ky_hieu_bv_boidayha);
+    console.log('kyhieuquanday in updated element:', updatedElement.kyhieuquanday);
+    console.log('All properties in updated element:', Object.keys(updatedElement));
+    
     // Chuyển trạng thái từ "chưa bắt đầu" sang "đang thi công" trước khi mở popup
-    this.startGiaCong(element, 'bd_ha');
+    this.startGiaCong(updatedElement, 'bd_ha');
     
     console.log('onGiaCongHa: Opening lower winding popup...');
     
@@ -1582,7 +1641,7 @@ export class DsQuanDayComponent implements OnInit {
     const dialogRef = this.dialog.open(BoiDayHaPopupComponent, {
       width: '1200px',
       maxWidth: '100vw',
-      data: { quanDay: element },
+      data: { quanDay: updatedElement },
       disableClose: true
     });
 
@@ -1632,9 +1691,10 @@ export class DsQuanDayComponent implements OnInit {
   }
 
   // Xử lý gia công cao
-  onGiaCongCao(element: QuanDayData): void {
+  async onGiaCongCao(element: QuanDayData): Promise<void> {
     console.log('onGiaCongCao: Processing upper winding for:', element.kyhieuquanday);
     console.log('onGiaCongCao: Element details:', element);
+    console.log('ky_hieu_bv_boidaycao in element:', element.ky_hieu_bv_boidaycao);
     
     // Kiểm tra quyền trước khi mở popup
     if (!this.isGiaCongCao) {
@@ -1643,8 +1703,23 @@ export class DsQuanDayComponent implements OnInit {
       return;
     }
     
+    // Refresh dữ liệu để đảm bảo có field mới nhất
+    console.log('onGiaCongCao: Refreshing data before opening popup...');
+    await this.refreshData();
+    
+    // Tìm lại element với dữ liệu mới nhất
+    const updatedElement = this.quanDays.find(item => item.id === element.id) || 
+                          this.inProgressQuanDays.find(item => item.id === element.id) ||
+                          this.completedQuanDays.find(item => item.id === element.id) ||
+                          element;
+    
+    console.log('onGiaCongCao: Updated element:', updatedElement);
+    console.log('ky_hieu_bv_boidaycao in updated element:', updatedElement.ky_hieu_bv_boidaycao);
+    console.log('kyhieuquanday in updated element:', updatedElement.kyhieuquanday);
+    console.log('All properties in updated element:', Object.keys(updatedElement));
+    
     // Chuyển trạng thái từ "chưa bắt đầu" sang "đang thi công" trước khi mở popup
-    this.startGiaCong(element, 'bd_cao');
+    this.startGiaCong(updatedElement, 'bd_cao');
     
     console.log('onGiaCongCao: Opening upper winding popup...');
     
@@ -1652,7 +1727,7 @@ export class DsQuanDayComponent implements OnInit {
     const dialogRef = this.dialog.open(BoiDayCaoPopupComponent, {
       width: '1200px',
       maxWidth: '100vw',
-      data: { quanDay: element },
+      data: { quanDay: updatedElement },
       disableClose: true
     });
 
@@ -1816,6 +1891,47 @@ export class DsQuanDayComponent implements OnInit {
     } catch (error) {
       console.error('refreshData: Error during refresh:', error);
       this.showError('Lỗi khi refresh dữ liệu');
+    }
+  }
+
+  // Method để cập nhật dữ liệu bangve với field mới
+  async updateBangVeWithNewFields(): Promise<void> {
+    try {
+      console.log('updateBangVeWithNewFields: Starting update...');
+      
+      // Lấy tất cả dữ liệu bangve từ Firebase
+      const allBangVe = await this.firebaseBangVeService.getAllBangVe();
+      console.log('All bangve data:', allBangVe);
+      
+      // Cập nhật từng document với field mới
+      for (const bangVe of allBangVe) {
+        const updateData: any = {};
+        
+        // Thêm field ky_hieu_bv_boidayha nếu chưa có
+        if (!bangVe.ky_hieu_bv_boidayha) {
+          updateData.ky_hieu_bv_boidayha = `${bangVe.kyhieubangve}-065`;
+        }
+        
+        // Thêm field ky_hieu_bv_boidaycao nếu chưa có
+        if (!bangVe.ky_hieu_bv_boidaycao) {
+          updateData.ky_hieu_bv_boidaycao = `${bangVe.kyhieubangve}-066`;
+        }
+        
+        // Chỉ cập nhật nếu có field mới
+        if (Object.keys(updateData).length > 0) {
+          console.log(`Updating bangve ${bangVe.id} with:`, updateData);
+          await this.firebaseBangVeService.updateBangVe(String(bangVe.id), updateData);
+        }
+      }
+      
+      console.log('updateBangVeWithNewFields: Update completed');
+      
+      // Refresh dữ liệu sau khi cập nhật
+      await this.loadQuanDayData();
+      
+    } catch (error) {
+      console.error('updateBangVeWithNewFields: Error:', error);
+      this.showError('Lỗi khi cập nhật dữ liệu bangve');
     }
   }
 

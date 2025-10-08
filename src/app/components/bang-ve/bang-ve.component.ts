@@ -51,7 +51,10 @@ export class BangVeComponent implements OnInit {
       bd_ha_ngoai: [''],
       bd_cao: [''],
       bd_ep: [''],
+      chu_vi_khuon: ['', Validators.pattern(/^[0-9]*$/)],
       bung_bd: ['', Validators.pattern(/^[0-9]*$/)],
+      ky_hieu_bv_boidayha: [''],
+      ky_hieu_bv_boidaycao: [''],
       user_create: [{ value: 'Current User', disabled: true }],
       trang_thai: [STATUS.NEW],
       created_at: [{ value: new Date().toISOString().slice(0, 16), disabled: true }]
@@ -91,6 +94,74 @@ export class BangVeComponent implements OnInit {
   }
 
   /**
+   * Xử lý sự kiện khi nhấn nút "Cập nhật Bảng Vẽ" (trong dialog edit mode)
+   */
+  async capNhatBangVe(): Promise<void> {
+    if (this.bangVeForm.valid && !this.isSaving) {
+      this.isSaving = true;
+      
+      try {
+        const formData = this.bangVeForm.getRawValue();
+        
+        // Lấy thông tin user hiện tại
+        const userInfo = this.authService.getUserInfo();
+        const currentUsername = userInfo?.username || localStorage.getItem('username') || 'unknown';
+        
+        const updatedBangVe = { 
+          id: this.data.bangVeData?.id, // Giữ nguyên ID
+          kyhieubangve: formData.kyhieubangve,
+          congsuat: formData.congsuat,
+          tbkt: formData.tbkt || '',
+          dienap: formData.dienap || '',
+          soboiday: this.data.bangVeData?.soboiday || '', // Giữ nguyên soboiday
+          bd_ha_trong: formData.bd_ha_trong || '',
+          bd_ha_ngoai: formData.bd_ha_ngoai || '',
+          bd_cao: formData.bd_cao || '',
+          bd_ep: formData.bd_ep || '',
+          chu_vi_khuon: formData.chu_vi_khuon || 0,
+          bung_bd: formData.bung_bd || 0,
+          ky_hieu_bv_boidayha: formData.ky_hieu_bv_boidayha || '',
+          ky_hieu_bv_boidaycao: formData.ky_hieu_bv_boidaycao || '',
+          user_create: this.data.bangVeData?.user_create || currentUsername, // Giữ nguyên user_create
+          trang_thai: this.data.bangVeData?.trang_thai || 0, // Giữ nguyên trang_thai
+          created_at: this.data.bangVeData?.created_at || new Date(), // Giữ nguyên created_at
+          username: currentUsername,
+          email: userInfo?.email || '',
+          role_name: userInfo?.roles?.[0] || 'user',
+          IsActive: true
+        };
+        
+        console.log('Updating bang ve to Firebase:', updatedBangVe);
+        
+        // Cập nhật vào Firebase
+        if (!updatedBangVe.id) {
+          throw new Error('ID bảng vẽ không hợp lệ');
+        }
+        const docId = typeof updatedBangVe.id === 'string' ? updatedBangVe.id : updatedBangVe.id.toString();
+        await this.firebaseBangVeService.updateBangVe(docId, updatedBangVe);
+        
+        console.log('Bang ve updated successfully');
+        
+        // Đóng dialog và trả về dữ liệu đã cập nhật
+        this.dialogRef.close(updatedBangVe);
+        this._snackBar.open('Cập nhật bảng vẽ thành công!', 'Đóng', { duration: 3000 });
+        
+      } catch (error) {
+        console.error('Error updating bang ve to Firebase:', error);
+        this._snackBar.open('Lỗi khi cập nhật bảng vẽ. Vui lòng thử lại!', 'Đóng', { duration: 3000 });
+      } finally {
+        this.isSaving = false;
+      }
+    } else if (this.isSaving) {
+      this._snackBar.open('Đang cập nhật bảng vẽ, vui lòng đợi...', 'Đóng', { duration: 2000 });
+    } else {
+      console.log('Form is invalid. Errors:', this.bangVeForm.errors);
+      this.bangVeForm.markAllAsTouched();
+      this._snackBar.open('Vui lòng điền đầy đủ và đúng thông tin!', 'Đóng', { duration: 3000 });
+    }
+  }
+
+  /**
    * Xử lý sự kiện khi nhấn nút "Thêm Bảng Vẽ" (trong dialog)
    */
   async themBangVe(): Promise<void> {
@@ -114,7 +185,10 @@ export class BangVeComponent implements OnInit {
           bd_ha_ngoai: formData.bd_ha_ngoai || '',
           bd_cao: formData.bd_cao || '',
           bd_ep: formData.bd_ep || '',
+          chu_vi_khuon: formData.chu_vi_khuon || 0,
           bung_bd: formData.bung_bd || 0,
+          ky_hieu_bv_boidayha: formData.ky_hieu_bv_boidayha || '',
+          ky_hieu_bv_boidaycao: formData.ky_hieu_bv_boidaycao || '',
           user_create: currentUsername,
           trang_thai: 0, // Đảm bảo trang_thai luôn là 0 cho bảng vẽ mới
           created_at: new Date(),
@@ -203,6 +277,8 @@ export class BangVeComponent implements OnInit {
       bd_cao: 'OK',
       bd_ep: 'OK',
       bung_bd: 1,
+      ky_hieu_bv_boidayha: 'TEST-BV-BDH-001',
+      ky_hieu_bv_boidaycao: 'TEST-BV-BDC-001',
       trang_thai: 0 // Đảm bảo trang_thai luôn là 0 khi test
     });
     console.log('Form after test patch:', this.bangVeForm.value);

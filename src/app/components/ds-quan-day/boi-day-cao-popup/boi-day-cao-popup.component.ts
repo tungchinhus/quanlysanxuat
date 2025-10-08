@@ -153,6 +153,37 @@ export class BoiDayCaoPopupComponent implements OnInit {
     
     console.log('Current user:', this.currentUser);
     console.log('Auth token:', this.authToken ? 'Available' : 'Not available');
+    
+    // Populate form with data from quanDay if available
+    if (this.data.quanDay) {
+      this.populateFormWithQuanDayData();
+    }
+  }
+  
+  // Method to populate form with quanDay data
+  private populateFormWithQuanDayData(): void {
+    console.log('Populating form with quanDay data:', this.data.quanDay);
+    
+    // Populate basic fields
+    this.boiDayCaoForm.patchValue({
+      chu_vi_khuon: this.data.quanDay.chu_vi_khuon || 0,
+      kt_bung_bd_truoc: this.data.quanDay.bung_bd || 0,
+      bung_bd_sau: 0 // Always start with 0, user must input
+    });
+    
+    // Disable chu_vi_khuon and kt_bung_bd_truoc if they have values
+    if (this.data.quanDay.chu_vi_khuon && this.data.quanDay.chu_vi_khuon > 0) {
+      this.boiDayCaoForm.get('chu_vi_khuon')?.disable();
+    }
+    if (this.data.quanDay.bung_bd && this.data.quanDay.bung_bd > 0) {
+      this.boiDayCaoForm.get('kt_bung_bd_truoc')?.disable();
+    }
+    
+    // Make bung_bd_sau required
+    this.boiDayCaoForm.get('bung_bd_sau')?.setValidators([Validators.required, Validators.min(0)]);
+    this.boiDayCaoForm.get('bung_bd_sau')?.updateValueAndValidity();
+    
+    console.log('Form values after population:', this.boiDayCaoForm.value);
   }
 
   // Kiểm tra form có thể submit được không
@@ -166,7 +197,8 @@ export class BoiDayCaoPopupComponent implements OnInit {
       'nha_san_xuat',
       'ngay_san_xuat',
       'soboiday',
-      'may_quan_day'
+      'may_quan_day',
+      'bung_bd_sau'
     ];
     
     // Kiểm tra các field bắt buộc
@@ -225,8 +257,8 @@ export class BoiDayCaoPopupComponent implements OnInit {
 
       // Tạo data cho bd_cao
       const bdCaoData: Omit<BdCaoData, 'id'> = {
-        masothe_bd_cao: `${this.data.quanDay.kyhieuquanday}-066`,
-        kyhieubangve: this.data.quanDay.kyhieuquanday,
+        masothe_bd_cao: this.data.quanDay.ky_hieu_bv_boidaycao || `${this.data.quanDay.kyhieuquanday}-066`,
+        kyhieubangve: this.data.quanDay.ky_hieu_bv_boidaycao || this.data.quanDay.kyhieuquanday,
         ngaygiacong: new Date(),
         nguoigiacong: currentUser.fullName || currentUser.username || currentUser.email || 'Unknown',
         quycachday: formData.quy_cach_day,

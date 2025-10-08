@@ -15,6 +15,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatNativeDateModule, MAT_DATE_LOCALE, MAT_DATE_FORMATS, DateAdapter, NativeDateAdapter } from '@angular/material/core';
 import { WINDING_MACHINE_HA_OPTIONS } from '../../constant/constant';
 
@@ -64,6 +65,7 @@ interface ApiResponse {
     MatIconModule,
     MatDatepickerModule,
     MatSelectModule,
+    MatCheckboxModule,
     MatNativeDateModule
   ],
   standalone: true,
@@ -89,6 +91,7 @@ export class BoiDayHaComponent implements OnInit {
   windingMachines = WINDING_MACHINE_HA_OPTIONS;
 
   boiDayHaControl = new FormControl('', [Validators.required]);
+  autoPiCheckbox = new FormControl(false); // Checkbox để bật/tắt tự động thêm π
 
   constructor(
     private fb: FormBuilder, 
@@ -97,7 +100,8 @@ export class BoiDayHaComponent implements OnInit {
     private http: HttpClient
   ) {
     this.windingForm = this.fb.group({
-      boiDayHa: this.boiDayHaControl
+      boiDayHa: this.boiDayHaControl,
+      autoPi: this.autoPiCheckbox
     });
     const navigation = this.router.getCurrentNavigation();
     // Lấy data drawing từ navigation state
@@ -128,6 +132,7 @@ export class BoiDayHaComponent implements OnInit {
     const bangVeData = this.bangVeData || this.bangve[0];
     const isViewMode = this.mode === 'view';
     
+    
     this.windingForm = this.fb.group({
       congSuat: [{ value: bangVeData?.congsuat, disabled: true }],
       TBKT: [{ value: bangVeData?.tbkt, disabled: true }],
@@ -136,8 +141,9 @@ export class BoiDayHaComponent implements OnInit {
 
       ngayGiaCong: [{ value: today.toLocaleDateString('vi-VN'), disabled: true }],
       nguoiGiaCong: [{ value: currentUser.name, disabled: true }],
-      kyHieuBV: [{ value: bangVeData?.kyhieubangve + '-065', disabled: true }],
+      kyHieuBV: [{ value: bangVeData?.ky_hieu_bv_boidayha || bangVeData?.kyhieubangve, disabled: true }],
       quyCachDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      autoPi: [{ value: false, disabled: isViewMode }],
       soSoiDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required, Validators.min(1)]],
       ngaySanXuat: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
       nhaSanXuat: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
@@ -197,6 +203,9 @@ export class BoiDayHaComponent implements OnInit {
     });
     // Emit initial validity
     this.isValid.emit(this.windingForm.valid);
+
+    // Xử lý tự động thêm π khi nhập số trong quyCachDay
+    this.setupAutoPiLogic();
   }
 
   loadWorkers(): void {
@@ -309,6 +318,51 @@ export class BoiDayHaComponent implements OnInit {
       email: localStorage.getItem('email') || '',
       role: localStorage.getItem('userRole') || 'User'
     };
+  }
+
+  /**
+   * Thiết lập logic tự động thêm π khi nhập số trong quyCachDay
+   */
+  setupAutoPiLogic(): void {
+    const quyCachDayControl = this.windingForm.get('quyCachDay');
+    const autoPiControl = this.windingForm.get('autoPi');
+
+    if (quyCachDayControl && autoPiControl) {
+      // Lắng nghe thay đổi trong trường quyCachDay
+      quyCachDayControl.valueChanges.subscribe(value => {
+        if (autoPiControl.value && value) {
+          const processedValue = this.processAutoPi(value);
+          if (processedValue !== value) {
+            quyCachDayControl.setValue(processedValue, { emitEvent: false });
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Xử lý tự động thêm π trước mỗi số trong chuỗi
+   * @param inputValue Giá trị đầu vào
+   * @returns Chuỗi đã được xử lý
+   */
+  processAutoPi(inputValue: string): string {
+    if (!inputValue) return inputValue;
+
+    // Tách chuỗi thành các phần, giữ lại khoảng trắng và ký tự khác
+    const parts = inputValue.split(/(\s+)/);
+    
+    return parts.map(part => {
+      // Nếu phần này là số (có thể có dấu thập phân)
+      if (/^\d+(\.\d+)?$/.test(part)) {
+        return `π${part}`;
+      }
+      // Nếu phần này là số đã có π ở đầu thì giữ nguyên
+      if (/^π\d+(\.\d+)?$/.test(part)) {
+        return part;
+      }
+      // Các phần khác giữ nguyên
+      return part;
+    }).join('');
   }
   onSubmit(): void {
     if (this.windingForm.valid) {

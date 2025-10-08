@@ -48,7 +48,10 @@ export interface BangVeData {
   bd_ha_ngoai: string;
   bd_cao: string;
   bd_ep: string;
+  chu_vi_khuon: number;
   bung_bd: number;
+  ky_hieu_bv_boidayha?: string; // Ký hiệu BV boidayha
+  ky_hieu_bv_boidaycao?: string; // Ký hiệu BV boidaycao
   user_create: string;
   trang_thai: number | null; // Thay đổi từ boolean thành number | null
   trang_thai_approve?: string; // KCS approval status: 'pending', 'approved', 'rejected'
@@ -612,7 +615,12 @@ export class DsBangveComponent implements OnInit {
         assigned_by_user_id: userBangVeRecord?.assigned_by_user_id || null,
         // Thêm thông tin user_update để debug
         bd_ha_user_update: userBangVeRecord?.user_update || null,
-        bd_cao_user_update: userBangVeRecord?.user_update || null
+        bd_cao_user_update: userBangVeRecord?.user_update || null,
+        // Đảm bảo các field bảng vẽ được populate đúng
+        bd_ha_ngoai: drawing.bd_ha_ngoai || '',
+        bd_ep: drawing.bd_ep || '',
+        ky_hieu_bv_boidayha: drawing.ky_hieu_bv_boidayha || '',
+        ky_hieu_bv_boidaycao: drawing.ky_hieu_bv_boidaycao || ''
       };
     });
   }
@@ -880,6 +888,7 @@ export class DsBangveComponent implements OnInit {
         bd_ha_ngoai: drawingData.bd_ha_ngoai,
         bd_cao: drawingData.bd_cao,
         bd_ep: drawingData.bd_ep,
+        chu_vi_khuon: drawingData.chu_vi_khuon || 0,
         bung_bd: drawingData.bung_bd,
         user_create: currentUsername,
         trang_thai: STATUS.NEW, // Bảng vẽ mới có trang_thai = 0
@@ -1984,7 +1993,10 @@ export class DsBangveComponent implements OnInit {
       bd_ha_ngoai: item.bd_ha_ngoai || '',
       bd_cao: item.bd_cao || '',
       bd_ep: item.bd_ep || '',
+      chu_vi_khuon: item.chu_vi_khuon || 0,
       bung_bd: item.bung_bd || 0,
+      ky_hieu_bv_boidayha: item.ky_hieu_bv_boidayha || '',
+      ky_hieu_bv_boidaycao: item.ky_hieu_bv_boidaycao || '',
       user_create: item.user_create || '',
       // Safe type casting for trang_thai: handle both boolean and number
       trang_thai: this.safeCastTrangThai(item.trang_thai),

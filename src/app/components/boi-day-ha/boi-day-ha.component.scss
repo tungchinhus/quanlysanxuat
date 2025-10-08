@@ -278,6 +278,23 @@ mat-card-content {
   align-items: center;
 }
 
+/* Form field with checkbox */
+.form-field-with-checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  .pi-checkbox {
+    font-size: 11px;
+    margin-top: 2px;
+    
+    ::ng-deep .mat-checkbox-label {
+      font-size: 11px;
+      color: #666;
+    }
+  }
+}
+
 /* Nhãn và văn bản phụ */
 .block-label,
 .block-label-inline,

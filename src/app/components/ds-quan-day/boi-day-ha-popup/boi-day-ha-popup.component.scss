@@ -84,6 +84,101 @@
     margin-bottom: 16px; // Giảm từ 24px xuống 16px
   }
 
+  // Main 2x2 Grid Container
+  .main-grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 12px;
+    width: 100%;
+  }
+
+  // Grid Cell Styling
+  .grid-cell {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: fit-content;
+    
+    .cell-title {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      padding-bottom: 8px;
+    }
+
+    .form-field {
+      width: 100%;
+      margin-bottom: 4px;
+      
+      .full-width {
+        width: 100%;
+      }
+    }
+
+    // Special styling for winding controls row
+    .winding-controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 4px;
+
+      .winding-direction-group {
+        flex: 1;
+        min-width: 0;
+
+        .mat-label {
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 8px;
+          color: #333;
+        }
+
+        .radio-group {
+          display: flex;
+          gap: 16px;
+          align-items: center;
+
+          .radio-button {
+            margin-right: 12px;
+          }
+        }
+      }
+
+      .winding-machine-field {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+  }
+
+  // Responsive design for smaller screens
+  @media (max-width: 1200px) {
+    .main-grid-container {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, auto);
+      gap: 8px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .main-grid-container {
+      gap: 6px;
+    }
+    
+    .grid-cell {
+      padding: 8px;
+      
+      .cell-title {
+        font-size: 14px;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+      }
+    }
+  }
+
   .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -96,6 +191,27 @@
     box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
     margin-bottom: 8px; // Giảm từ 16px xuống 8px
   }
+
+  .new-line {
+    clear: both;
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .force-new-line {
+    clear: both !important;
+    display: block !important;
+    width: 100% !important;
+    margin-top: 20px !important;
+    margin-bottom: 8px !important;
+    float: none !important;
+    position: relative !important;
+    flex: none !important;
+    flex-basis: 100% !important;
+    order: 999 !important;
+  }
+
 
   // Special styling for wire specification row
   .wire-spec-row {
@@ -185,12 +301,19 @@
       font-weight: 500;
       margin-bottom: 8px;
       color: #333;
+      
+      // Làm đậm phần giá trị trong ngoặc
+      ::ng-deep .dynamic-value {
+        font-weight: 700 !important;
+        color: #000 !important;
+      }
     }
 
     .input-group {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+      width: 100%;
     }
 
     .small-input {
@@ -215,6 +338,16 @@
     margin-top: 0; // Loại bỏ margin-top để căn chỉnh với Chiều quấn dây
   }
 
+  .thickness-controls-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: nowrap;
+    width: 100%;
+  }
+
   .thickness-group {
     display: flex;
     align-items: center;
@@ -236,6 +369,61 @@
         padding: 4px;
         text-align: center;
         box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
+      }
+    }
+  }
+
+  .thickness-group-horizontal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .thickness-label {
+      min-width: 80px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .thickness-input-small {
+      width: 50px;
+      min-width: 0;
+      padding: 4px;
+      text-align: center;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  }
+
+  .thickness-subgroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: space-between;
+    width: 100%;
+
+    .subgroup-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      text-align: center;
+      width: 100%;
+    }
+
+    .subgroup-inputs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+
+      .small-input {
+        min-width: 60px;
+        width: 60px;
+        flex: 0 0 auto;
       }
     }
   }

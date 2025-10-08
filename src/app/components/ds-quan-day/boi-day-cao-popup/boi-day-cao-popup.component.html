@@ -45,7 +45,11 @@
             </div>
             <div class="info-item">
               <span class="label">Ký hiệu BV:</span>
-              <span class="value">{{ data.quanDay.kyhieuquanday }}-066</span>
+              <span class="value">{{ data.quanDay.ky_hieu_bv_boidaycao || data.quanDay.kyhieuquanday }}</span>
+              <!-- Debug info -->
+              <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                Debug: ky_hieu_bv_boidaycao = "{{ data.quanDay.ky_hieu_bv_boidaycao }}" | kyhieuquanday = "{{ data.quanDay.kyhieuquanday }}"
+              </div>
             </div>
             <div class="info-item">
               <span class="label">Ngày tạo:</span>
@@ -124,8 +128,14 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="dimension-field">
-              <mat-label>Bụng bd sau (mm)</mat-label>
+              <mat-label>Bụng bd sau (mm) *</mat-label>
               <input matInput type="number" formControlName="bung_bd_sau" placeholder="Nhập bụng bd sau">
+              <mat-error *ngIf="boiDayCaoForm.get('bung_bd_sau')?.hasError('required') && boiDayCaoForm.get('bung_bd_sau')?.touched">
+                Bụng bd sau là bắt buộc.
+              </mat-error>
+              <mat-error *ngIf="boiDayCaoForm.get('bung_bd_sau')?.hasError('min') && boiDayCaoForm.get('bung_bd_sau')?.touched">
+                Bụng bd sau phải lớn hơn hoặc bằng 0.
+              </mat-error>
             </mat-form-field>
           </div>
 

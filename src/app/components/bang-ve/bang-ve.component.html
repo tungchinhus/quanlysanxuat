@@ -86,8 +86,17 @@
           </mat-form-field>
         </div>
 
-        <!-- Hàng thứ năm cho Bụng BD -->
+        <!-- Hàng thứ năm cho Chu vi khuôn và Bụng BD -->
         <div class="form-row">
+          <!-- Trường Chu vi khuôn -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Chu vi khuôn</mat-label>
+            <input matInput formControlName="chu_vi_khuon" type="number" placeholder="Nhập chu vi khuôn">
+            <mat-error *ngIf="bangVeForm.get('chu_vi_khuon')?.hasError('pattern') && bangVeForm.get('chu_vi_khuon')?.touched">
+              Chu vi khuôn phải là số nguyên.
+            </mat-error>
+          </mat-form-field>
+
           <!-- Trường Bụng BD -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Bụng BD</mat-label>
@@ -95,6 +104,21 @@
             <mat-error *ngIf="bangVeForm.get('bung_bd')?.hasError('pattern') && bangVeForm.get('bung_bd')?.touched">
               Bụng BD phải là số nguyên.
             </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Hàng thứ sáu cho Ký hiệu BV boidayha và boidaycao -->
+        <div class="form-row">
+          <!-- Trường Ký hiệu BV boidayha -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Ký hiệu BV Bối dây hạ</mat-label>
+            <input matInput formControlName="ky_hieu_bv_boidayha" placeholder="Nhập ký hiệu BV boidayha">
+          </mat-form-field>
+
+          <!-- Trường Ký hiệu BV boidaycao -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Ký hiệu BV Bối dây cao</mat-label>
+            <input matInput formControlName="ky_hieu_bv_boidaycao" placeholder="Nhập ký hiệu BV boidaycao">
           </mat-form-field>
         </div>
       </form>
@@ -107,6 +131,14 @@
         <mat-icon *ngIf="!isSaving">save</mat-icon>
         <mat-icon *ngIf="isSaving" class="spinning">refresh</mat-icon>
         {{ isSaving ? 'Đang lưu...' : 'Thêm mới bảng vẽ' }}
+      </button>
+
+      <!-- Nút "Lưu" chỉ hiển thị khi ở chế độ 'edit' -->
+      <button mat-raised-button color="primary" (click)="capNhatBangVe()" *ngIf="data.mode === 'edit'" 
+              [disabled]="isSaving || bangVeForm.invalid">
+        <mat-icon *ngIf="!isSaving">save</mat-icon>
+        <mat-icon *ngIf="isSaving" class="spinning">refresh</mat-icon>
+        {{ isSaving ? 'Đang lưu...' : 'Lưu' }}
       </button>     
   
       <!-- Nút "Đóng" hoặc "Hủy" -->
