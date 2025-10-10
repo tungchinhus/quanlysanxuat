@@ -1,4 +1,4 @@
-.boi-day-cao-popup {
+.boi-day-ha-popup {
   .popup-header {
     display: flex;
     justify-content: space-between;
@@ -64,14 +64,151 @@
     }
   }
 
-  .form-section {
-    margin-bottom: 16px; // Giảm từ 24px xuống 16px
+  /* Lưới hai cột cho phần thông tin đầu trang */
+  .header-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+    margin-top: 8px;
+    margin-bottom: 20px;
   }
 
-  .form-grid {
+  /* Làm nổi bật giá trị ở phần thông tin đầu trang */
+  .header-info-grid .info-item .value {
+    font-weight: 700;
+    font-style: normal;
+    color: #000;
+  }
+
+  // Main 2x2 Grid Container
+  .main-grid-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    grid-template-rows: repeat(2, auto);
+    gap: 12px;
+    width: 100%;
+  }
+
+  // Grid Cell Styling
+  .grid-cell {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: fit-content;
+    
+    .cell-title {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      padding-bottom: 8px;
+    }
+
+  .form-field {
+    width: 100%;
+    margin-bottom: 4px;
+    
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  // Styling for quy cach day row with checkbox
+  .quy-cach-day-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+    
+    .quy-cach-day-field {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .pi-checkbox {
+      flex-shrink: 0;
+      margin-top: 8px; // Căn chỉnh với input field
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      
+      ::ng-deep .mat-mdc-checkbox-label {
+        font-size: 12px;
+        line-height: 1.3;
+        color: #666;
+        white-space: nowrap;
+      }
+      
+      ::ng-deep .mat-mdc-checkbox-frame {
+        border-color: #ccc;
+      }
+      
+      ::ng-deep .mat-mdc-checkbox-checked .mat-mdc-checkbox-background {
+        background-color: #1976d2;
+      }
+    }
+  }
+
+    // Special styling for winding controls row
+    .winding-controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 4px;
+
+      .winding-direction-group {
+        flex: 1;
+        min-width: 0;
+
+        .mat-label {
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 8px;
+          color: #333;
+        }
+
+        .radio-group {
+          display: flex;
+          gap: 16px;
+          align-items: center;
+
+          .radio-button {
+            margin-right: 12px;
+          }
+        }
+      }
+
+      .winding-machine-field {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+  }
+
+  // Responsive design for smaller screens
+  @media (max-width: 1200px) {
+    .main-grid-container {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, auto);
+      gap: 8px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .main-grid-container {
+      gap: 6px;
+    }
+    
+    .grid-cell {
+      padding: 8px;
+      
+      .cell-title {
+        font-size: 14px;
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+      }
+    }
   }
 
   // Reuse improved layout styles from bôi dây hạ
@@ -165,11 +302,85 @@
     color: #000;
   }
 
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
   .form-field {
     width: 100%;
     min-width: 0; // Bỏ min-width mặc định của Material để tránh đẩy rộng cột
     box-sizing: border-box; // Đảm bảo padding và border không làm tăng kích thước
     margin-bottom: 8px; // Giảm từ 16px xuống 8px
+  }
+
+  .new-line {
+    clear: both;
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .force-new-line {
+    clear: both !important;
+    display: block !important;
+    width: 100% !important;
+    margin-top: 20px !important;
+    margin-bottom: 8px !important;
+    float: none !important;
+    position: relative !important;
+    flex: none !important;
+    flex-basis: 100% !important;
+    order: 999 !important;
+  }
+
+
+  // Special styling for wire specification row
+  .wire-spec-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+
+    .wire-spec-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .strand-count-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // Special styling for basic dimensions row
+  .basic-dimensions-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 8px; // Giảm từ 20px xuống 8px
+
+    .dimension-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // Special styling for manufacturer and date row
+  .manufacturer-date-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+
+    .manufacturer-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .date-field {
+      flex: 1;
+      min-width: 0;
+    }
   }
 
   .combined-field {
@@ -178,12 +389,19 @@
       font-weight: 500;
       margin-bottom: 8px;
       color: #333;
+      
+      // Làm đậm phần giá trị trong ngoặc
+      ::ng-deep .dynamic-value {
+        font-weight: 700 !important;
+        color: #000 !important;
+      }
     }
 
     .input-group {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+      width: 100%;
     }
 
     .small-input {
@@ -201,11 +419,56 @@
     }
   }
 
+  // Special styling for winding controls row
+  .winding-controls-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start; // Thay đổi từ flex-end thành flex-start để căn chỉnh với phần Độ dày
+    margin-bottom: 4px; // Giảm khoảng cách với row tiếp theo
+
+    .winding-direction-group {
+      flex: 1;
+      min-width: 0;
+
+      .mat-label {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      .radio-group {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        .radio-button {
+          margin-right: 12px;
+        }
+      }
+    }
+
+    .winding-machine-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
   .thickness-controls {
     display: flex;
     flex-direction: column;
     gap: 8px; // Giảm từ 12px xuống 8px
-    margin-top: 0; // Loại bỏ margin-top để căn chỉnh
+    margin-top: 0; // Loại bỏ margin-top để căn chỉnh với Chiều quấn dây
+  }
+
+  .thickness-controls-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: nowrap;
+    width: 100%;
   }
 
   .thickness-group {
@@ -233,11 +496,166 @@
     }
   }
 
+  .thickness-group-horizontal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .thickness-label {
+      min-width: 80px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .thickness-input-small {
+      width: 50px;
+      min-width: 0;
+      padding: 4px;
+      text-align: center;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  }
+
+  .thickness-subgroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: space-between;
+    width: 100%;
+
+    .subgroup-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      text-align: center;
+      width: 100%;
+    }
+
+    .subgroup-inputs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+
+      .small-input {
+        min-width: 60px;
+        width: 60px;
+        flex: 0 0 auto;
+      }
+    }
+  }
+
   .tc-note {
     font-size: 12px;
     color: #666;
     margin-left: 8px;
+    font-style: italic;
   }
+
+// Global styling để làm compact form fields
+::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  min-height: 32px !important;
+}
+
+::ng-deep .mat-mdc-form-field-flex {
+  min-height: 32px !important;
+}
+
+::ng-deep input.mat-mdc-input-element,
+::ng-deep textarea.mat-mdc-input-element {
+  height: 32px !important;
+  padding: 2px 6px !important;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  min-height: 32px !important;
+}
+
+::ng-deep .mat-mdc-select-trigger {
+  min-height: 32px !important;
+  padding: 2px 6px !important;
+  font-size: 13px;
+}
+
+// CSS để hiển thị border đỏ khi có lỗi
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+  .mat-mdc-form-field-outline {
+    color: #f44336 !important;
+  }
+  
+  .mat-mdc-form-field-outline-thick {
+    color: #f44336 !important;
+    border-width: 2px !important;
+  }
+}
+
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline {
+  color: #f44336 !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
+  color: #f44336 !important;
+  border-width: 2px !important;
+}
+
+// Đảm bảo mat-error luôn hiển thị khi có lỗi
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+  height: auto !important;
+  min-height: 24px !important;
+  margin-bottom: 8px !important;
+}
+
+// Đảm bảo form field có đủ không gian cho error message
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: 8px !important; // Giảm từ 16px xuống 8px
+  display: block !important;
+}
+
+// Đảm bảo form field wrapper có đủ không gian
+::ng-deep .mat-mdc-form-field-wrapper {
+  padding-bottom: 8px !important; // Giảm từ 16px xuống 8px
+}
+
+// CSS mạnh để đảm bảo mat-error hiển thị đúng vị trí
+::ng-deep .mat-mdc-form-field-error {
+  position: relative !important;
+  display: block !important;
+  margin-top: 2px !important; // Giảm từ 4px xuống 2px
+  margin-bottom: 4px !important; // Giảm từ 8px xuống 4px
+  font-size: 12px !important;
+  color: #f44336 !important;
+  line-height: 1.2 !important;
+}
+
+// Đảm bảo subscript wrapper không bị absolute positioning
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  position: relative !important;
+  margin-top: 4px !important;
+  min-height: 20px !important;
+  height: auto !important;
+}
+
+::ng-deep mat-error {
+  margin-top: 2px; // Giảm từ 4px xuống 2px
+  font-size: 12px;
+  line-height: 1.2;
+  color: #f44336 !important;
+  display: block !important;
+  position: relative;
+  font-weight: 500;
+  padding: 2px 0;
+  margin-bottom: 4px; // Giảm từ 8px xuống 4px
+}
 
   .popup-actions {
     display: flex;
@@ -288,9 +706,8 @@
 
 .with-note {
   display: flex;
-  align-items: flex-end; // Align with bottom of input fields like Ra, Rb, Rc
+  align-items: center; // Căn giữa theo chiều dọc
   gap: 8px;
-  margin-top: 8px; // Move down to align with the input fields row
 
   .form-field {
     flex: 1; // Input chiếm hết không gian còn lại
@@ -300,133 +717,5 @@
     font-size: 12px;
     color: #666;
     white-space: nowrap; // Ngăn không cho xuống dòng
-    margin-bottom: 4px; // Align with input field baseline
   }
 }
-
-::ng-deep .mat-mdc-form-field-infix {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  min-height: 32px !important;
-}
-
-::ng-deep .mat-mdc-form-field-flex {
-  min-height: 32px !important;
-}
-
-::ng-deep input.mat-mdc-input-element,
-::ng-deep textarea.mat-mdc-input-element {
-  height: 32px !important;
-  padding: 2px 6px !important;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-::ng-deep .mat-mdc-text-field-wrapper {
-  min-height: 32px !important;
-}
-
-::ng-deep .mat-mdc-select-trigger {
-  min-height: 32px !important;
-  padding: 2px 6px !important;
-  font-size: 13px;
-}
-
-::ng-deep .mat-form-field-wrapper {
-  padding-bottom: 0px !important;
-}
-
-// CSS mạnh để đảm bảo mat-error hiển thị đúng vị trí
-::ng-deep .mat-mdc-form-field-error {
-  position: relative !important;
-  display: block !important;
-  margin-top: 2px !important; // Giảm từ 4px xuống 2px
-  margin-bottom: 4px !important; // Giảm từ 8px xuống 4px
-  font-size: 12px !important;
-  color: #f44336 !important;
-  line-height: 1.2 !important;
-}
-
-// Đảm bảo subscript wrapper không bị absolute positioning
-::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  position: relative !important;
-  margin-top: 4px !important;
-  min-height: 20px !important;
-  height: auto !important;
-}
-
-::ng-deep mat-error {
-  margin-top: 2px; // Giảm từ 4px xuống 2px
-  font-size: 12px;
-  line-height: 1.2;
-  color: #f44336 !important;
-  display: block !important;
-  position: relative;
-  font-weight: 500;
-  padding: 2px 0;
-  margin-bottom: 4px; // Giảm từ 8px xuống 4px
-}
-
-// CSS để hiển thị border đỏ khi có lỗi
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
-  .mat-mdc-form-field-outline {
-    color: #f44336 !important;
-  }
-  
-  .mat-mdc-form-field-outline-thick {
-    color: #f44336 !important;
-    border-width: 2px !important;
-  }
-}
-
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline {
-  color: #f44336 !important;
-}
-
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
-  color: #f44336 !important;
-  border-width: 2px !important;
-}
-
-// Đảm bảo mat-error luôn hiển thị khi có lỗi
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
-  height: auto !important;
-  min-height: 24px !important;
-  margin-bottom: 8px !important;
-}
-
-// Đảm bảo form field có đủ không gian cho error message
-::ng-deep .mat-mdc-form-field {
-  margin-bottom: 8px !important; // Giảm từ 16px xuống 8px
-  display: block !important;
-}
-
-// Đảm bảo form field wrapper có đủ không gian
-::ng-deep .mat-mdc-form-field-wrapper {
-  padding-bottom: 8px !important; // Giảm từ 16px xuống 8px
-}
-
-// CSS cho inline hint - không còn sử dụng
-// .field-with-hint {
-//   position: relative;
-//   display: flex;
-//   flex-direction: column;
-//   gap: 4px;
-//   margin-bottom: 8px; // Thêm margin-bottom để tạo khoảng cách
-// }
-
-// .inline-hint {
-//   font-size: 12px;
-//   color: #f44336;
-//   margin-top: 2px;
-//   padding: 2px 8px;
-//   background-color: #ffebee;
-//   border-radius: 4px;
-//   border-left: 3px solid #f44336;
-  
-//   &.normal {
-//     color: #666;
-//     background-color: #f5f5f5;
-//     border-left-color: #666;
-//   }
-// }

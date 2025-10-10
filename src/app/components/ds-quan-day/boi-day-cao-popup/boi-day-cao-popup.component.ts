@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { CommonService } from '../../../services/common.service';
 import { AuthService } from '../../../services/auth.service';
 import { FirebaseService } from '../../../services/firebase.service';
@@ -58,7 +59,8 @@ export const VIETNAMESE_DATE_FORMATS = {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatSelectModule,
-    MatRadioModule
+    MatRadioModule,
+    MatCheckboxModule
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
@@ -98,11 +100,11 @@ export class BoiDayCaoPopupComponent implements OnInit {
     this.boiDayCaoForm = this.fb.group({
       // Các field bắt buộc
       quy_cach_day: ['', Validators.required],
-      so_soi_day: [1, [Validators.required, Validators.min(1)]],
+      auto_pi_prefix: [false], // Checkbox để tự động thêm ký hiệu φ
+      so_soi_day: [1, [Validators.required, Validators.min(0)]],
       nha_san_xuat: [Manufacturer.bsHN, Validators.required],
       nha_san_xuat_other: [''],
       ngay_san_xuat: [new Date(), Validators.required],
-      soboiday: ['', Validators.required], // Bỏ Validators.pattern để cho phép nhập text
       
       // Các field kỹ thuật
       chu_vi_khuon: [0, [Validators.min(0)]],
@@ -113,26 +115,33 @@ export class BoiDayCaoPopupComponent implements OnInit {
       xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
       xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_6: [6, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       mot_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
       mot_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
       mot_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      mot_dau_day_6: [6, [Validators.min(2), Validators.max(6)]],
       
-      // Chu vi bối dây cao
-      chu_vi_bd_cao_1p: [0, [Validators.min(0)]],
-      chu_vi_bd_cao_2p: [0, [Validators.min(0)]],
-      chu_vi_bd_cao_3p: [0, [Validators.min(0)]],
+      // Chu vi bối dây cao trong
+      chu_vi_bd_cao_trong_1p: [0, [Validators.required, Validators.min(0)]],
+      chu_vi_bd_cao_trong_2p: [0, [Validators.required, Validators.min(0)]],
+      chu_vi_bd_cao_trong_3p: [0, [Validators.required, Validators.min(0)]],
+      
+      // Kích thước bối dây cao trong
+      kt_bd_cao_trong_1p: [0, [Validators.min(0)]],
+      kt_bd_cao_trong_2p: [0, [Validators.min(0)]],
+      kt_bd_cao_trong_3p: [0, [Validators.min(0)]],
+
+      // Kích thước bối dây cao ngoài
+      kt_bd_cao_ngoai_bv_1p: [0, [Validators.required, Validators.min(0)]],
+      kt_bd_cao_ngoai_bv_2p: [0, [Validators.required, Validators.min(0)]],
+      kt_bd_cao_ngoai_bv_3p: [0, [Validators.required, Validators.min(0)]],
       
       // Điện trở cao
-      dien_tro_cao_ra: [0, [Validators.min(0)]],
-      dien_tro_cao_rb: [0, [Validators.min(0)]],
-      dien_tro_cao_rc: [0, [Validators.min(0)]],
-      do_lech_dien_tro_giua_cac_pha: [0, [Validators.min(0), Validators.max(2)]],
+      dien_tro_cao_ra: [0, [Validators.required, Validators.min(0)]],
+      dien_tro_cao_rb: [0, [Validators.required, Validators.min(0)]],
+      dien_tro_cao_rc: [0, [Validators.required, Validators.min(0)]],
+      do_lech_dien_tro_giua_cac_pha: [0, [Validators.required, Validators.min(0), Validators.max(2)]],
       
       ghi_chu: ['']
     });
@@ -146,6 +155,16 @@ export class BoiDayCaoPopupComponent implements OnInit {
 
   ngOnInit() {
     console.log('BoiDayCaoPopup initialized with data:', this.data);
+    console.log('quanDay data:', this.data.quanDay);
+    console.log('ky_hieu_bv_boidaycao:', this.data.quanDay?.ky_hieu_bv_boidaycao);
+    console.log('kyhieuquanday:', this.data.quanDay?.kyhieuquanday);
+    console.log('soboi day fields:', {
+      soboiday: this.data.quanDay?.soboiday,
+      so_boi_day: this.data.quanDay?.so_boi_day,
+      soboidaycao: this.data.quanDay?.soboidaycao
+    });
+    console.log('All quanDay properties:', Object.keys(this.data.quanDay || {}));
+    console.log('quanDay object full:', JSON.stringify(this.data.quanDay, null, 2));
     
     // Lấy thông tin user hiện tại
     this.currentUser = this.authService.getCurrentUser();
@@ -158,20 +177,62 @@ export class BoiDayCaoPopupComponent implements OnInit {
     if (this.data.quanDay) {
       this.populateFormWithQuanDayData();
     }
+    
+    // Auto-populate from bangve if available
+    this.autoPopulateFromBangve();
   }
   
   // Method to populate form with quanDay data
   private populateFormWithQuanDayData(): void {
     console.log('Populating form with quanDay data:', this.data.quanDay);
     
-    // Populate basic fields
+    // Populate basic fields from bangve data
     this.boiDayCaoForm.patchValue({
+      // Thông tin cơ bản từ bangve
+      quy_cach_day: this.data.quanDay.quy_cach_day || '',
+      auto_pi_prefix: false, // Mặc định là false
+      so_soi_day: this.data.quanDay.so_soi_day || 1,
+      nha_san_xuat: this.data.quanDay.nha_san_xuat || Manufacturer.bsHN,
+      ngay_san_xuat: this.data.quanDay.ngay_san_xuat ? new Date(this.data.quanDay.ngay_san_xuat) : new Date(),
+      
+      // Thông tin kỹ thuật từ bangve
       chu_vi_khuon: this.data.quanDay.chu_vi_khuon || 0,
       kt_bung_bd_truoc: this.data.quanDay.bung_bd || 0,
-      bung_bd_sau: 0 // Always start with 0, user must input
+      bung_bd_sau: this.data.quanDay.bung_bd_sau || 0,
+      chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : true,
+      may_quan_day: this.data.quanDay.may_quan_day || '',
+      
+      // Thông số dây quấn từ bangve
+      xung_quanh_day_2: this.data.quanDay.xung_quanh_day_2 || 2,
+      xung_quanh_day_3: this.data.quanDay.xung_quanh_day_3 || 3,
+      xung_quanh_day_4: this.data.quanDay.xung_quanh_day_4 || 4,
+      hai_dau_day_2: this.data.quanDay.hai_dau_day_2 || 2,
+      hai_dau_day_3: this.data.quanDay.hai_dau_day_3 || 3,
+      hai_dau_day_4: this.data.quanDay.hai_dau_day_4 || 4,
+      mot_dau_day_2: this.data.quanDay.mot_dau_day_2 || 2,
+      mot_dau_day_3: this.data.quanDay.mot_dau_day_3 || 3,
+      mot_dau_day_4: this.data.quanDay.mot_dau_day_4 || 4,
+      
+      // Đo lường từ bangve
+      chu_vi_bd_cao_trong_1p: this.data.quanDay.chu_vi_bd_cao_trong_1p || 0,
+      chu_vi_bd_cao_trong_2p: this.data.quanDay.chu_vi_bd_cao_trong_2p || 0,
+      chu_vi_bd_cao_trong_3p: this.data.quanDay.chu_vi_bd_cao_trong_3p || 0,
+      kt_bd_cao_trong_1p: 0, // Sẽ được điền từ parseAndFillBdCaoTrong
+      kt_bd_cao_trong_2p: 0, // Sẽ được điền từ parseAndFillBdCaoTrong
+      kt_bd_cao_trong_3p: 0, // Sẽ được điền từ parseAndFillBdCaoTrong
+      kt_bd_cao_ngoai_bv_1p: 0, // Sẽ được điền từ parseAndFillBdCaoNgoai
+      kt_bd_cao_ngoai_bv_2p: 0, // Sẽ được điền từ parseAndFillBdCaoNgoai
+      kt_bd_cao_ngoai_bv_3p: 0, // Sẽ được điền từ parseAndFillBdCaoNgoai
+      dien_tro_cao_ra: this.data.quanDay.dien_tro_cao_ra || 0,
+      dien_tro_cao_rb: this.data.quanDay.dien_tro_cao_rb || 0,
+      dien_tro_cao_rc: this.data.quanDay.dien_tro_cao_rc || 0,
+      do_lech_dien_tro_giua_cac_pha: this.data.quanDay.do_lech_dien_tro_giua_cac_pha || 0,
+      
+      // Ghi chú
+      ghi_chu: this.data.quanDay.ghi_chu || ''
     });
     
-    // Disable chu_vi_khuon and kt_bung_bd_truoc if they have values
+    // Disable fields that are read-only from bangve
     if (this.data.quanDay.chu_vi_khuon && this.data.quanDay.chu_vi_khuon > 0) {
       this.boiDayCaoForm.get('chu_vi_khuon')?.disable();
     }
@@ -183,7 +244,12 @@ export class BoiDayCaoPopupComponent implements OnInit {
     this.boiDayCaoForm.get('bung_bd_sau')?.setValidators([Validators.required, Validators.min(0)]);
     this.boiDayCaoForm.get('bung_bd_sau')?.updateValueAndValidity();
     
+    // Parse và điền dữ liệu từ các trường string format
+    this.parseAndFillBdCaoTrong(this.data.quanDay.bd_cao_trong);
+    this.parseAndFillBdCaoNgoai(this.data.quanDay.bd_cao_ngoai);
+    
     console.log('Form values after population:', this.boiDayCaoForm.value);
+    console.log('Available quanDay properties:', Object.keys(this.data.quanDay));
   }
 
   // Kiểm tra form có thể submit được không
@@ -196,24 +262,55 @@ export class BoiDayCaoPopupComponent implements OnInit {
       'so_soi_day', 
       'nha_san_xuat',
       'ngay_san_xuat',
-      'soboiday',
       'may_quan_day',
-      'bung_bd_sau'
+      'bung_bd_sau',
+      'chu_vi_bd_cao_trong_1p',
+      'chu_vi_bd_cao_trong_2p', 
+      'chu_vi_bd_cao_trong_3p',
+      'kt_bd_cao_ngoai_bv_1p',
+      'kt_bd_cao_ngoai_bv_2p',
+      'kt_bd_cao_ngoai_bv_3p',
+      'dien_tro_cao_ra',
+      'dien_tro_cao_rb',
+      'dien_tro_cao_rc',
+      'do_lech_dien_tro_giua_cac_pha'
     ];
     
     // Kiểm tra các field bắt buộc
     for (const fieldName of requiredFields) {
       const control = this.boiDayCaoForm.get(fieldName);
-      if (!control || !control.valid || !control.value) {
-        console.log(`Field ${fieldName} không hợp lệ:`, control?.value, control?.errors);
+      if (!control || !control.valid) {
+        console.log(`❌ Field ${fieldName} không hợp lệ:`, control?.value, control?.errors);
         return false;
       }
+      
+      // Kiểm tra giá trị có tồn tại và hợp lệ không
+      const value = control.value;
+      if (value === null || value === undefined || value === '') {
+        console.log(`❌ Field ${fieldName} chưa được điền:`, value);
+        return false;
+      }
+      
+      // Chỉ kiểm tra không được âm (cho phép giá trị 0)
+      if (typeof value === 'number' && value < 0) {
+        console.log(`❌ Field ${fieldName} không được âm:`, value);
+        return false;
+      }
+      
+      console.log(`✅ Field ${fieldName} OK:`, value);
     }
     
     // Kiểm tra nhà sản xuất
     const nhaSanXuat = this.boiDayCaoForm.get('nha_san_xuat')?.value;
     if (!nhaSanXuat || !nhaSanXuat.trim()) {
       console.log('Chưa chọn nhà sản xuất');
+      return false;
+    }
+    
+    // Kiểm tra ngày sản xuất
+    const ngaySanXuat = this.boiDayCaoForm.get('ngay_san_xuat')?.value;
+    if (!ngaySanXuat) {
+      console.log('Chưa chọn ngày sản xuất');
       return false;
     }
     
@@ -225,6 +322,69 @@ export class BoiDayCaoPopupComponent implements OnInit {
   onManufacturerChange(event: any) {
     // Không cần xử lý đặc biệt vì không còn option 'OTHER'
     console.log('Manufacturer changed to:', event.value);
+  }
+
+  // Xử lý khi nhập vào trường Quy cách dây
+  onQuyCachDayInput(event: any) {
+    const inputValue = event.target.value;
+    const autoPiPrefix = this.boiDayCaoForm.get('auto_pi_prefix')?.value;
+    
+    if (autoPiPrefix && inputValue) {
+      // Kiểm tra nếu người dùng nhập số và chưa có ký hiệu φ ở đầu
+      const numberMatch = inputValue.match(/^(\d+(?:\.\d+)?)/);
+      if (numberMatch && !inputValue.startsWith('φ')) {
+        // Tự động thêm ký hiệu φ vào đầu
+        const number = numberMatch[1];
+        const restOfValue = inputValue.substring(numberMatch[0].length);
+        const newValue = `φ${number}${restOfValue}`;
+        
+        // Cập nhật giá trị trong form
+        this.boiDayCaoForm.patchValue({ quy_cach_day: newValue });
+        
+        // Cập nhật giá trị trong input để hiển thị
+        event.target.value = newValue;
+        
+        // Đặt cursor về cuối để người dùng có thể tiếp tục gõ
+        setTimeout(() => {
+          const input = event.target;
+          const length = input.value.length;
+          input.setSelectionRange(length, length);
+        }, 0);
+      }
+    }
+  }
+
+  // Xử lý khi checkbox thay đổi trạng thái
+  onPiPrefixCheckboxChange(event: any) {
+    const isChecked = event.checked;
+    const currentValue = this.boiDayCaoForm.get('quy_cach_day')?.value;
+    
+    if (currentValue) {
+      const newValue = this.togglePiSymbol(currentValue, isChecked);
+      this.boiDayCaoForm.patchValue({ quy_cach_day: newValue });
+    }
+  }
+
+  // Method để toggle ký hiệu φ dựa trên trạng thái checkbox
+  private togglePiSymbol(value: string, shouldHavePi: boolean): string {
+    if (!value) return value;
+    
+    const hasPi = value.startsWith('φ');
+    
+    if (shouldHavePi && !hasPi) {
+      // Thêm φ vào đầu nếu checkbox được check và chưa có φ
+      const numberMatch = value.match(/^(\d+(?:\.\d+)?)/);
+      if (numberMatch) {
+        const number = numberMatch[1];
+        const restOfValue = value.substring(numberMatch[0].length);
+        return `φ${number}${restOfValue}`;
+      }
+    } else if (!shouldHavePi && hasPi) {
+      // Bỏ φ ở đầu nếu checkbox được uncheck và đã có φ
+      return value.substring(1); // Bỏ ký tự đầu tiên (φ)
+    }
+    
+    return value; // Không thay đổi gì
   }
 
   // Submit form
@@ -270,8 +430,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
         xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
         haidau: this.getSelectedThickness(formData, 'hai_dau'),
         mot_dau: this.getSelectedThickness(formData, 'mot_dau'),
-        bd_tt: `${formData.chu_vi_bd_cao_1p},${formData.chu_vi_bd_cao_2p},${formData.chu_vi_bd_cao_3p}`,
-        chuvi_bd_tt: formData.chu_vi_bd_cao_1p,
+        chuvi_bd_tt: formData.chu_vi_bd_cao_trong_1p,
         dientroRa: formData.dien_tro_cao_ra,
         dientroRb: formData.dien_tro_cao_rb,
         dientroRc: formData.dien_tro_cao_rc,
@@ -288,10 +447,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       const bdCaoId = await this.firebaseBdCaoService.createBdCao(bdCaoData);
       console.log('BdCao created with ID:', bdCaoId);
 
-      // 2. Cập nhật số bối dây vào bangve
-      await this.updateBangVeSoboiday(this.data.quanDay.id, formData.soboiday);
-
-      // 3. Cập nhật trạng thái trong user_bangve với bd_cao_id mới
+      // 2. Cập nhật trạng thái trong user_bangve với bd_cao_id mới
       await this.updateUserBangVeStatus(userFromFirestore.id, this.data.quanDay.id, bdCaoId);
       
       // Hiển thị thông báo thành công
@@ -502,16 +658,19 @@ export class BoiDayCaoPopupComponent implements OnInit {
   // Helper to get selected thickness from form data
   private getSelectedThickness(formData: any, fieldName: string): number {
     if (fieldName === 'xung_quanh') {
+      // Check which xung quanh field has a value
       if (formData.xung_quanh_day_2 && formData.xung_quanh_day_2 > 0) return 2;
       if (formData.xung_quanh_day_3 && formData.xung_quanh_day_3 > 0) return 3;
       if (formData.xung_quanh_day_4 && formData.xung_quanh_day_4 > 0) return 4;
       if (formData.xung_quanh_day_6 && formData.xung_quanh_day_6 > 0) return 6;
     } else if (fieldName === 'hai_dau') {
+      // Check which hai dau field has a value
       if (formData.hai_dau_day_2 && formData.hai_dau_day_2 > 0) return 2;
       if (formData.hai_dau_day_3 && formData.hai_dau_day_3 > 0) return 3;
       if (formData.hai_dau_day_4 && formData.hai_dau_day_4 > 0) return 4;
       if (formData.hai_dau_day_6 && formData.hai_dau_day_6 > 0) return 6;
     } else if (fieldName === 'mot_dau') {
+      // Check which mot dau field has a value
       if (formData.mot_dau_day_2 && formData.mot_dau_day_2 > 0) return 2;
       if (formData.mot_dau_day_3 && formData.mot_dau_day_3 > 0) return 3;
       if (formData.mot_dau_day_4 && formData.mot_dau_day_4 > 0) return 4;
@@ -644,6 +803,181 @@ export class BoiDayCaoPopupComponent implements OnInit {
     }
   }
 
+  // Auto-populate form from bangve data
+  private autoPopulateFromBangve(): void {
+    console.log('Auto-populating from bangve data...');
+    
+    // Nếu có dữ liệu từ bangve, điền vào các trường tương ứng
+    if (this.data.quanDay) {
+      const bangveData = this.data.quanDay;
+      
+      // Điền thông tin từ bangve vào các trường chưa có giá trị
+      const currentFormValue = this.boiDayCaoForm.value;
+      
+      // Chỉ điền nếu trường chưa có giá trị hoặc có giá trị mặc định
+      if (!currentFormValue.quy_cach_day && bangveData.quy_cach_day) {
+        this.boiDayCaoForm.patchValue({ quy_cach_day: bangveData.quy_cach_day });
+      }
+      
+      if (currentFormValue.so_soi_day === 1 && bangveData.so_soi_day) {
+        this.boiDayCaoForm.patchValue({ so_soi_day: bangveData.so_soi_day });
+      }
+      
+      if (!currentFormValue.may_quan_day && bangveData.may_quan_day) {
+        this.boiDayCaoForm.patchValue({ may_quan_day: bangveData.may_quan_day });
+      }
+      
+      // Parse và điền dữ liệu bd_cao_trong (format: "244/436")
+      this.parseAndFillBdCaoTrong(bangveData.bd_cao_trong);
+      
+      // Parse và điền dữ liệu bd_cao_ngoai nếu có
+      this.parseAndFillBdCaoNgoai(bangveData.bd_cao_ngoai);
+      
+      // Điền các giá trị đo lường nếu có
+      if (bangveData.chu_vi_bd_cao_trong_1p && bangveData.chu_vi_bd_cao_trong_1p > 0) {
+        this.boiDayCaoForm.patchValue({ chu_vi_bd_cao_trong_1p: bangveData.chu_vi_bd_cao_trong_1p });
+      }
+      if (bangveData.chu_vi_bd_cao_trong_2p && bangveData.chu_vi_bd_cao_trong_2p > 0) {
+        this.boiDayCaoForm.patchValue({ chu_vi_bd_cao_trong_2p: bangveData.chu_vi_bd_cao_trong_2p });
+      }
+      if (bangveData.chu_vi_bd_cao_trong_3p && bangveData.chu_vi_bd_cao_trong_3p > 0) {
+        this.boiDayCaoForm.patchValue({ chu_vi_bd_cao_trong_3p: bangveData.chu_vi_bd_cao_trong_3p });
+      }
+      
+      // Điền điện trở nếu có
+      if (bangveData.dien_tro_cao_ra && bangveData.dien_tro_cao_ra > 0) {
+        this.boiDayCaoForm.patchValue({ dien_tro_cao_ra: bangveData.dien_tro_cao_ra });
+      }
+      if (bangveData.dien_tro_cao_rb && bangveData.dien_tro_cao_rb > 0) {
+        this.boiDayCaoForm.patchValue({ dien_tro_cao_rb: bangveData.dien_tro_cao_rb });
+      }
+      if (bangveData.dien_tro_cao_rc && bangveData.dien_tro_cao_rc > 0) {
+        this.boiDayCaoForm.patchValue({ dien_tro_cao_rc: bangveData.dien_tro_cao_rc });
+      }
+      
+      console.log('Auto-population completed. Form values:', this.boiDayCaoForm.value);
+    }
+  }
+
+  // Parse và điền dữ liệu bd_cao_trong (format: "244/436")
+  private parseAndFillBdCaoTrong(bdCaoTrongData: string): void {
+    if (!bdCaoTrongData) return;
+    
+    console.log('Parsing bd_cao_trong data:', bdCaoTrongData);
+    
+    // Parse format "244/436" hoặc "244/436/550"
+    const values = bdCaoTrongData.split('/').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    
+    if (values.length >= 2) {
+      // Điền vào KT bối dây cao trong
+      this.boiDayCaoForm.patchValue({
+        kt_bd_cao_trong_1p: values[0],
+        kt_bd_cao_trong_2p: values[1],
+        kt_bd_cao_trong_3p: values[2] || values[1] // Nếu không có pha 3, dùng giá trị pha 2
+      });
+      
+      console.log('Filled KT bối dây cao trong:', {
+        pha1: values[0],
+        pha2: values[1], 
+        pha3: values[2] || values[1]
+      });
+      
+      // Trigger change detection để cập nhật UI
+      this.changeDetectorRef.detectChanges();
+    }
+  }
+
+  // Parse và điền dữ liệu bd_cao_ngoai (format: "244/436")
+  private parseAndFillBdCaoNgoai(bdCaoNgoaiData: string): void {
+    if (!bdCaoNgoaiData) return;
+    
+    console.log('Parsing bd_cao_ngoai data:', bdCaoNgoaiData);
+    
+    // Parse format "244/436" hoặc "244/436/550"
+    const values = bdCaoNgoaiData.split('/').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    
+    if (values.length >= 2) {
+      // Điền vào KT bối dây cao ngoài
+      this.boiDayCaoForm.patchValue({
+        kt_bd_cao_ngoai_bv_1p: values[0],
+        kt_bd_cao_ngoai_bv_2p: values[1],
+        kt_bd_cao_ngoai_bv_3p: values[2] || values[1] // Nếu không có pha 3, dùng giá trị pha 2
+      });
+      
+      console.log('Filled KT bối dây cao ngoài:', {
+        pha1: values[0],
+        pha2: values[1], 
+        pha3: values[2] || values[1]
+      });
+      
+      // Trigger change detection để cập nhật UI
+      this.changeDetectorRef.detectChanges();
+    }
+  }
+
+  // Get KT bối dây cao trong từ bangve data
+  getKtBdCaoTrongLabel(): string {
+    if (!this.data.quanDay?.bd_cao_trong) return 'KT bối dây cao trong (mm)';
+    return `KT bối dây cao trong <span class="dynamic-value">(${this.data.quanDay.bd_cao_trong})</span>`;
+  }
+
+  // Get KT bối dây cao ngoài từ bangve data
+  getKtBdCaoNgoaiLabel(): string {
+    if (!this.data.quanDay?.bd_cao_ngoai) return 'KT bối dây cao ngoài (mm)';
+    return `KT bối dây cao ngoài <span class="dynamic-value">(${this.data.quanDay.bd_cao_ngoai})</span>`;
+  }
+
+  // Get số bối dây from quanDay data
+  getSoboiday(): string {
+    if (!this.data.quanDay) return 'N/A';
+    
+    return this.data.quanDay.soboiday || 
+           this.data.quanDay.so_boi_day || 
+           this.data.quanDay.soboidaycao || 
+           this.data.quanDay.so_boi_day_cao ||
+           'N/A';
+  }
+
+  // Debug method để kiểm tra trạng thái form
+  debugFormStatus(): void {
+    console.log('=== FORM DEBUG STATUS ===');
+    console.log('Form valid:', this.boiDayCaoForm.valid);
+    console.log('Form touched:', this.boiDayCaoForm.touched);
+    console.log('Form dirty:', this.boiDayCaoForm.dirty);
+    
+    const requiredFields = [
+      'quy_cach_day',
+      'so_soi_day', 
+      'nha_san_xuat',
+      'ngay_san_xuat',
+      'may_quan_day',
+      'bung_bd_sau',
+      'chu_vi_bd_cao_trong_1p',
+      'chu_vi_bd_cao_trong_2p', 
+      'chu_vi_bd_cao_trong_3p',
+      'kt_bd_cao_ngoai_bv_1p',
+      'kt_bd_cao_ngoai_bv_2p',
+      'kt_bd_cao_ngoai_bv_3p',
+      'dien_tro_cao_ra',
+      'dien_tro_cao_rb',
+      'dien_tro_cao_rc',
+      'do_lech_dien_tro_giua_cac_pha'
+    ];
+    
+    requiredFields.forEach(fieldName => {
+      const control = this.boiDayCaoForm.get(fieldName);
+      console.log(`${fieldName}:`, {
+        value: control?.value,
+        valid: control?.valid,
+        errors: control?.errors,
+        touched: control?.touched
+      });
+    });
+    
+    console.log('Can submit:', this.canSubmitForm());
+    console.log('=== END FORM DEBUG ===');
+  }
+
   // Test method để kiểm tra chức năng lưu số bối dây
   testSoboidaySave(): void {
     console.log('Testing soboiday save functionality...');
@@ -654,15 +988,14 @@ export class BoiDayCaoPopupComponent implements OnInit {
       so_soi_day: 1,
       nha_san_xuat: Manufacturer.bsHN,
       ngay_san_xuat: new Date(),
-      soboiday: '3',
       chu_vi_khuon: 100,
       kt_bung_bd_truoc: 50,
       bung_bd_sau: 60,
       chieu_quan_day: true,
       may_quan_day: 'Máy 1',
-      chu_vi_bd_cao_1p: 200,
-      chu_vi_bd_cao_2p: 200,
-      chu_vi_bd_cao_3p: 200,
+      chu_vi_bd_cao_trong_1p: 200,
+      chu_vi_bd_cao_trong_2p: 200,
+      chu_vi_bd_cao_trong_3p: 200,
       dien_tro_cao_ra: 1.5,
       dien_tro_cao_rb: 1.5,
       dien_tro_cao_rc: 1.5
@@ -670,6 +1003,5 @@ export class BoiDayCaoPopupComponent implements OnInit {
     
     console.log('Form patched with test data');
     console.log('Form valid:', this.boiDayCaoForm.valid);
-    console.log('Soboiday value:', this.boiDayCaoForm.get('soboiday')?.value);
   }
 }
