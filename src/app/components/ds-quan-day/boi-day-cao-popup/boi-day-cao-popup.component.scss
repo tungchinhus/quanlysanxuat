@@ -154,12 +154,16 @@
     .winding-controls-row {
       display: flex;
       gap: 16px;
-      align-items: flex-start;
+      align-items: center; // Thay đổi từ flex-start thành center để align ngang hàng
       margin-bottom: 4px;
 
       .winding-direction-group {
         flex: 1;
         min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; // Thêm để center vertical
+        margin-top: -35px;
 
         .mat-label {
           font-size: 14px;
@@ -170,19 +174,35 @@
 
         .radio-group {
           display: flex;
-          gap: 16px;
-          align-items: center;
-
-          .radio-button {
-            margin-right: 12px;
-          }
+          gap: 8px;
+          align-items: center; // Đảm bảo radio buttons align center
         }
       }
 
       .winding-machine-field {
         flex: 1;
         min-width: 0;
+        
+        // Đảm bảo mat-form-field có cùng height với radio group
+        ::ng-deep .mat-form-field-wrapper {
+          padding-top: 0;
+          padding-bottom: 0;
+        }
+        
+        ::ng-deep .mat-form-field-infix {
+          padding-top: 0;
+          padding-bottom: 0;
+        }
       }
+    }
+
+  .radio-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+
+    .radio-button {
+      margin-right: 12px;
     }
   }
 
@@ -254,37 +274,6 @@
       flex: 1;
       min-width: 0;
       margin-left: 8px; // Additional spacing for date field
-    }
-  }
-
-  .winding-controls-row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start; // Thay đổi từ flex-end thành flex-start để căn chỉnh
-    margin-bottom: 4px; // Giảm khoảng cách với row tiếp theo
-
-    .winding-direction-group {
-      flex: 1;
-      min-width: 0;
-
-      .mat-label {
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 8px;
-        color: #333;
-        display: block;
-      }
-
-      .radio-group {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-      }
-    }
-
-    .winding-machine-field {
-      flex: 1;
-      min-width: 0;
     }
   }
 
@@ -399,14 +388,52 @@
 
     .input-group {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
       width: 100%;
     }
 
     .small-input {
       min-width: 0; // Tránh đẩy rộng cột
       width: 100%;
+      
+      // Đảm bảo input không bị wrap
+      ::ng-deep .mat-form-field-wrapper {
+        width: 100%;
+        min-width: 0;
+      }
+      
+      ::ng-deep .mat-form-field-infix {
+        width: 100%;
+        min-width: 0;
+      }
+      
+      ::ng-deep .mat-input-element {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+  }
+
+  // Responsive design for input groups
+  @media (max-width: 1200px) {
+    .combined-field .input-group {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .combined-field .input-group {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .combined-field .input-group {
+      grid-template-columns: 1fr;
+      gap: 3px;
     }
   }
 
@@ -416,41 +443,6 @@
 
     .radio-button {
       margin-right: 12px;
-    }
-  }
-
-  // Special styling for winding controls row
-  .winding-controls-row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start; // Thay đổi từ flex-end thành flex-start để căn chỉnh với phần Độ dày
-    margin-bottom: 4px; // Giảm khoảng cách với row tiếp theo
-
-    .winding-direction-group {
-      flex: 1;
-      min-width: 0;
-
-      .mat-label {
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 8px;
-        color: #333;
-      }
-
-      .radio-group {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-
-        .radio-button {
-          margin-right: 12px;
-        }
-      }
-    }
-
-    .winding-machine-field {
-      flex: 1;
-      min-width: 0;
     }
   }
 
@@ -718,4 +710,4 @@
     color: #666;
     white-space: nowrap; // Ngăn không cho xuống dòng
   }
-}
+}}

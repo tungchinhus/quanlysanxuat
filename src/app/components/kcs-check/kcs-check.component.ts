@@ -837,11 +837,47 @@ export class KcsCheckComponent implements OnInit {
         sosoiday: 1,
         ngaysanxuat: new Date('2025-01-19'),
         nhasanxuat: 'nha_sx1',
+        chuvikhuon: 0,
+        kt_bung_bd: 0,
         chieuquanday: true,
         mayquanday: '2',
-        xungquanh: 2,
-        haidau: 2,
+        // Xung quanh fields
+        xungquanh_2: 0,
+        xungquanh_3: 0,
+        xungquanh_4: 0,
+        xungquanh_6: 0,
+        xungquanh_8: 0,
+        // Hai đầu fields
+        haidau_2: 0,
+        haidau_3: 0,
+        haidau_4: 0,
+        haidau_6: 0,
+        haidau_8: 0,
+        // Một đầu fields
+        mot_dau_2: 0,
+        mot_dau_3: 0,
+        mot_dau_4: 0,
+        mot_dau_6: 0,
+        mot_dau_8: 0,
+        // Chu vi bối dây cao trong
+        chuvi_bd_cao_trong_1p: 0,
+        chuvi_bd_cao_trong_2p: 0,
+        chuvi_bd_cao_trong_3p: 0,
+        // KT bối dây cao trong
+        kt_boiday_cao_trong_1p: 0,
+        kt_boiday_cao_trong_2p: 0,
+        kt_boiday_cao_trong_3p: 0,
+        // KT bối dây cao ngoài
+        kt_bd_cao_ngoai_1p: 0,
+        kt_bd_cao_ngoai_2p: 0,
+        kt_bd_cao_ngoai_3p: 0,
+        // Điện trở cao
+        dientroRa: 0,
+        dientroRb: 0,
+        dientroRc: 0,
+        dolechdientro: 0,
         trang_thai: 1, // Processed, ready for KCS check
+        trang_thai_approve: 'pending',
         user_update: 'system',
         created_at: new Date(),
         khau_sx: 'bd_cao'

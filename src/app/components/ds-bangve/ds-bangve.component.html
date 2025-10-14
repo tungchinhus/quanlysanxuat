@@ -86,10 +86,6 @@
               <mat-header-cell *matHeaderCellDef> BD Ép </mat-header-cell>
               <mat-cell *matCellDef="let d"> {{d.bd_ep}} </mat-cell>
             </ng-container>
-            <ng-container matColumnDef="bung_bd">
-              <mat-header-cell *matHeaderCellDef> Bưng BD </mat-header-cell>
-              <mat-cell *matCellDef="let d"> {{d.bung_bd}} </mat-cell>
-            </ng-container>
             <ng-container matColumnDef="user_create">
               <mat-header-cell *matHeaderCellDef> Người tạo </mat-header-cell>
               <mat-cell *matCellDef="let d"> {{d.user_create}} </mat-cell>
@@ -126,6 +122,10 @@
                   <button mat-menu-item (click)="onGiaCong(d)" class="menu-item">
                      <mat-icon class="menu-icon">build</mat-icon>
                      <span class="menu-text">Thao tác quấn dây</span>
+                  </button>
+                  <button *ngIf="hasAdminOrManagerRole()" mat-menu-item (click)="deleteBangVe(d)" class="menu-item delete-item">
+                    <mat-icon class="menu-icon">delete</mat-icon>
+                    <span class="menu-text">Xóa bảng vẽ</span>
                   </button>
                 </mat-menu>
               </mat-cell>
@@ -278,10 +278,6 @@
             <ng-container matColumnDef="bd_ep">
               <mat-header-cell *matHeaderCellDef> BD Ép </mat-header-cell>
               <mat-cell *matCellDef="let d"> {{d.bd_ep}} </mat-cell>
-            </ng-container>
-            <ng-container matColumnDef="bung_bd">
-              <mat-header-cell *matHeaderCellDef> Bưng BD </mat-header-cell>
-              <mat-cell *matCellDef="let d"> {{d.bung_bd}} </mat-cell>
             </ng-container>
             <ng-container matColumnDef="user_process">
               <mat-header-cell *matHeaderCellDef> Người xử lý </mat-header-cell>

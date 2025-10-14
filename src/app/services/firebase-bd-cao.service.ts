@@ -28,16 +28,41 @@ export interface BdCaoData {
   sosoiday: number;
   ngaysanxuat: Date;
   nhasanxuat: string;
+  chuvikhuon: number;
+  kt_bung_bd: number;
   chieuquanday: boolean;
   mayquanday?: string;
-  xungquanh: number;
-  haidau: number;
-  mot_dau?: number;
-  bd_tt?: string;
-  chuvi_bd_tt?: number;
-  dientroRa?: number;
-  dientroRb?: number;
-  dientroRc?: number;
+  // Xung quanh fields
+  xungquanh_2?: number;
+  xungquanh_3?: number;
+  xungquanh_4?: number;
+  xungquanh_6?: number;
+  xungquanh_8?: number;
+  // Hai đầu fields
+  haidau_2?: number;
+  haidau_3?: number;
+  haidau_4?: number;
+  haidau_6?: number;
+  haidau_8?: number;
+  // Một đầu fields
+  mot_dau_2?: number;
+  mot_dau_3?: number;
+  mot_dau_4?: number;
+  mot_dau_6?: number;
+  mot_dau_8?: number;
+  // Chu vi bối dây cao trong
+  chuvi_bd_cao_trong_1p?: number;
+  chuvi_bd_cao_trong_2p?: number;
+  chuvi_bd_cao_trong_3p?: number;
+  // KT bối dây cao trong
+  kt_boiday_cao_trong_1p?: number;
+  kt_boiday_cao_trong_2p?: number;
+  kt_boiday_cao_trong_3p?: number;
+  // KT bối dây cao ngoài
+  kt_bd_cao_ngoai_1p?: number;
+  kt_bd_cao_ngoai_2p?: number;
+  kt_bd_cao_ngoai_3p?: number;
+  kt_bd_cao_bv?: number;
   trang_thai: number;
   trang_thai_approve?: string; // 'pending', 'approved', 'rejected'
   user_update?: string;
@@ -71,6 +96,65 @@ export class FirebaseBdCaoService {
   }
 
   /**
+   * Map Firestore data to BdCaoData interface
+   */
+  private mapFirestoreDataToBdCaoData(doc: DocumentSnapshot): BdCaoData {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      masothe_bd_cao: data?.['masothe_bd_cao'] || '',
+      kyhieubangve: data?.['kyhieubangve'] || '',
+      ngaygiacong: data?.['ngaygiacong']?.toDate() || new Date(),
+      nguoigiacong: data?.['nguoigiacong'] || '',
+      quycachday: data?.['quycachday'] || '',
+      sosoiday: data?.['sosoiday'] || 0,
+      ngaysanxuat: data?.['ngaysanxuat']?.toDate() || new Date(),
+      nhasanxuat: data?.['nhasanxuat'] || '',
+      chuvikhuon: data?.['chuvikhuon'] || 0,
+      kt_bung_bd: data?.['kt_bung_bd'] || 0,
+      chieuquanday: data?.['chieuquanday'] || false,
+      mayquanday: data?.['mayquanday'] || '',
+      // Xung quanh fields
+      xungquanh_2: data?.['xungquanh_2'] || 0,
+      xungquanh_3: data?.['xungquanh_3'] || 0,
+      xungquanh_4: data?.['xungquanh_4'] || 0,
+      xungquanh_6: data?.['xungquanh_6'] || 0,
+      xungquanh_8: data?.['xungquanh_8'] || 0,
+      // Hai đầu fields
+      haidau_2: data?.['haidau_2'] || 0,
+      haidau_3: data?.['haidau_3'] || 0,
+      haidau_4: data?.['haidau_4'] || 0,
+      haidau_6: data?.['haidau_6'] || 0,
+      haidau_8: data?.['haidau_8'] || 0,
+      // Một đầu fields
+      mot_dau_2: data?.['mot_dau_2'] || 0,
+      mot_dau_3: data?.['mot_dau_3'] || 0,
+      mot_dau_4: data?.['mot_dau_4'] || 0,
+      mot_dau_6: data?.['mot_dau_6'] || 0,
+      mot_dau_8: data?.['mot_dau_8'] || 0,
+      // Chu vi bối dây cao trong
+      chuvi_bd_cao_trong_1p: data?.['chuvi_bd_cao_trong_1p'] || 0,
+      chuvi_bd_cao_trong_2p: data?.['chuvi_bd_cao_trong_2p'] || 0,
+      chuvi_bd_cao_trong_3p: data?.['chuvi_bd_cao_trong_3p'] || 0,
+      // KT bối dây cao trong
+      kt_boiday_cao_trong_1p: data?.['kt_boiday_cao_trong_1p'] || 0,
+      kt_boiday_cao_trong_2p: data?.['kt_boiday_cao_trong_2p'] || 0,
+      kt_boiday_cao_trong_3p: data?.['kt_boiday_cao_trong_3p'] || 0,
+      // KT bối dây cao ngoài
+      kt_bd_cao_ngoai_1p: data?.['kt_bd_cao_ngoai_1p'] || 0,
+      kt_bd_cao_ngoai_2p: data?.['kt_bd_cao_ngoai_2p'] || 0,
+      kt_bd_cao_ngoai_3p: data?.['kt_bd_cao_ngoai_3p'] || 0,
+      kt_bd_cao_bv: data?.['kt_bd_cao_bv'] || 0,
+      trang_thai: data?.['trang_thai'] || 0,
+      trang_thai_approve: data?.['trang_thai_approve'] || 'pending',
+      user_update: data?.['user_update'] || '',
+      created_at: data?.['created_at']?.toDate() || new Date(),
+      updated_at: data?.['updated_at']?.toDate() || new Date(),
+      khau_sx: data?.['khau_sx'] || ''
+    };
+  }
+
+  /**
    * Create a new bd_cao record in Firebase
    */
   async createBdCao(bdCaoData: Omit<BdCaoData, 'id'>): Promise<string> {
@@ -80,7 +164,7 @@ export class FirebaseBdCaoService {
       const now = new Date();
       const data = {
         ...bdCaoData,
-        trang_thai_approve: bdCaoData.trang_thai_approve || 'pending', // Ensure trang_thai_approve is set to 'pending' if not provided
+        trang_thai_approve: bdCaoData.trang_thai_approve || 'pending',
         created_at: Timestamp.fromDate(now),
         updated_at: Timestamp.fromDate(now)
       };
@@ -111,34 +195,7 @@ export class FirebaseBdCaoService {
       const bdCaoList: BdCaoData[] = [];
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const bdCao: BdCaoData = {
-          id: doc.id,
-          masothe_bd_cao: data['masothe_bd_cao'] || '',
-          kyhieubangve: data['kyhieubangve'] || '',
-          ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
-          nguoigiacong: data['nguoigiacong'] || '',
-          quycachday: data['quycachday'] || '',
-          sosoiday: data['sosoiday'] || 0,
-          ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
-          nhasanxuat: data['nhasanxuat'] || '',
-          chieuquanday: data['chieuquanday'] || false,
-          mayquanday: data['mayquanday'] || '',
-          xungquanh: data['xungquanh'] || 0,
-          haidau: data['haidau'] || 0,
-          mot_dau: data['mot_dau'] || 0,
-          bd_tt: data['bd_tt'] || '',
-          chuvi_bd_tt: data['chuvi_bd_tt'] || 0,
-          dientroRa: data['dientroRa'] || 0,
-          dientroRb: data['dientroRb'] || 0,
-          dientroRc: data['dientroRc'] || 0,
-          trang_thai: data['trang_thai'] || 0,
-          trang_thai_approve: data['trang_thai_approve'] || 'pending', // Default to pending
-          user_update: data['user_update'] || '',
-          created_at: data['created_at']?.toDate() || new Date(),
-          updated_at: data['updated_at']?.toDate() || new Date(),
-          khau_sx: data['khau_sx'] || ''
-        };
+        const bdCao = this.mapFirestoreDataToBdCaoData(doc);
         bdCaoList.push(bdCao);
       });
       
@@ -175,34 +232,7 @@ export class FirebaseBdCaoService {
         
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const bdCao: BdCaoData = {
-            id: doc.id,
-            masothe_bd_cao: data['masothe_bd_cao'] || '',
-            kyhieubangve: data['kyhieubangve'] || '',
-            ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
-            nguoigiacong: data['nguoigiacong'] || '',
-            quycachday: data['quycachday'] || '',
-            sosoiday: data['sosoiday'] || 0,
-            ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
-            nhasanxuat: data['nhasanxuat'] || '',
-            chieuquanday: data['chieuquanday'] || false,
-            mayquanday: data['mayquanday'] || '',
-            xungquanh: data['xungquanh'] || 0,
-            haidau: data['haidau'] || 0,
-          mot_dau: data['mot_dau'] || 0,
-            bd_tt: data['bd_tt'] || '',
-            chuvi_bd_tt: data['chuvi_bd_tt'] || 0,
-            dientroRa: data['dientroRa'] || 0,
-            dientroRb: data['dientroRb'] || 0,
-            dientroRc: data['dientroRc'] || 0,
-            trang_thai: data['trang_thai'] || 0,
-            trang_thai_approve: data['trang_thai_approve'] || 'pending',
-            user_update: data['user_update'] || '',
-            created_at: data['created_at']?.toDate() || new Date(),
-            updated_at: data['updated_at']?.toDate(),
-            khau_sx: data['khau_sx'] || ''
-          };
+          const bdCao = this.mapFirestoreDataToBdCaoData(doc);
           bdCaoList.push(bdCao);
         });
       }
@@ -231,34 +261,7 @@ export class FirebaseBdCaoService {
       const bdCaoList: BdCaoData[] = [];
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const bdCao: BdCaoData = {
-          id: doc.id,
-          masothe_bd_cao: data['masothe_bd_cao'] || '',
-          kyhieubangve: data['kyhieubangve'] || '',
-          ngaygiacong: data['ngaygiacong']?.toDate() || new Date(),
-          nguoigiacong: data['nguoigiacong'] || '',
-          quycachday: data['quycachday'] || '',
-          sosoiday: data['sosoiday'] || 0,
-          ngaysanxuat: data['ngaysanxuat']?.toDate() || new Date(),
-          nhasanxuat: data['nhasanxuat'] || '',
-          chieuquanday: data['chieuquanday'] || false,
-          mayquanday: data['mayquanday'] || '',
-          xungquanh: data['xungquanh'] || 0,
-          haidau: data['haidau'] || 0,
-          mot_dau: data['mot_dau'] || 0,
-          bd_tt: data['bd_tt'] || '',
-          chuvi_bd_tt: data['chuvi_bd_tt'] || 0,
-          dientroRa: data['dientroRa'] || 0,
-          dientroRb: data['dientroRb'] || 0,
-          dientroRc: data['dientroRc'] || 0,
-          trang_thai: data['trang_thai'] || 0,
-          trang_thai_approve: data['trang_thai_approve'] || 'pending', // Default to pending
-          user_update: data['user_update'] || '',
-          created_at: data['created_at']?.toDate() || new Date(),
-          updated_at: data['updated_at']?.toDate() || new Date(),
-          khau_sx: data['khau_sx'] || ''
-        };
+        const bdCao = this.mapFirestoreDataToBdCaoData(doc);
         bdCaoList.push(bdCao);
       });
       

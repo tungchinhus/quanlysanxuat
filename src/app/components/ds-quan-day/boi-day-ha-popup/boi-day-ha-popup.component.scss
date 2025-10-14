@@ -177,6 +177,20 @@
         padding-bottom: 4px;
       }
     }
+
+    // Responsive input groups for smaller screens
+    .combined-field .input-group {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    // For very small screens, stack inputs vertically
+    .combined-field .input-group {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
   }
 
   .form-grid {
@@ -311,8 +325,8 @@
 
     .input-group {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
       width: 100%;
     }
 

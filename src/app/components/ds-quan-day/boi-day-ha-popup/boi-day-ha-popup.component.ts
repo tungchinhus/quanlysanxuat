@@ -61,14 +61,43 @@ export interface BoiDayHaData {
   bung_bd_sau?: number;
   chieu_quan_day?: boolean;
   may_quan_day?: string;
-  xung_quanh_day?: number;
-  hai_dau_day?: number;
+  // Xung quanh fields
+  xung_quanh_day_2?: number;
+  xung_quanh_day_3?: number;
+  xung_quanh_day_4?: number;
+  xung_quanh_day_6?: number;
+  xung_quanh_day_8?: number;
+  // Hai đầu fields
+  hai_dau_day_2?: number;
+  hai_dau_day_3?: number;
+  hai_dau_day_4?: number;
+  hai_dau_day_6?: number;
+  hai_dau_day_8?: number;
+  // Một đầu fields
+  mot_dau_day_2?: number;
+  mot_dau_day_3?: number;
+  mot_dau_day_4?: number;
+  mot_dau_day_6?: number;
+  mot_dau_day_8?: number;
+  // QTD a12 fields
+  qtda12_2?: number;
+  qtda12_3?: number;
+  qtda12_4?: number;
+  qtda12_6?: number;
+  qtda12_8?: number;
+  // Chu vi bối dây hạ trong
   chu_vi_bd_ha_trong_1p?: number;
   chu_vi_bd_ha_trong_2p?: number;
   chu_vi_bd_ha_trong_3p?: number;
+  // KT bối dây hạ trong
+  kt_bd_ha_trong_1p?: number;
+  kt_bd_ha_trong_2p?: number;
+  kt_bd_ha_trong_3p?: number;
+  // KT bối dây hạ ngoài
   kt_bd_ha_ngoai_bv_1p?: number;
   kt_bd_ha_ngoai_bv_2p?: number;
   kt_bd_ha_ngoai_bv_3p?: number;
+  // Điện trở hạ
   dien_tro_ha_ra?: number;
   dien_tro_ha_rb?: number;
   dien_tro_ha_rc?: number;
@@ -97,14 +126,43 @@ export interface BoiDayHaSubmitData {
   bung_bd_sau?: number;
   chieu_quan_day?: boolean;
   may_quan_day?: string;
-  xung_quanh_day?: number;
-  hai_dau_day?: number;
+  // Xung quanh fields
+  xung_quanh_day_2?: number;
+  xung_quanh_day_3?: number;
+  xung_quanh_day_4?: number;
+  xung_quanh_day_6?: number;
+  xung_quanh_day_8?: number;
+  // Hai đầu fields
+  hai_dau_day_2?: number;
+  hai_dau_day_3?: number;
+  hai_dau_day_4?: number;
+  hai_dau_day_6?: number;
+  hai_dau_day_8?: number;
+  // Một đầu fields
+  mot_dau_day_2?: number;
+  mot_dau_day_3?: number;
+  mot_dau_day_4?: number;
+  mot_dau_day_6?: number;
+  mot_dau_day_8?: number;
+  // QTD a12 fields
+  qtda12_2?: number;
+  qtda12_3?: number;
+  qtda12_4?: number;
+  qtda12_6?: number;
+  qtda12_8?: number;
+  // Chu vi bối dây hạ trong
   chu_vi_bd_ha_trong_1p?: number;
   chu_vi_bd_ha_trong_2p?: number;
   chu_vi_bd_ha_trong_3p?: number;
+  // KT bối dây hạ trong
+  kt_bd_ha_trong_1p?: number;
+  kt_bd_ha_trong_2p?: number;
+  kt_bd_ha_trong_3p?: number;
+  // KT bối dây hạ ngoài
   kt_bd_ha_ngoai_bv_1p?: number;
   kt_bd_ha_ngoai_bv_2p?: number;
   kt_bd_ha_ngoai_bv_3p?: number;
+  // Điện trở hạ
   dien_tro_ha_ra?: number;
   dien_tro_ha_rb?: number;
   dien_tro_ha_rc?: number;
@@ -125,12 +183,43 @@ export interface BoiDayHaApiRequest {
   kt_bung_bd: number;
   chieuquanday: boolean;
   mayquanday: string;
-  xungquanh: number;
-  haidau: number;
-  mot_dau?: number;
-  kt_boiday_trong: string;
-  chuvi_bd_trong: number;
-  kt_bd_ngoai: string;
+  // Xung quanh fields
+  xungquanh_2?: number;
+  xungquanh_3?: number;
+  xungquanh_4?: number;
+  xungquanh_6?: number;
+  xungquanh_8?: number;
+  // Hai đầu fields
+  haidau_2?: number;
+  haidau_3?: number;
+  haidau_4?: number;
+  haidau_6?: number;
+  haidau_8?: number;
+  // Một đầu fields
+  mot_dau_2?: number;
+  mot_dau_3?: number;
+  mot_dau_4?: number;
+  mot_dau_6?: number;
+  mot_dau_8?: number;
+  // QTD a12 fields
+  qtda12_2?: number;
+  qtda12_3?: number;
+  qtda12_4?: number;
+  qtda12_6?: number;
+  qtda12_8?: number;
+  // Chu vi bối dây hạ trong
+  chuvi_bd_trong_1p?: number;
+  chuvi_bd_trong_2p?: number;
+  chuvi_bd_trong_3p?: number;
+  // KT bối dây hạ trong
+  kt_boiday_trong_1p?: number;
+  kt_boiday_trong_2p?: number;
+  kt_boiday_trong_3p?: number;
+  // KT bối dây hạ ngoài
+  kt_bd_ngoai_1p?: number;
+  kt_bd_ngoai_2p?: number;
+  kt_bd_ngoai_3p?: number;
+  // Điện trở hạ
   dientroRa: number;
   dientroRb: number;
   dientroRc: number;
@@ -208,15 +297,26 @@ export class BoiDayHaPopupComponent implements OnInit {
       bung_bd_sau: [0, [Validators.min(0)]],
       chieu_quan_day: [true],
       may_quan_day: ['', Validators.required],
-      xung_quanh_day_2: [2, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_3: [3, [Validators.min(2), Validators.max(6)]],
-      xung_quanh_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
-      hai_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
-      mot_dau_day_2: [2, [Validators.min(2), Validators.max(6)]],
-      mot_dau_day_3: [3, [Validators.min(2), Validators.max(6)]],
-      mot_dau_day_4: [4, [Validators.min(2), Validators.max(6)]],
+      xung_quanh_day_2: [0, [Validators.min(0)]],
+      xung_quanh_day_3: [0, [Validators.min(0)]],
+      xung_quanh_day_4: [0, [Validators.min(0)]],
+      xung_quanh_day_6: [0, [Validators.min(0)]],
+      xung_quanh_day_8: [0, [Validators.min(0)]],
+      hai_dau_day_2: [0, [Validators.min(0)]],
+      hai_dau_day_3: [0, [Validators.min(0)]],
+      hai_dau_day_4: [0, [Validators.min(0)]],
+      hai_dau_day_6: [0, [Validators.min(0)]],
+      hai_dau_day_8: [0, [Validators.min(0)]],
+      mot_dau_day_2: [0, [Validators.min(0)]],
+      mot_dau_day_3: [0, [Validators.min(0)]],
+      mot_dau_day_4: [0, [Validators.min(0)]],
+      mot_dau_day_6: [0, [Validators.min(0)]],
+      mot_dau_day_8: [0, [Validators.min(0)]],
+      qtda12_2: [0, [Validators.min(0)]],
+      qtda12_3: [0, [Validators.min(0)]],
+      qtda12_4: [0, [Validators.min(0)]],
+      qtda12_6: [0, [Validators.min(0)]],
+      qtda12_8: [0, [Validators.min(0)]],
       
       // Chu vi bối dây hạ trong
       chu_vi_bd_ha_trong_1p: [0, [Validators.required, Validators.min(0)]],
@@ -297,16 +397,27 @@ export class BoiDayHaPopupComponent implements OnInit {
       chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : true,
       may_quan_day: this.data.quanDay.may_quan_day || '',
       
-      // Thông số dây quấn từ bangve
-      xung_quanh_day_2: this.data.quanDay.xung_quanh_day_2 || 2,
-      xung_quanh_day_3: this.data.quanDay.xung_quanh_day_3 || 3,
-      xung_quanh_day_4: this.data.quanDay.xung_quanh_day_4 || 4,
-      hai_dau_day_2: this.data.quanDay.hai_dau_day_2 || 2,
-      hai_dau_day_3: this.data.quanDay.hai_dau_day_3 || 3,
-      hai_dau_day_4: this.data.quanDay.hai_dau_day_4 || 4,
-      mot_dau_day_2: this.data.quanDay.mot_dau_day_2 || 2,
-      mot_dau_day_3: this.data.quanDay.mot_dau_day_3 || 3,
-      mot_dau_day_4: this.data.quanDay.mot_dau_day_4 || 4,
+      // Thông số dây quấn từ bangve - default to 0
+      xung_quanh_day_2: this.data.quanDay.xung_quanh_day_2 || 0,
+      xung_quanh_day_3: this.data.quanDay.xung_quanh_day_3 || 0,
+      xung_quanh_day_4: this.data.quanDay.xung_quanh_day_4 || 0,
+      xung_quanh_day_6: this.data.quanDay.xung_quanh_day_6 || 0,
+      xung_quanh_day_8: this.data.quanDay.xung_quanh_day_8 || 0,
+      hai_dau_day_2: this.data.quanDay.hai_dau_day_2 || 0,
+      hai_dau_day_3: this.data.quanDay.hai_dau_day_3 || 0,
+      hai_dau_day_4: this.data.quanDay.hai_dau_day_4 || 0,
+      hai_dau_day_6: this.data.quanDay.hai_dau_day_6 || 0,
+      hai_dau_day_8: this.data.quanDay.hai_dau_day_8 || 0,
+      mot_dau_day_2: this.data.quanDay.mot_dau_day_2 || 0,
+      mot_dau_day_3: this.data.quanDay.mot_dau_day_3 || 0,
+      mot_dau_day_4: this.data.quanDay.mot_dau_day_4 || 0,
+      mot_dau_day_6: this.data.quanDay.mot_dau_day_6 || 0,
+      mot_dau_day_8: this.data.quanDay.mot_dau_day_8 || 0,
+      qtda12_2: this.data.quanDay.qtda12_2 || 0,
+      qtda12_3: this.data.quanDay.qtda12_3 || 0,
+      qtda12_4: this.data.quanDay.qtda12_4 || 0,
+      qtda12_6: this.data.quanDay.qtda12_6 || 0,
+      qtda12_8: this.data.quanDay.qtda12_8 || 0,
       
       // Đo lường từ bangve
       chu_vi_bd_ha_trong_1p: this.data.quanDay.chu_vi_bd_ha_trong_1p || 0,
@@ -666,12 +777,43 @@ export class BoiDayHaPopupComponent implements OnInit {
       kt_bung_bd: formData.kt_bung_bd_truoc || 0,
       chieuquanday: formData.chieu_quan_day,
       mayquanday: formData.may_quan_day,
-      xungquanh: formData.xung_quanh_day_2,
-      haidau: formData.hai_dau_day_2,
-      mot_dau: formData.mot_dau_day_2,
-      kt_boiday_trong: formData.kt_boiday_trong,
-      chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p,
-      kt_bd_ngoai: formData.kt_bd_ngoai,
+      // Xung quanh fields
+      xungquanh_2: formData.xung_quanh_day_2,
+      xungquanh_3: formData.xung_quanh_day_3,
+      xungquanh_4: formData.xung_quanh_day_4,
+      xungquanh_6: formData.xung_quanh_day_6,
+      xungquanh_8: formData.xung_quanh_day_8,
+      // Hai đầu fields
+      haidau_2: formData.hai_dau_day_2,
+      haidau_3: formData.hai_dau_day_3,
+      haidau_4: formData.hai_dau_day_4,
+      haidau_6: formData.hai_dau_day_6,
+      haidau_8: formData.hai_dau_day_8,
+      // Một đầu fields
+      mot_dau_2: formData.mot_dau_day_2,
+      mot_dau_3: formData.mot_dau_day_3,
+      mot_dau_4: formData.mot_dau_day_4,
+      mot_dau_6: formData.mot_dau_day_6,
+      mot_dau_8: formData.mot_dau_day_8,
+      // QTD a12 fields
+      qtda12_2: formData.qtda12_2,
+      qtda12_3: formData.qtda12_3,
+      qtda12_4: formData.qtda12_4,
+      qtda12_6: formData.qtda12_6,
+      qtda12_8: formData.qtda12_8,
+      // Chu vi bối dây hạ trong
+      chuvi_bd_trong_1p: formData.chu_vi_bd_ha_trong_1p,
+      chuvi_bd_trong_2p: formData.chu_vi_bd_ha_trong_2p,
+      chuvi_bd_trong_3p: formData.chu_vi_bd_ha_trong_3p,
+      // KT bối dây hạ trong
+      kt_boiday_trong_1p: formData.kt_bd_ha_trong_1p,
+      kt_boiday_trong_2p: formData.kt_bd_ha_trong_2p,
+      kt_boiday_trong_3p: formData.kt_bd_ha_trong_3p,
+      // KT bối dây hạ ngoài
+      kt_bd_ngoai_1p: formData.kt_bd_ha_ngoai_bv_1p,
+      kt_bd_ngoai_2p: formData.kt_bd_ha_ngoai_bv_2p,
+      kt_bd_ngoai_3p: formData.kt_bd_ha_ngoai_bv_3p,
+      // Điện trở hạ
       dientroRa: formData.dien_tro_ha_ra,
       dientroRb: formData.dien_tro_ha_rb,
       dientroRc: formData.dien_tro_ha_rc,
@@ -729,11 +871,43 @@ export class BoiDayHaPopupComponent implements OnInit {
         kt_bung_bd: formData.kt_bung_bd_truoc || 0,
         chieuquanday: formData.chieu_quan_day,
         mayquanday: formData.may_quan_day,
-        xungquanh: this.getSelectedThickness(formData, 'xung_quanh'),
-        haidau: this.getSelectedThickness(formData, 'hai_dau'),
-        kt_boiday_trong: `${formData.chu_vi_bd_ha_trong_1p},${formData.chu_vi_bd_ha_trong_2p},${formData.chu_vi_bd_ha_trong_3p}`,
-        chuvi_bd_trong: formData.chu_vi_bd_ha_trong_1p,
-        kt_bd_ngoai: `${formData.kt_bd_ha_ngoai_bv_1p},${formData.kt_bd_ha_ngoai_bv_2p},${formData.kt_bd_ha_ngoai_bv_3p}`,
+        // Xung quanh fields
+        xungquanh_2: formData.xung_quanh_day_2,
+        xungquanh_3: formData.xung_quanh_day_3,
+        xungquanh_4: formData.xung_quanh_day_4,
+        xungquanh_6: formData.xung_quanh_day_6,
+        xungquanh_8: formData.xung_quanh_day_8,
+        // Hai đầu fields
+        haidau_2: formData.hai_dau_day_2,
+        haidau_3: formData.hai_dau_day_3,
+        haidau_4: formData.hai_dau_day_4,
+        haidau_6: formData.hai_dau_day_6,
+        haidau_8: formData.hai_dau_day_8,
+        // Một đầu fields
+        mot_dau_2: formData.mot_dau_day_2,
+        mot_dau_3: formData.mot_dau_day_3,
+        mot_dau_4: formData.mot_dau_day_4,
+        mot_dau_6: formData.mot_dau_day_6,
+        mot_dau_8: formData.mot_dau_day_8,
+        // QTD a12 fields
+        qtda12_2: formData.qtda12_2,
+        qtda12_3: formData.qtda12_3,
+        qtda12_4: formData.qtda12_4,
+        qtda12_6: formData.qtda12_6,
+        qtda12_8: formData.qtda12_8,
+        // Chu vi bối dây hạ trong
+        chuvi_bd_trong_1p: formData.chu_vi_bd_ha_trong_1p,
+        chuvi_bd_trong_2p: formData.chu_vi_bd_ha_trong_2p,
+        chuvi_bd_trong_3p: formData.chu_vi_bd_ha_trong_3p,
+        // KT bối dây hạ trong
+        kt_boiday_trong_1p: formData.kt_bd_ha_trong_1p,
+        kt_boiday_trong_2p: formData.kt_bd_ha_trong_2p,
+        kt_boiday_trong_3p: formData.kt_bd_ha_trong_3p,
+        // KT bối dây hạ ngoài
+        kt_bd_ngoai_1p: formData.kt_bd_ha_ngoai_bv_1p,
+        kt_bd_ngoai_2p: formData.kt_bd_ha_ngoai_bv_2p,
+        kt_bd_ngoai_3p: formData.kt_bd_ha_ngoai_bv_3p,
+        // Điện trở hạ
         dientroRa: formData.dien_tro_ha_ra,
         dientroRb: formData.dien_tro_ha_rb,
         dientroRc: formData.dien_tro_ha_rc,

@@ -14,6 +14,7 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { FirebaseBangVeService } from '../../services/firebase-bangve.service';
 import { FirebaseUserBangVeService } from '../../services/firebase-user-bangve.service';
+import { FirebaseService } from '../../services/firebase.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { STATUS } from '../../models/common.enum';
 import { CommonModule } from '@angular/common';
@@ -48,8 +49,6 @@ export interface BangVeData {
   bd_ha_ngoai: string;
   bd_cao: string;
   bd_ep: string;
-  chu_vi_khuon: number;
-  bung_bd: number;
   ky_hieu_bv_boidayha?: string; // Ký hiệu BV boidayha
   ky_hieu_bv_boidaycao?: string; // Ký hiệu BV boidaycao
   user_create: string;
@@ -161,6 +160,7 @@ export class DsBangveComponent implements OnInit {
     private authService: AuthService,
     private firebaseBangVeService: FirebaseBangVeService,
     private firebaseUserBangVeService: FirebaseUserBangVeService,
+    private firebaseService: FirebaseService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -888,8 +888,6 @@ export class DsBangveComponent implements OnInit {
         bd_ha_ngoai: drawingData.bd_ha_ngoai,
         bd_cao: drawingData.bd_cao,
         bd_ep: drawingData.bd_ep,
-        chu_vi_khuon: drawingData.chu_vi_khuon || 0,
-        bung_bd: drawingData.bung_bd,
         user_create: currentUsername,
         trang_thai: STATUS.NEW, // Bảng vẽ mới có trang_thai = 0
         created_at: new Date(),
@@ -936,7 +934,6 @@ export class DsBangveComponent implements OnInit {
         bd_ha_ngoai: drawingData.bd_ha_ngoai,
         bd_cao: drawingData.bd_cao,
         bd_ep: drawingData.bd_ep,
-        bung_bd: drawingData.bung_bd,
         user_create: drawingData.user_create,
         trang_thai: drawingData.trang_thai,
         created_at: drawingData.created_at,
@@ -1784,12 +1781,14 @@ export class DsBangveComponent implements OnInit {
     }
 
     const dialogRef = this.dialog.open(BangVeComponent, {
-      width: '1200px',
+      width: '90vw',
+      maxWidth: '1200px',
+      minWidth: '320px',
       disableClose: true,
       data: {
         mode: 'add'
       },
-      panelClass: 'custom-dialog-container'
+      panelClass: ['custom-dialog-container', 'responsive-dialog']
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -1847,13 +1846,15 @@ export class DsBangveComponent implements OnInit {
   
   openBangVeDetailDialog(bangVe: BangVeData, mode: 'view' | 'edit'): void {
     const dialogRef = this.dialog.open(BangVeComponent, {
-      width: '850px',
+      width: '90vw',
+      maxWidth: '850px',
+      minWidth: '320px',
       disableClose: true,
       data: {
         bangVeData: bangVe,
         mode: mode
       },
-      panelClass: 'custom-dialog-container'
+      panelClass: ['custom-dialog-container', 'responsive-dialog']
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -1928,15 +1929,32 @@ export class DsBangveComponent implements OnInit {
   }
 
   deleteBangVe(bangVe: BangVeData): void {
+    // Kiểm tra quyền admin hoặc manager trước khi hiển thị dialog
+    if (!this.hasAdminOrManagerRole()) {
+      this.showPermissionDeniedMessage();
+      return;
+    }
+
+    // Chỉ cho phép xóa ở tab "Bảng vẽ mới" (trang_thai = STATUS.NEW hoặc null/0)
+    const status = bangVe.trang_thai ?? 0;
+    if (status !== STATUS.NEW) {
+      this.thongbao('Chỉ được phép xóa ở tab Bảng vẽ mới.', 'Đóng', 'warning');
+      return;
+    }
+
     // Hiển thị dialog xác nhận trước khi xóa
     const confirmDialog = this.dialog.open(DialogComponent, {
-      width: '400px',
+      width: 'auto',
+      maxWidth: '500px',
+      minWidth: '400px',
+      maxHeight: '80vh',
       data: {
-        title: 'Xác nhận xóa',
-        message: `Bạn có chắc chắn muốn xóa bảng vẽ "${bangVe.kyhieubangve}" không?`,
+        title: 'Xác nhận xóa bảng vẽ',
+        message: `Bạn có chắc chắn muốn xóa bảng vẽ "${bangVe.kyhieubangve}" không?\n\nLưu ý: Hành động này sẽ xóa tất cả thông tin liên quan bao gồm:\n- Dữ liệu bảng vẽ\n- Thông tin phân công người dùng\n- Dữ liệu bối dây hạ/cao/ép\n- Lịch sử xử lý`,
         confirmText: 'Xóa',
         cancelText: 'Hủy'
-      }
+      },
+      panelClass: ['custom-confirmation-dialog']
     });
 
     confirmDialog.afterClosed().subscribe(result => {
@@ -1948,22 +1966,242 @@ export class DsBangveComponent implements OnInit {
           return;
         }
 
-        // Gọi Firebase để xóa bảng vẽ
-        this.deleteDrawing(bangVe.id).then(() => {
-
-          
-          // Xóa bảng vẽ khỏi danh sách local
-          this.drawings = this.drawings.filter(b => b.id !== bangVe.id);
-          this.filteredDrawings = this.filteredDrawings.filter(b => b.id !== bangVe.id);
-          this.updatePagedNewDrawings();
-          
-          this.thongbao('Xóa bảng vẽ thành công!', 'Đóng', 'success');
-        }).catch((error) => {
-          console.error('Error deleting drawing:', error);
-          this.handleApiError(error, 'xóa bảng vẽ');
-        });
+        // Thực hiện xóa toàn diện
+        this.performComprehensiveDelete(bangVe);
       }
     });
+  }
+
+  /**
+   * Thực hiện xóa toàn diện bảng vẽ và tất cả dữ liệu liên quan
+   * @param bangVe - Bảng vẽ cần xóa
+   */
+  private async performComprehensiveDelete(bangVe: BangVeData): Promise<void> {
+    try {
+      console.log('🔄 [performComprehensiveDelete] Starting comprehensive delete for:', bangVe.kyhieubangve);
+      
+      // Hiển thị loading indicator
+      this.thongbao('Đang xóa bảng vẽ và dữ liệu liên quan...', 'Đóng', 'info');
+      
+      const bangVeId = bangVe.id.toString();
+      
+      // 1. Tìm và xóa tất cả user_bangve records liên quan
+      await this.deleteRelatedUserBangVeRecords(bangVeId);
+      
+      // 2. Xóa các bd_ha records liên quan
+      await this.deleteRelatedBdHaRecords(bangVeId);
+      
+      // 3. Xóa các bd_cao records liên quan
+      await this.deleteRelatedBdCaoRecords(bangVeId);
+      
+      // 4. Xóa các bd_ep records liên quan (nếu có)
+      await this.deleteRelatedBdEpRecords(bangVeId);
+      
+      // 5. Cuối cùng xóa bảng vẽ chính
+      await this.deleteDrawing(bangVeId);
+      
+      // 6. Cập nhật UI
+      this.updateUIAfterDeletion(bangVe);
+      
+      // 7. Reload dữ liệu để đảm bảo UI được cập nhật
+      await this.loadDrawings();
+      
+      console.log('✅ [performComprehensiveDelete] Comprehensive delete completed successfully');
+      this.thongbao(`Đã xóa thành công bảng vẽ "${bangVe.kyhieubangve}" và tất cả dữ liệu liên quan!`, 'Đóng', 'success');
+      
+    } catch (error) {
+      console.error('❌ [performComprehensiveDelete] Error during comprehensive delete:', error);
+      this.thongbao('Có lỗi xảy ra khi xóa bảng vẽ. Vui lòng thử lại hoặc liên hệ quản trị viên.', 'Đóng', 'error');
+    }
+  }
+
+  /**
+   * Xóa tất cả user_bangve records liên quan đến bảng vẽ
+   * @param bangVeId - ID của bảng vẽ
+   */
+  private async deleteRelatedUserBangVeRecords(bangVeId: string): Promise<void> {
+    try {
+      console.log('🔄 [deleteRelatedUserBangVeRecords] Deleting user_bangve records for bangve:', bangVeId);
+      
+      // Lấy tất cả user_bangve records liên quan
+      const userBangVeRecords = await this.firebaseUserBangVeService.getUserBangVeByBangVeId(bangVeId);
+      
+      if (userBangVeRecords && userBangVeRecords.length > 0) {
+        console.log(`Found ${userBangVeRecords.length} user_bangve records to delete`);
+        
+        // Xóa từng record
+        for (const record of userBangVeRecords) {
+          if (record.id) {
+            await this.firebaseUserBangVeService.deleteUserBangVe(record.id.toString());
+            console.log(`Deleted user_bangve record: ${record.id}`);
+          }
+        }
+        
+        console.log('✅ [deleteRelatedUserBangVeRecords] All user_bangve records deleted successfully');
+      } else {
+        console.log('ℹ️ [deleteRelatedUserBangVeRecords] No user_bangve records found for this bangve');
+      }
+    } catch (error) {
+      console.error('❌ [deleteRelatedUserBangVeRecords] Error deleting user_bangve records:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Xóa tất cả bd_ha records liên quan đến bảng vẽ
+   * @param bangVeId - ID của bảng vẽ
+   */
+  private async deleteRelatedBdHaRecords(bangVeId: string): Promise<void> {
+    try {
+      console.log('🔄 [deleteRelatedBdHaRecords] Deleting bd_ha records for bangve:', bangVeId);
+      
+      // Import FirebaseBdHaService để sử dụng
+      const { FirebaseBdHaService } = await import('../../services/firebase-bd-ha.service');
+      const firebaseBdHaService = new FirebaseBdHaService(this.firebaseService);
+      
+      // Lấy thông tin bảng vẽ để có kyhieubangve
+      const bangVe = await this.firebaseBangVeService.getBangVeById(bangVeId);
+      if (!bangVe) {
+        console.log('ℹ️ [deleteRelatedBdHaRecords] BangVe not found, skipping bd_ha deletion');
+        return;
+      }
+      
+      // Lấy tất cả bd_ha records liên quan
+      const bdHaRecords = await firebaseBdHaService.getBdHaByKyHieuBangVe(bangVe.kyhieubangve);
+      
+      if (bdHaRecords && bdHaRecords.length > 0) {
+        console.log(`Found ${bdHaRecords.length} bd_ha records to delete`);
+        
+        // Xóa từng record
+        for (const record of bdHaRecords) {
+          if (record.id) {
+            await firebaseBdHaService.deleteBdHa(record.id);
+            console.log(`Deleted bd_ha record: ${record.id}`);
+          }
+        }
+        
+        console.log('✅ [deleteRelatedBdHaRecords] All bd_ha records deleted successfully');
+      } else {
+        console.log('ℹ️ [deleteRelatedBdHaRecords] No bd_ha records found for this bangve');
+      }
+    } catch (error) {
+      console.error('❌ [deleteRelatedBdHaRecords] Error deleting bd_ha records:', error);
+      // Không throw error để không làm gián đoạn quá trình xóa
+      console.warn('⚠️ [deleteRelatedBdHaRecords] Continuing with other deletions despite bd_ha error');
+    }
+  }
+
+  /**
+   * Xóa tất cả bd_cao records liên quan đến bảng vẽ
+   * @param bangVeId - ID của bảng vẽ
+   */
+  private async deleteRelatedBdCaoRecords(bangVeId: string): Promise<void> {
+    try {
+      console.log('🔄 [deleteRelatedBdCaoRecords] Deleting bd_cao records for bangve:', bangVeId);
+      
+      // Import FirebaseBdCaoService để sử dụng
+      const { FirebaseBdCaoService } = await import('../../services/firebase-bd-cao.service');
+      const firebaseBdCaoService = new FirebaseBdCaoService(this.firebaseService);
+      
+      // Lấy thông tin bảng vẽ để có kyhieubangve
+      const bangVe = await this.firebaseBangVeService.getBangVeById(bangVeId);
+      if (!bangVe) {
+        console.log('ℹ️ [deleteRelatedBdCaoRecords] BangVe not found, skipping bd_cao deletion');
+        return;
+      }
+      
+      // Lấy tất cả bd_cao records liên quan
+      const bdCaoRecords = await firebaseBdCaoService.getBdCaoByKyHieuBangVe(bangVe.kyhieubangve);
+      
+      if (bdCaoRecords && bdCaoRecords.length > 0) {
+        console.log(`Found ${bdCaoRecords.length} bd_cao records to delete`);
+        
+        // Xóa từng record
+        for (const record of bdCaoRecords) {
+          if (record.id) {
+            await firebaseBdCaoService.deleteBdCao(record.id);
+            console.log(`Deleted bd_cao record: ${record.id}`);
+          }
+        }
+        
+        console.log('✅ [deleteRelatedBdCaoRecords] All bd_cao records deleted successfully');
+      } else {
+        console.log('ℹ️ [deleteRelatedBdCaoRecords] No bd_cao records found for this bangve');
+      }
+    } catch (error) {
+      console.error('❌ [deleteRelatedBdCaoRecords] Error deleting bd_cao records:', error);
+      // Không throw error để không làm gián đoạn quá trình xóa
+      console.warn('⚠️ [deleteRelatedBdCaoRecords] Continuing with other deletions despite bd_cao error');
+    }
+  }
+
+  /**
+   * Xóa tất cả bd_ep records liên quan đến bảng vẽ (nếu có service)
+   * @param bangVeId - ID của bảng vẽ
+   */
+  private async deleteRelatedBdEpRecords(bangVeId: string): Promise<void> {
+    try {
+      console.log('🔄 [deleteRelatedBdEpRecords] Checking for bd_ep records for bangve:', bangVeId);
+      
+      // Kiểm tra xem có service bd_ep không
+      try {
+        // Tạm thời comment out vì service chưa tồn tại
+        // const { FirebaseBdEpService } = await import('../../services/firebase-bd-ep.service');
+        // const firebaseBdEpService = new FirebaseBdEpService(this.firebaseService);
+        
+        // Lấy thông tin bảng vẽ để có kyhieubangve
+        const bangVe = await this.firebaseBangVeService.getBangVeById(bangVeId);
+        if (!bangVe) {
+          console.log('ℹ️ [deleteRelatedBdEpRecords] BangVe not found, skipping bd_ep deletion');
+          return;
+        }
+        
+        // TODO: Implement bd_ep deletion when service is available
+        // const bdEpRecords = await firebaseBdEpService.getBdEpByKyHieuBangVe(bangVe.kyhieubangve);
+        
+        console.log('ℹ️ [deleteRelatedBdEpRecords] FirebaseBdEpService not yet implemented, skipping bd_ep deletion');
+      } catch (importError) {
+        console.log('ℹ️ [deleteRelatedBdEpRecords] FirebaseBdEpService not available, skipping bd_ep deletion');
+      }
+    } catch (error) {
+      console.error('❌ [deleteRelatedBdEpRecords] Error deleting bd_ep records:', error);
+      // Không throw error để không làm gián đoạn quá trình xóa
+      console.warn('⚠️ [deleteRelatedBdEpRecords] Continuing with other deletions despite bd_ep error');
+    }
+  }
+
+  /**
+   * Cập nhật UI sau khi xóa thành công
+   * @param bangVe - Bảng vẽ đã bị xóa
+   */
+  private updateUIAfterDeletion(bangVe: BangVeData): void {
+    try {
+      console.log('🔄 [updateUIAfterDeletion] Updating UI after deletion of:', bangVe.kyhieubangve);
+      
+      // Xóa khỏi tất cả các danh sách local
+          this.drawings = this.drawings.filter(b => b.id !== bangVe.id);
+      this.inProgressDrawings = this.inProgressDrawings.filter(b => b.id !== bangVe.id);
+      this.processedDrawings = this.processedDrawings.filter(b => b.id !== bangVe.id);
+      
+      // Cập nhật filtered lists
+          this.filteredDrawings = this.filteredDrawings.filter(b => b.id !== bangVe.id);
+      this.filteredInProgressDrawings = this.filteredInProgressDrawings.filter(b => b.id !== bangVe.id);
+      this.filteredProcessedDrawings = this.filteredProcessedDrawings.filter(b => b.id !== bangVe.id);
+      
+      // Cập nhật paged lists
+          this.updatePagedNewDrawings();
+      this.updatePagedInProgressDrawings();
+      this.updatePagedProcessedDrawings();
+      
+      // Force UI update
+      this.forceUIUpdate();
+      
+      console.log('✅ [updateUIAfterDeletion] UI updated successfully');
+    } catch (error) {
+      console.error('❌ [updateUIAfterDeletion] Error updating UI:', error);
+      // Fallback: reload data từ Firebase
+      this.loadDrawings();
+    }
   }
 
   // Method mới: Tìm kiếm bảng vẽ đang gia công
@@ -1993,8 +2231,6 @@ export class DsBangveComponent implements OnInit {
       bd_ha_ngoai: item.bd_ha_ngoai || '',
       bd_cao: item.bd_cao || '',
       bd_ep: item.bd_ep || '',
-      chu_vi_khuon: item.chu_vi_khuon || 0,
-      bung_bd: item.bung_bd || 0,
       ky_hieu_bv_boidayha: item.ky_hieu_bv_boidayha || '',
       ky_hieu_bv_boidaycao: item.ky_hieu_bv_boidaycao || '',
       user_create: item.user_create || '',

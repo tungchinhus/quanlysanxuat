@@ -48,8 +48,6 @@ export interface QuanDayData {
   bd_ha_ngoai: string;
   bd_cao: string;
   bd_ep: string;
-  chu_vi_khuon: number;
-  bung_bd: number;
   ky_hieu_bv_boidayha?: string; // Ký hiệu BV boidayha
   ky_hieu_bv_boidaycao?: string; // Ký hiệu BV boidaycao
   user_create: string;
@@ -539,8 +537,6 @@ export class DsQuanDayComponent implements OnInit {
           bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
           bd_cao: bangVe.bd_cao || '',
           bd_ep: bangVe.bd_ep || '',
-          chu_vi_khuon: bangVe.chu_vi_khuon || 0,
-          bung_bd: bangVe.bung_bd || 0,
           ky_hieu_bv_boidayha: bangVe.ky_hieu_bv_boidayha || '', // Thêm field mới
           ky_hieu_bv_boidaycao: bangVe.ky_hieu_bv_boidaycao || '', // Thêm field mới
           user_create: bangVe.user_create || '',
@@ -1238,8 +1234,6 @@ export class DsQuanDayComponent implements OnInit {
        bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
        bd_cao: bangVe.bd_cao || '',
        bd_ep: bangVe.bd_ep || '',
-       chu_vi_khuon: bangVe.chu_vi_khuon || 0,
-       bung_bd: bangVe.bung_bd || 0,
        ky_hieu_bv_boidayha: bangVe.ky_hieu_bv_boidayha || '',
        ky_hieu_bv_boidaycao: bangVe.ky_hieu_bv_boidaycao || '',
        user_create: bangVe.user_create || '',
@@ -1277,8 +1271,6 @@ export class DsQuanDayComponent implements OnInit {
        bd_ha_ngoai: bangVe.bd_ha_ngoai || '',
        bd_cao: bangVe.bd_cao || '',
        bd_ep: bangVe.bd_ep || '',
-       chu_vi_khuon: bangVe.chu_vi_khuon || 0,
-       bung_bd: bangVe.bung_bd || 0,
        user_create: bangVe.user_create || '',
        trang_thai: bangVe.trang_thai || 0,
        trang_thai_bv: bangVe.trang_thai_bv || 0,
@@ -1322,8 +1314,6 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '12mm', 
          bd_cao: '15mm', 
          bd_ep: '2mm', 
-         chu_vi_khuon: 100,
-         bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 0, 
          trang_thai_bv: 1, // Đang xử lý
@@ -1350,8 +1340,6 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '10mm', 
          bd_cao: '12mm', 
          bd_ep: '1.5mm', 
-         chu_vi_khuon: 120,
-         bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 0, 
          trang_thai_bv: 1, // Đang xử lý
@@ -1392,8 +1380,6 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '12mm', 
          bd_cao: '15mm', 
          bd_ep: '2mm', 
-         chu_vi_khuon: 100,
-         bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 2, 
          trang_thai_bv: 2, // Đã hoàn thành
@@ -1423,8 +1409,6 @@ export class DsQuanDayComponent implements OnInit {
          bd_ha_ngoai: '14mm', 
          bd_cao: '18mm', 
          bd_ep: '2.5mm', 
-         chu_vi_khuon: 150,
-         bung_bd: 1,
          user_create: currentUsername, // Sử dụng username hiện tại
          trang_thai: 2, 
          trang_thai_bv: 2, // Đã hoàn thành

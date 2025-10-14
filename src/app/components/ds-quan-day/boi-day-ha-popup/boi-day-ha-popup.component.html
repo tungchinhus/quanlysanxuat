@@ -179,6 +179,14 @@
                   <mat-label>4</mat-label>
                   <input matInput type="number" formControlName="xung_quanh_day_4" placeholder="4">
                 </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>6</mat-label>
+                  <input matInput type="number" formControlName="xung_quanh_day_6" placeholder="6">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>8</mat-label>
+                  <input matInput type="number" formControlName="xung_quanh_day_8" placeholder="8">
+                </mat-form-field>
               </div>
             </div>
 
@@ -196,6 +204,14 @@
                 <mat-form-field appearance="outline" class="small-input">
                   <mat-label>4</mat-label>
                   <input matInput type="number" formControlName="hai_dau_day_4" placeholder="4">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>6</mat-label>
+                  <input matInput type="number" formControlName="hai_dau_day_6" placeholder="6">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>8</mat-label>
+                  <input matInput type="number" formControlName="hai_dau_day_8" placeholder="8">
                 </mat-form-field>
               </div>
             </div>
@@ -215,6 +231,40 @@
                   <mat-label>4</mat-label>
                   <input matInput type="number" formControlName="mot_dau_day_4" placeholder="4">
                 </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>6</mat-label>
+                  <input matInput type="number" formControlName="mot_dau_day_6" placeholder="6">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>8</mat-label>
+                  <input matInput type="number" formControlName="mot_dau_day_8" placeholder="8">
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="form-field combined-field">
+              <div class="field-label">QTD a12: Xung quanh</div>
+              <div class="input-group">                
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>2</mat-label>
+                  <input matInput type="number" formControlName="qtda12_2" placeholder="2">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>3</mat-label>
+                  <input matInput type="number" formControlName="qtda12_3" placeholder="3">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>4</mat-label>
+                  <input matInput type="number" formControlName="qtda12_4" placeholder="4">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>6</mat-label>
+                  <input matInput type="number" formControlName="qtda12_6" placeholder="6">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="small-input">
+                  <mat-label>8</mat-label>
+                  <input matInput type="number" formControlName="qtda12_8" placeholder="8">
+                </mat-form-field>
               </div>
             </div>
           </div>
@@ -224,7 +274,7 @@
             <div class="form-field combined-field">
               <div class="field-label">Chu vi bối dây hạ trong (mm)</div>
               <div class="input-group">
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 1</mat-label>
                   <input matInput type="number" formControlName="chu_vi_bd_ha_trong_1p" placeholder="Pha 1">
                   <mat-error *ngIf="boiDayHaForm.get('chu_vi_bd_ha_trong_1p')?.hasError('required') && boiDayHaForm.get('chu_vi_bd_ha_trong_1p')?.touched">
@@ -232,7 +282,7 @@
                   </mat-error>
                 </mat-form-field>
                 
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 2</mat-label>
                   <input matInput type="number" formControlName="chu_vi_bd_ha_trong_2p" placeholder="Pha 2">
                   <mat-error *ngIf="boiDayHaForm.get('chu_vi_bd_ha_trong_2p')?.hasError('required') && boiDayHaForm.get('chu_vi_bd_ha_trong_2p')?.touched">
@@ -240,7 +290,7 @@
                   </mat-error>
                 </mat-form-field>
                 
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 3</mat-label>
                   <input matInput type="number" formControlName="chu_vi_bd_ha_trong_3p" placeholder="Pha 3">
                   <mat-error *ngIf="boiDayHaForm.get('chu_vi_bd_ha_trong_3p')?.hasError('required') && boiDayHaForm.get('chu_vi_bd_ha_trong_3p')?.touched">
@@ -253,17 +303,17 @@
             <div class="form-field combined-field">
               <div class="field-label" [innerHTML]="getKtBdHaTrongLabel()"></div>
               <div class="input-group">
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 1</mat-label>
                   <input matInput type="number" formControlName="kt_bd_ha_trong_1p" placeholder="Pha 1">
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 2</mat-label>
                   <input matInput type="number" formControlName="kt_bd_ha_trong_2p" placeholder="Pha 2">
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 3</mat-label>
                   <input matInput type="number" formControlName="kt_bd_ha_trong_3p" placeholder="Pha 3">
                 </mat-form-field>
@@ -273,7 +323,7 @@
             <div class="form-field combined-field">
               <div class="field-label" [innerHTML]="getKtBdHaNgoaiLabel()"></div>
               <div class="input-group">
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 1</mat-label>
                   <input matInput type="number" formControlName="kt_bd_ha_ngoai_bv_1p" placeholder="Pha 1">
                   <mat-error *ngIf="boiDayHaForm.get('kt_bd_ha_ngoai_bv_1p')?.hasError('required') && boiDayHaForm.get('kt_bd_ha_ngoai_bv_1p')?.touched">
@@ -281,7 +331,7 @@
                   </mat-error>
                 </mat-form-field>
                 
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 2</mat-label>
                   <input matInput type="number" formControlName="kt_bd_ha_ngoai_bv_2p" placeholder="Pha 2">
                   <mat-error *ngIf="boiDayHaForm.get('kt_bd_ha_ngoai_bv_2p')?.hasError('required') && boiDayHaForm.get('kt_bd_ha_ngoai_bv_2p')?.touched">
@@ -289,7 +339,7 @@
                   </mat-error>
                 </mat-form-field>
                 
-                <mat-form-field appearance="outline" class="small-input">
+                <mat-form-field appearance="outline" class="small-input" style="width: 200px;">
                   <mat-label>Pha 3</mat-label>
                   <input matInput type="number" formControlName="kt_bd_ha_ngoai_bv_3p" placeholder="Pha 3">
                   <mat-error *ngIf="boiDayHaForm.get('kt_bd_ha_ngoai_bv_3p')?.hasError('required') && boiDayHaForm.get('kt_bd_ha_ngoai_bv_3p')?.touched">
@@ -299,36 +349,7 @@
               </div>
             </div>
 
-            <div class="form-field combined-field">
-              <div class="field-label">Điện trở hạ (Ω)</div>
-              <div class="input-group">
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>Ra</mat-label>
-                  <input matInput type="number" formControlName="dien_tro_ha_ra" placeholder="Ra">
-                  <mat-error *ngIf="boiDayHaForm.get('dien_tro_ha_ra')?.hasError('required') && boiDayHaForm.get('dien_tro_ha_ra')?.touched">
-                    Điện trở hạ Ra là bắt buộc
-                  </mat-error>
-                </mat-form-field>
-                
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>Rb</mat-label>
-                  <input matInput type="number" formControlName="dien_tro_ha_rb" placeholder="Rb">
-                  <mat-error *ngIf="boiDayHaForm.get('dien_tro_ha_rb')?.hasError('required') && boiDayHaForm.get('dien_tro_ha_rb')?.touched">
-                    Điện trở hạ Rb là bắt buộc
-                  </mat-error>
-                </mat-form-field>
-                
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>Rc</mat-label>
-                  <input matInput type="number" formControlName="dien_tro_ha_rc" placeholder="Rc">
-                  <mat-error *ngIf="boiDayHaForm.get('dien_tro_ha_rc')?.hasError('required') && boiDayHaForm.get('dien_tro_ha_rc')?.touched">
-                    Điện trở hạ Rc là bắt buộc
-                  </mat-error>
-                </mat-form-field>
-              </div>
-            </div>
-
-            <div class="form-field with-note">
+            <div class="form-field with-note" style="margin-top: 25px;">
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>Độ lệch điện trở giữa các pha (%)</mat-label>
                 <input matInput type="number" formControlName="do_lech_dien_tro_giua_cac_pha"

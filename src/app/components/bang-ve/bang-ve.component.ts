@@ -51,8 +51,6 @@ export class BangVeComponent implements OnInit {
       bd_ha_ngoai: [''],
       bd_cao: [''],
       bd_ep: [''],
-      chu_vi_khuon: ['', Validators.pattern(/^[0-9]*$/)],
-      bung_bd: ['', Validators.pattern(/^[0-9]*$/)],
       ky_hieu_bv_boidayha: [''],
       ky_hieu_bv_boidaycao: [''],
       user_create: [{ value: 'Current User', disabled: true }],
@@ -171,6 +169,16 @@ export class BangVeComponent implements OnInit {
       try {
         const formData = this.bangVeForm.getRawValue();
         
+        // Duplicate check: only consider active records
+        const existsActive = await this.firebaseBangVeService.existsActiveBangVeByKyHieu(
+          (formData.kyhieubangve || '').trim()
+        );
+        if (existsActive) {
+          this.isSaving = false;
+          this._snackBar.open('Ký hiệu bảng vẽ đã tồn tại (đang hoạt động). Vui lòng chọn ký hiệu khác.', 'Đóng', { duration: 4000 });
+          return;
+        }
+        
         // Lấy thông tin user hiện tại
         const userInfo = this.authService.getUserInfo();
         const currentUsername = userInfo?.username || localStorage.getItem('username') || 'unknown';
@@ -185,8 +193,6 @@ export class BangVeComponent implements OnInit {
           bd_ha_ngoai: formData.bd_ha_ngoai || '',
           bd_cao: formData.bd_cao || '',
           bd_ep: formData.bd_ep || '',
-          chu_vi_khuon: formData.chu_vi_khuon || 0,
-          bung_bd: formData.bung_bd || 0,
           ky_hieu_bv_boidayha: formData.ky_hieu_bv_boidayha || '',
           ky_hieu_bv_boidaycao: formData.ky_hieu_bv_boidaycao || '',
           user_create: currentUsername,

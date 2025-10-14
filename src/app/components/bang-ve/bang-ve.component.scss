@@ -5,10 +5,10 @@
   padding: 16px; /* Giảm khoảng đệm bên trong từ 24px xuống 16px */
   display: flex;
   flex-direction: column;
-  min-height: auto; /* Tự động điều chỉnh chiều cao tối thiểu */
-  height: auto; /* Chiều cao tự động theo nội dung */
-  max-height: 90vh; /* Giới hạn chiều cao để có thể cuộn nếu nội dung dài */
-  max-width: 95vw; /* Tăng chiều rộng tối đa */
+  min-height: auto; /* Tự động điều chỉnh chiều cao tối thiểu */  
+  max-height: 85vh; /* Giảm từ 90vh để tránh tràn màn hình */
+  max-width: 100%; /* Sử dụng toàn bộ chiều rộng có sẵn */
+  width: 98%; /* Đảm bảo chiều rộng đầy đủ */
   overflow-y: auto; /* Cho phép cuộn dọc khi nội dung quá dài */
   overflow-x: hidden; /* Ngăn cuộn ngang */
   position: relative; /* Cần thiết cho resize handle */
@@ -156,39 +156,184 @@ button[mat-button] {
 }
 
 
-/* Responsive design cho màn hình nhỏ */
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column; /* Chuyển sang hiển thị cột trên màn hình nhỏ */
-    gap: 0; /* Bỏ khoảng cách giữa các trường khi hiển thị cột */
-  }
-
-  .form-row .full-width {
-    width: 100%; /* Các trường chiếm toàn bộ chiều rộng */
-  }
-
+/* Responsive design cho màn hình có tỷ lệ thấp */
+@media (max-height: 600px) {
   .bang-ve-popup-content {
-    padding: 15px;
-    min-width: 95vw; /* Trên màn hình nhỏ, chiều rộng tối thiểu là 95% viewport */
-    max-width: 98vw; /* Chiều rộng tối đa là 98% viewport */
-    min-height: auto; /* Tự động điều chỉnh chiều cao tối thiểu trên màn hình nhỏ */
-    height: auto; /* Chiều cao tự động theo nội dung */
-    resize: vertical; /* Chỉ cho phép resize chiều cao trên màn hình nhỏ */
+    min-height: 300px; /* Giảm chiều cao tối thiểu cho màn hình ngắn */
+    max-height: 80vh; /* Giảm chiều cao tối đa */
+    padding: 12px; /* Giảm padding */
+  }
+
+  .form-row {
+    height: 70px; /* Giảm chiều cao của form row */
+    gap: 8px;
+  }
+
+  .popup-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+
+  .popup-title {
+    font-size: 1.4em; /* Giảm kích thước font */
+  }
+
+  .popup-actions {
+    margin-top: 8px;
+    padding-top: 6px;
+  }
+
+  mat-form-field .mat-form-field-infix {
+    padding: 0.3em 0 !important; /* Giảm padding */
+  }
+
+  mat-form-field input.mat-input-element {
+    height: 22px !important; /* Giảm chiều cao input */
+    line-height: 22px !important;
+  }
+}
+
+/* Responsive design cho màn hình có độ phân giải thấp */
+@media (max-width: 1024px) and (max-height: 768px) {
+  .bang-ve-popup-content {
+    min-height: 350px;
+    max-height: 75vh;
+    padding: 14px;
+  }
+
+  .form-row {
+    height: 80px;
+    gap: 8px;
   }
 
   .popup-title {
     font-size: 1.5em;
   }
+}
+
+/* Responsive design cho màn hình nhỏ */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column; /* Chuyển sang hiển thị cột trên màn hình nhỏ */
+    gap: 0; /* Bỏ khoảng cách giữa các trường khi hiển thị cột */
+    height: auto; /* Tự động điều chỉnh chiều cao */
+    min-height: auto;
+  }
+
+  .form-row .full-width {
+    width: 100%; /* Các trường chiếm toàn bộ chiều rộng */
+    margin-bottom: 8px; /* Thêm khoảng cách dưới mỗi trường */
+  }
+
+  .bang-ve-popup-content {
+    padding: 12px; /* Giảm padding trên màn hình nhỏ */
+    margin: 8px; /* Thêm margin để không sát mép màn hình */
+    max-height: 95vh; /* Tăng chiều cao tối đa trên mobile */
+  }
+
+  .popup-header {
+    flex-direction: column; /* Xếp tiêu đề và nút đóng theo cột */
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .popup-title {
+    font-size: 1.3em; /* Giảm kích thước font trên mobile */
+    margin-bottom: 0;
+  }
+
+  .close-button {
+    align-self: flex-end; /* Căn nút đóng sang phải */
+    margin-left: 0;
+  }
 
   .popup-actions {
     justify-content: center; /* Căn giữa các nút trên màn hình nhỏ */
     flex-direction: column; /* Xếp các nút theo cột */
-    gap: 10px; /* Khoảng cách giữa các nút */
+    gap: 8px; /* Khoảng cách giữa các nút */
+    margin-top: 16px; /* Tăng khoảng cách trên */
   }
 
   button[mat-raised-button],
   button[mat-button] {
     width: 100%; /* Các nút chiếm toàn bộ chiều rộng */
+    padding: 10px 16px; /* Tăng padding cho dễ bấm trên mobile */
+    font-size: 0.9em; /* Tăng kích thước font cho dễ đọc */
   }
 
+  /* Điều chỉnh form fields trên mobile */
+  mat-form-field {
+    margin-bottom: 8px;
+  }
+
+  mat-form-field .mat-form-field-wrapper {
+    padding-bottom: 0 !important;
+  }
+
+  mat-form-field .mat-form-field-infix {
+    padding: 0.6em 0 !important; /* Tăng padding cho dễ bấm */
+  }
+
+  mat-form-field input.mat-input-element {
+    height: 28px !important; /* Tăng chiều cao input */
+    line-height: 28px !important;
+  }
+}
+
+/* Responsive design cho màn hình trung bình */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .form-row {
+    gap: 8px; /* Giảm khoảng cách giữa các trường */
+  }
+
+  .bang-ve-popup-content {
+    padding: 14px;
+    max-height: 85vh;
+  }
+
+  .popup-title {
+    font-size: 1.4em;
+  }
+
+  .popup-actions {
+    gap: 8px;
+  }
+
+  button[mat-raised-button],
+  button[mat-button] {
+    padding: 8px 14px;
+    font-size: 0.87em;
+  }
+}
+
+/* Responsive design cho màn hình rất nhỏ */
+@media (max-width: 480px) {
+  .bang-ve-popup-content {
+    padding: 8px;
+    margin: 4px;
+    max-height: 98vh;
+  }
+
+  .popup-title {
+    font-size: 1.2em;
+  }
+
+  .form-row .full-width {
+    margin-bottom: 6px;
+  }
+
+  mat-form-field .mat-form-field-infix {
+    padding: 0.5em 0 !important;
+  }
+
+  mat-form-field input.mat-input-element {
+    height: 26px !important;
+    line-height: 26px !important;
+  }
+
+  button[mat-raised-button],
+  button[mat-button] {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
 }

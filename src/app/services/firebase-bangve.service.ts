@@ -33,6 +33,27 @@ export class FirebaseBangVeService {
   }
 
   /**
+   * Check if there is an ACTIVE (isActive=true) bang ve with the same kyhieubangve
+   * @param kyhieubangve - Drawing code to check
+   * @returns Promise<boolean> - true if an active record exists, otherwise false
+   */
+  async existsActiveBangVeByKyHieu(kyhieubangve: string): Promise<boolean> {
+    try {
+      const q = query(
+        collection(this.firestore, this.COLLECTION_NAME),
+        where('kyhieubangve', '==', kyhieubangve),
+        where('isActive', '==', true)
+      );
+      const snap = await getDocs(q);
+      return !snap.empty;
+    } catch (error) {
+      console.error('Error checking duplicate kyhieubangve:', error);
+      // In case of error, do not block creation for non-critical issues – treat as no duplicate
+      return false;
+    }
+  }
+
+  /**
    * Create a new bang ve (drawing board) in Firebase
    * @param bangVeData - The drawing board data to save
    * @returns Promise<string> - The document ID of the created bang ve
@@ -68,9 +89,15 @@ export class FirebaseBangVeService {
    */
   async getAllBangVe(): Promise<BangVeData[]> {
     try {
-      console.log('Fetching all bang ve from Firebase...');
+      console.log('Fetching all active bang ve from Firebase...');
       
-      const querySnapshot = await getDocs(collection(this.firestore, this.COLLECTION_NAME));
+      // Chỉ lấy những bảng vẽ còn active (isActive = true)
+      const q = query(
+        collection(this.firestore, this.COLLECTION_NAME),
+        where('isActive', '==', true)
+      );
+      
+      const querySnapshot = await getDocs(q);
       const bangVeList: BangVeData[] = [];
       
       querySnapshot.forEach((doc) => {
@@ -86,8 +113,6 @@ export class FirebaseBangVeService {
           bd_ha_ngoai: data['bd_ha_ngoai'] || '',
           bd_cao: data['bd_cao'] || '',
           bd_ep: data['bd_ep'] || '',
-          chu_vi_khuon: data['chu_vi_khuon'] || 0,
-          bung_bd: data['bung_bd'] || 0,
           ky_hieu_bv_boidayha: data['ky_hieu_bv_boidayha'] || '',
           ky_hieu_bv_boidaycao: data['ky_hieu_bv_boidaycao'] || '',
           user_create: data['user_create'] || '',
@@ -101,7 +126,7 @@ export class FirebaseBangVeService {
         bangVeList.push(bangVe);
       });
       
-      console.log('Fetched bang ve list:', bangVeList);
+      console.log('Fetched active bang ve list:', bangVeList);
       return bangVeList;
     } catch (error) {
       console.error('Error fetching bang ve:', error);
@@ -121,6 +146,13 @@ export class FirebaseBangVeService {
       
       if (docSnap.exists()) {
         const data = docSnap.data();
+        
+        // Kiểm tra nếu bảng vẽ đã bị soft delete thì trả về null
+        if (data['isActive'] === false) {
+          console.log('Bang ve with ID', id, 'is inactive (soft deleted)');
+          return null;
+        }
+        
         return {
           id: id, // Sử dụng ID trực tiếp từ Firebase (string)
           kyhieubangve: data['kyhieubangve'] || '',
@@ -132,8 +164,6 @@ export class FirebaseBangVeService {
           bd_ha_ngoai: data['bd_ha_ngoai'] || '',
           bd_cao: data['bd_cao'] || '',
           bd_ep: data['bd_ep'] || '',
-          chu_vi_khuon: data['chu_vi_khuon'] || 0,
-          bung_bd: data['bung_bd'] || 0,
           ky_hieu_bv_boidayha: data['ky_hieu_bv_boidayha'] || '',
           ky_hieu_bv_boidaycao: data['ky_hieu_bv_boidaycao'] || '',
           user_create: data['user_create'] || '',
@@ -231,8 +261,6 @@ export class FirebaseBangVeService {
           bd_ha_ngoai: data['bd_ha_ngoai'] || '',
           bd_cao: data['bd_cao'] || '',
           bd_ep: data['bd_ep'] || '',
-          chu_vi_khuon: data['chu_vi_khuon'] || 0,
-          bung_bd: data['bung_bd'] || 0,
           user_create: data['user_create'] || '',
           trang_thai: data['trang_thai'] || 0,
           created_at: data['created_at']?.toDate() || new Date(),
