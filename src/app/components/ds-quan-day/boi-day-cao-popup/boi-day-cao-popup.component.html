@@ -75,18 +75,28 @@
               </mat-checkbox>
             </div>
 
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="full-width">
+            <!-- Row 1: Số sợi chập và Số bối dây -->
+            <div class="form-field-row">
+              <mat-form-field appearance="outline" class="half-width">
                 <mat-label>Số sợi chập *</mat-label>
                 <input matInput type="number" formControlName="so_soi_day" placeholder="VD: 1, 2, 3" min="1">
                 <mat-error *ngIf="boiDayCaoForm.get('so_soi_day')?.hasError('required') && boiDayCaoForm.get('so_soi_day')?.touched">
                   Số sợi dây là bắt buộc
                 </mat-error>
               </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Số bối dây *</mat-label>
+                <input matInput formControlName="so_boi_day" placeholder="VD: 1, 2, A, B, 1A">
+                <mat-error *ngIf="boiDayCaoForm.get('so_boi_day')?.hasError('required') && boiDayCaoForm.get('so_boi_day')?.touched">
+                  Số bối dây là bắt buộc
+                </mat-error>
+              </mat-form-field>
             </div>
 
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="full-width">
+            <!-- Row 2: Nhà sản xuất và Ngày sản xuất -->
+            <div class="form-field-row">
+              <mat-form-field appearance="outline" class="half-width">
                 <mat-label>Nhà sản xuất *</mat-label>
                 <mat-select formControlName="nha_san_xuat" (selectionChange)="onManufacturerChange($event)">
                   <mat-option *ngFor="let manufacturer of manufacturers" [value]="manufacturer.value">
@@ -97,10 +107,8 @@
                   Nhà sản xuất là bắt buộc
                 </mat-error>
               </mat-form-field>
-            </div>
 
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="half-width">
                 <mat-label>Ngày sản xuất *</mat-label>
                 <input matInput [matDatepicker]="pickerNgaySanXuat" formControlName="ngay_san_xuat">
                 <mat-datepicker-toggle matSuffix [for]="pickerNgaySanXuat"></mat-datepicker-toggle>
@@ -114,21 +122,26 @@
 
           <!-- Grid Cell 2: Kích thước và máy móc -->
           <div class="grid-cell dimensions-machine-cell" style="margin-top: -20px;">
-            <div class="form-field">
-              <label class="mat-label">KT bd Cao BV: </label>
-              <mat-form-field appearance="outline" class="full-width">
-                <input matInput type="number" formControlName="kt_bd_cao_bv">
-              </mat-form-field>
-            </div>
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Chu vi bd Cao TT</mat-label>
-                <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi bd TT">
-              </mat-form-field>
+            <!-- Row 1: KT bd Cao BV và Chu vi bd Cao TT -->
+            <div class="form-field-row">
+              <div class="form-field half-width">
+                <label class="mat-label">KT bd Cao BV: </label>
+                <mat-form-field appearance="outline" class="full-width">
+                  <input matInput type="number" formControlName="kt_bd_cao_bv">
+                </mat-form-field>
+              </div>
+              
+              <div class="form-field half-width">
+                <mat-form-field appearance="outline" class="full-width" style="margin-top: 20px;">
+                  <mat-label>Chu vi bd Cao TT</mat-label>
+                  <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi bd TT">
+                </mat-form-field>
+              </div>
             </div>
 
-            <div class="form-field winding-controls-row">
-              <div class="winding-direction-group">
+            <!-- Row 2: Chiều quấn dây và Máy quấn dây -->
+            <div class="form-field-row">
+              <div class="winding-direction-group half-width">
                 <label class="mat-label">Chiều quấn dây</label>
                 <div class="radio-group">
                   <mat-radio-group formControlName="chieu_quan_day">
@@ -137,24 +150,22 @@
                   </mat-radio-group>
                 </div>
               </div>
-  
-              <mat-form-field appearance="outline" class="winding-machine-field">
-                <mat-label>Máy quấn dây *</mat-label>
-                <mat-select formControlName="may_quan_day">
-                  <mat-option *ngFor="let machine of windingMachines" [value]="machine.value">
-                    {{ machine.name }}
-                  </mat-option>
-                </mat-select>
-                <mat-error *ngIf="boiDayCaoForm.get('may_quan_day')?.hasError('required') && boiDayCaoForm.get('may_quan_day')?.touched">
-                  Máy quấn dây là bắt buộc
-                </mat-error>
-              </mat-form-field>
+              
+              <div class="form-field half-width">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Máy quấn dây *</mat-label>
+                  <mat-select formControlName="may_quan_day">
+                    <mat-option *ngFor="let machine of windingMachines" [value]="machine.value">
+                      {{ machine.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="boiDayCaoForm.get('may_quan_day')?.hasError('required') && boiDayCaoForm.get('may_quan_day')?.touched">
+                    Máy quấn dây là bắt buộc
+                  </mat-error>
+                </mat-form-field>
+              </div>
             </div>
-
           </div>
-
-          
-
           <!-- Grid Cell 3: Thông số dây quấn -->
           <div class="grid-cell winding-params-cell">            
             <div class="form-field combined-field">
@@ -234,8 +245,6 @@
                 </mat-form-field>
               </div>
             </div>
-
-
           </div>
         </div>
       </div>

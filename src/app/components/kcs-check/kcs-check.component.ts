@@ -835,6 +835,7 @@ export class KcsCheckComponent implements OnInit {
         nguoigiacong: 'quandaycao1@thibidi.com',
         quycachday: '2.5mm²',
         sosoiday: 1,
+        soboi_day: '1',
         ngaysanxuat: new Date('2025-01-19'),
         nhasanxuat: 'nha_sx1',
         chuvikhuon: 0,

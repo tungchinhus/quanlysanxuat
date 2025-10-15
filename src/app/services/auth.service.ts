@@ -40,86 +40,105 @@ export class AuthService {
           this.tokenSubject.next(token);
           this.isAuthenticatedSubject.next(true);
 
-          // Try to map Firebase user to app user by email
-          const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise();
-          const matchedUser = (users || []).find(u => u.email?.toLowerCase() === (fbUser.email || '').toLowerCase() || u.username?.toLowerCase() === (fbUser.email || '').toLowerCase());
+          // Initialize user management data after authentication
+          this.userManagementService.initializeData();
 
-          if (matchedUser) {
-            console.log('Found matched user in Firestore:', matchedUser);
-            console.log('Matched user roles:', matchedUser.roles);
-            
-            // Check if we already have user data loaded from localStorage
-            const currentUser = this.currentUserSubject.value;
-            console.log('Current user from localStorage:', currentUser);
-            console.log('Current user roles:', currentUser?.roles);
-            
-            const isDataFresh = currentUser && 
-              currentUser.id === matchedUser.id && 
-              currentUser.email === matchedUser.email &&
-              currentUser.roles && 
-              currentUser.roles.length > 0;
+          // Wait a bit for data to load, then try to map Firebase user to app user by email
+          setTimeout(async () => {
+            try {
+              // Wait a bit more for Firebase auth state to propagate
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              // Load users only after authentication
+              await this.userManagementService.loadUsers();
+              const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise();
+              const matchedUser = (users || []).find(u => 
+                u.email?.toLowerCase() === (fbUser.email || '').toLowerCase() || 
+                u.username?.toLowerCase() === (fbUser.email || '').toLowerCase() ||
+                (u.username?.toLowerCase() === 'chinhdvt' && fbUser.email?.toLowerCase().includes('chinh.dvt'))
+              );
 
-            console.log('Is data fresh?', isDataFresh);
+              if (matchedUser) {
+                console.log('Found matched user in Firestore:', matchedUser);
+                console.log('Matched user roles:', matchedUser.roles);
+                
+                // Check if we already have user data loaded from localStorage
+                const currentUser = this.currentUserSubject.value;
+                console.log('Current user from localStorage:', currentUser);
+                console.log('Current user roles:', currentUser?.roles);
+                
+                const isDataFresh = currentUser && 
+                  currentUser.id === matchedUser.id && 
+                  currentUser.email === matchedUser.email &&
+                  currentUser.roles && 
+                  currentUser.roles.length > 0;
 
-            if (isDataFresh) {
-              console.log('User data is already fresh, skipping refresh');
-              // Just update the token
-              this.tokenSubject.next(token);
-              this.isAuthenticatedSubject.next(true);
-            } else {
-              console.log('User data needs refresh, refreshing from Firestore...');
-              // Refresh user data to ensure roles are properly loaded
-              try {
-                const refreshedUser = await this.userManagementService.getUserById(matchedUser.id).toPromise();
-                if (refreshedUser) {
-                  console.log('Refreshed user from getUserById:', refreshedUser);
-                  console.log('Refreshed user roles:', refreshedUser.roles);
-                  this.setAuthData(refreshedUser, token);
-                  console.log('User data refreshed from Firestore:', refreshedUser);
+                console.log('Is data fresh?', isDataFresh);
+
+                if (isDataFresh) {
+                  console.log('User data is already fresh, skipping refresh');
+                  // Just update the token
+                  this.tokenSubject.next(token);
+                  this.isAuthenticatedSubject.next(true);
                 } else {
-                  console.log('No refreshed user, using matched user data:', matchedUser);
-                  this.setAuthData(matchedUser, token);
+                  console.log('User data needs refresh, refreshing from Firestore...');
+                  // Refresh user data to ensure roles are properly loaded
+                  try {
+                    const refreshedUser = await this.userManagementService.getUserById(matchedUser.id).toPromise();
+                    if (refreshedUser) {
+                      console.log('Refreshed user from getUserById:', refreshedUser);
+                      console.log('Refreshed user roles:', refreshedUser.roles);
+                      this.setAuthData(refreshedUser, token);
+                      console.log('User data refreshed from Firestore:', refreshedUser);
+                    } else {
+                      console.log('No refreshed user, using matched user data:', matchedUser);
+                      this.setAuthData(matchedUser, token);
+                    }
+                  } catch (refreshError) {
+                    console.warn('Could not refresh user data, using original user:', refreshError);
+                    this.setAuthData(matchedUser, token);
+                  }
                 }
-              } catch (refreshError) {
-                console.warn('Could not refresh user data, using original user:', refreshError);
-                this.setAuthData(matchedUser, token);
-              }
-            }
-          } else {
-            // Check if this is a special demo user and assign appropriate role
-            let assignedRoles: string[] = [];
-            if (fbUser.email?.toLowerCase().includes('totruong')) {
-              assignedRoles = ['totruong'];
-            } else if (fbUser.email?.toLowerCase().includes('quandaycao') || fbUser.email?.toLowerCase().includes('boidaycao')) {
-              assignedRoles = ['quandaycao'];
-            } else if (fbUser.email?.toLowerCase().includes('quandayha') || fbUser.email?.toLowerCase().includes('boidayha')) {
-              assignedRoles = ['quandayha'];
-            } else if (fbUser.email?.toLowerCase().includes('epboiday') || fbUser.email?.toLowerCase().includes('boidayep')) {
-              assignedRoles = ['epboiday'];
-            } else if (fbUser.email?.toLowerCase().includes('kcs')) {
-              assignedRoles = ['kcs'];
-            } else if (fbUser.email?.toLowerCase().includes('admin')) {
-              assignedRoles = ['admin'];
-            } else if (fbUser.email?.toLowerCase().includes('manager')) {
-              assignedRoles = ['manager'];
-            } else {
-              assignedRoles = ['user']; // Default role
-            }
+              } else {
+                // Check if this is a special demo user and assign appropriate role
+                let assignedRoles: string[] = [];
+                if (fbUser.email?.toLowerCase().includes('totruong')) {
+                  assignedRoles = ['totruong'];
+                } else if (fbUser.email?.toLowerCase().includes('quandaycao') || fbUser.email?.toLowerCase().includes('boidaycao')) {
+                  assignedRoles = ['quandaycao'];
+                } else if (fbUser.email?.toLowerCase().includes('quandayha') || fbUser.email?.toLowerCase().includes('boidayha')) {
+                  assignedRoles = ['quandayha'];
+                } else if (fbUser.email?.toLowerCase().includes('epboiday') || fbUser.email?.toLowerCase().includes('boidayep')) {
+                  assignedRoles = ['epboiday'];
+                } else if (fbUser.email?.toLowerCase().includes('kcs')) {
+                  assignedRoles = ['kcs'];
+                } else if (fbUser.email?.toLowerCase().includes('admin')) {
+                  assignedRoles = ['admin'];
+                } else if (fbUser.email?.toLowerCase().includes('manager')) {
+                  assignedRoles = ['manager'];
+                } else {
+                  assignedRoles = ['user']; // Default role
+                }
 
-            // Minimal fallback mapping if no profile found
-            const minimalUser: User = {
-              id: fbUser.uid,
-              uid: fbUser.uid, // Set uid field to Firebase UID
-              username: fbUser.email || fbUser.uid,
-              email: fbUser.email || '',
-              fullName: fbUser.displayName || (fbUser.email || ''),
-              isActive: true,
-              roles: assignedRoles,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            };
-            this.setAuthData(minimalUser, token);
-          }
+                // Minimal fallback mapping if no profile found
+                const minimalUser: User = {
+                  id: fbUser.uid,
+                  uid: fbUser.uid, // Set uid field to Firebase UID
+                  username: fbUser.email || fbUser.uid,
+                  email: fbUser.email || '',
+                  fullName: fbUser.displayName || (fbUser.email || ''),
+                  isActive: true,
+                  roles: assignedRoles,
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                };
+                this.setAuthData(minimalUser, token);
+              }
+            } catch (err) {
+              console.error('Error handling auth state change:', err);
+              this.clearAuthData();
+            }
+          }, 1000); // Wait 1 second for data to load
         } catch (err) {
           console.error('Error handling auth state change:', err);
           this.clearAuthData();
@@ -219,54 +238,74 @@ export class AuthService {
 
   async login(usernameOrEmail: string, password: string): Promise<{ success: boolean; message: string; user?: User }> {
     try {
-      // First, get all users to find the correct email for username
-      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise() || [];
+      // Initialize user management data first
+      this.userManagementService.initializeData();
       
       // Check if input is email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const isEmail = emailRegex.test(usernameOrEmail);
       
       let actualEmail = usernameOrEmail;
-      let appUser: User | undefined;
       
-      if (isEmail) {
-        // Input is email, find user by email
-        appUser = users.find(u => u.email?.toLowerCase() === usernameOrEmail.toLowerCase());
-        actualEmail = usernameOrEmail;
-      } else {
-        // Input is username, find user by username and get their email
-        appUser = users.find(u => u.username?.toLowerCase() === usernameOrEmail.toLowerCase());
-        if (appUser && appUser.email) {
-          actualEmail = appUser.email;
-        } else {
-          return { success: false, message: 'Tên đăng nhập không tồn tại' };
-        }
-      }
-      
-      if (!appUser) {
-        // Check if this is a demo user that should be allowed to login
-        if (actualEmail.toLowerCase().includes('totruong') || 
-            actualEmail.toLowerCase().includes('admin') || 
-            actualEmail.toLowerCase().includes('manager') ||
-            actualEmail.toLowerCase().includes('user') ||
-            actualEmail.toLowerCase().includes('quandaycao') ||
-            actualEmail.toLowerCase().includes('boidaycao') ||
-            actualEmail.toLowerCase().includes('quandayha') ||
-            actualEmail.toLowerCase().includes('boidayha') ||
-            actualEmail.toLowerCase().includes('epboiday') ||
-            actualEmail.toLowerCase().includes('boidayep') ||
-            actualEmail.toLowerCase().includes('kcs')) {
-          // Allow login for demo users even if not in database
-          console.log('Demo user login allowed:', actualEmail);
-        } else {
-          return { success: false, message: 'Tài khoản không tồn tại' };
+      if (!isEmail) {
+        // For username, query Firebase to find the corresponding email
+        try {
+          await this.userManagementService.loadUsers();
+          const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise() || [];
+          
+          console.log('Looking for username:', usernameOrEmail);
+          console.log('Available users:', users.map(u => ({ username: u.username, email: u.email })));
+          
+          const matchedUser = users.find(u => 
+            u.username?.toLowerCase() === usernameOrEmail.toLowerCase()
+          );
+          
+          if (matchedUser && matchedUser.email) {
+            actualEmail = matchedUser.email;
+            console.log('Found user by username:', usernameOrEmail, '-> email:', actualEmail);
+          } else {
+            // Try direct Firebase lookup as fallback
+            try {
+              const directUser = await this.userManagementService.getUserByUsername(usernameOrEmail).pipe(take(1)).toPromise();
+              if (directUser && directUser.email) {
+                actualEmail = directUser.email;
+                console.log('Found user via direct lookup:', usernameOrEmail, '-> email:', actualEmail);
+              } else {
+                // Fallback: try to construct email from username
+                actualEmail = usernameOrEmail + '@thibidi.com';
+                console.log('No user found for username:', usernameOrEmail, 'using fallback email:', actualEmail);
+              }
+            } catch (directLookupError) {
+              console.error('Direct lookup failed:', directLookupError);
+              // Fallback: try to construct email from username
+              actualEmail = usernameOrEmail + '@thibidi.com';
+              console.log('Using fallback email:', actualEmail);
+            }
+          }
+        } catch (error) {
+          console.error('Error looking up user by username:', error);
+          // Fallback: try to construct email from username
+          actualEmail = usernameOrEmail + '@thibidi.com';
         }
       }
       
       // Use the actual email for Firebase authentication
+      console.log('Attempting Firebase authentication with:', actualEmail);
       const credential = await signInWithEmailAndPassword(this.firebaseService.getAuth(), actualEmail, password);
       const fbUser = credential.user;
       const token = await fbUser.getIdToken();
+      console.log('Firebase authentication successful for:', fbUser.email);
+      
+      // After successful authentication, load users to find the app user
+      await this.userManagementService.loadUsers();
+      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise() || [];
+      
+      // Find the app user
+      const appUser = users.find(u => 
+        u.email?.toLowerCase() === actualEmail.toLowerCase() || 
+        u.username?.toLowerCase() === usernameOrEmail.toLowerCase() ||
+        (u.username?.toLowerCase() === 'chinhdvt' && actualEmail.toLowerCase().includes('chinh.dvt'))
+      );
 
       // Update last login (best-effort) - only if appUser exists
       if (appUser) {
@@ -810,5 +849,57 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return this.isAuthenticatedSubject.value;
+  }
+
+  // Debug method to test login with specific credentials
+  async debugLogin(email: string, password: string): Promise<void> {
+    try {
+      console.log('🔍 DEBUG LOGIN START');
+      console.log('Email:', email);
+      console.log('Password:', password);
+      
+      // Step 1: Test Firebase Authentication
+      console.log('Step 1: Testing Firebase Authentication...');
+      const credential = await signInWithEmailAndPassword(this.firebaseService.getAuth(), email, password);
+      console.log('✅ Firebase Auth successful:', credential.user.uid);
+      
+      // Step 2: Initialize user management
+      console.log('Step 2: Initializing user management...');
+      this.userManagementService.initializeData();
+      
+      // Step 3: Wait and try to get users
+      console.log('Step 3: Waiting for data to load...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const users = await this.userManagementService.getUsers().pipe(take(1)).toPromise();
+      console.log('Users loaded from Firestore:', users?.length || 0);
+      
+      if (users && users.length > 0) {
+        console.log('First few users:', users.slice(0, 3).map(u => ({ email: u.email, username: u.username, roles: u.roles })));
+      }
+      
+      // Step 4: Try to find matching user
+      console.log('Step 4: Looking for matching user...');
+      const matchedUser = (users || []).find(u => 
+        u.email?.toLowerCase() === email.toLowerCase() || 
+        u.username?.toLowerCase() === email.toLowerCase()
+      );
+      
+      if (matchedUser) {
+        console.log('✅ Found matching user:', matchedUser);
+        console.log('User roles:', matchedUser.roles);
+      } else {
+        console.log('❌ No matching user found in Firestore');
+        console.log('Available emails:', users?.map(u => u.email).filter(Boolean));
+      }
+      
+      // Step 5: Sign out
+      console.log('Step 5: Signing out...');
+      await signOut(this.firebaseService.getAuth());
+      console.log('✅ Debug login completed');
+      
+    } catch (error) {
+      console.error('❌ Debug login failed:', error);
+    }
   }
 }

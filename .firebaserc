@@ -5,11 +5,11 @@
   "targets": {
     "quanlysanxuat": {
       "hosting": {
-        "dieuxe": [
-          "quanlysanxuat"
-        ],
         "quanlysx": [
           "quanlysx"
+        ],
+        "quanlysanxuat-b7346": [
+          "quanlysanxuat-b7346"
         ]
       }
     }

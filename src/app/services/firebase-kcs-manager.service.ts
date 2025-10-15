@@ -84,6 +84,8 @@ export class FirebaseKcsManagerService {
     try {
       if (!kyhieubangve) return null;
       
+      console.log('Looking for bangve data with kyhieubangve:', kyhieubangve);
+      
       // Try to find in bangve collection first
       const bangveQuery = query(
         collection(this.firestore, 'bangve'),
@@ -93,6 +95,7 @@ export class FirebaseKcsManagerService {
       
       if (!bangveSnapshot.empty) {
         const data = bangveSnapshot.docs[0].data();
+        console.log('Found in bangve collection:', data);
         return {
           kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || '',
           tenbangve: data['tenbangve'] || data['ten_bang_ve'] || '',
@@ -112,6 +115,7 @@ export class FirebaseKcsManagerService {
       
       if (!quanDaySnapshot.empty) {
         const data = quanDaySnapshot.docs[0].data();
+        console.log('Found in quan_day collection:', data);
         return {
           kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || '',
           tenbangve: data['tenbangve'] || data['ten_bang_ve'] || '',
@@ -122,6 +126,54 @@ export class FirebaseKcsManagerService {
         };
       }
       
+      // If not found, try to extract the base bangve symbol from the boiday symbol
+      // For example: "testbangve1-065" -> "testbangve1"
+      const baseBangveSymbol = kyhieubangve.replace(/-\d+$/, ''); // Remove suffix like "-065"
+      console.log('Trying base bangve symbol:', baseBangveSymbol);
+      
+      if (baseBangveSymbol !== kyhieubangve) {
+        // Try to find with base symbol in bangve collection
+        const baseBangveQuery = query(
+          collection(this.firestore, 'bangve'),
+          where('kyhieubangve', '==', baseBangveSymbol)
+        );
+        const baseBangveSnapshot = await getDocs(baseBangveQuery);
+        
+        if (!baseBangveSnapshot.empty) {
+          const data = baseBangveSnapshot.docs[0].data();
+          console.log('Found with base symbol in bangve collection:', data);
+          return {
+            kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || '',
+            tenbangve: data['tenbangve'] || data['ten_bang_ve'] || '',
+            congsuat: data['congsuat'] || data['cong_suat'] || '',
+            tbkt: data['tbkt'] || data['tb_kt'] || '',
+            nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || '',
+            ngaysanxuat: data['ngaysanxuat'] || data['ngay_san_xuat']
+          };
+        }
+        
+        // Try to find with base symbol in quan_day collection
+        const baseQuanDayQuery = query(
+          collection(this.firestore, 'quan_day'),
+          where('kyhieubangve', '==', baseBangveSymbol)
+        );
+        const baseQuanDaySnapshot = await getDocs(baseQuanDayQuery);
+        
+        if (!baseQuanDaySnapshot.empty) {
+          const data = baseQuanDaySnapshot.docs[0].data();
+          console.log('Found with base symbol in quan_day collection:', data);
+          return {
+            kyhieuquanday: data['kyhieuquanday'] || data['ky_hieu_quan_day'] || '',
+            tenbangve: data['tenbangve'] || data['ten_bang_ve'] || '',
+            congsuat: data['congsuat'] || data['cong_suat'] || '',
+            tbkt: data['tbkt'] || data['tb_kt'] || '',
+            nhasanxuat: data['nhasanxuat'] || data['nha_san_xuat'] || '',
+            ngaysanxuat: data['ngaysanxuat'] || data['ngay_san_xuat']
+          };
+        }
+      }
+      
+      console.log('No bangve data found for:', kyhieubangve);
       return null;
     } catch (error) {
       console.log(`Error getting bangve data for ${kyhieubangve}:`, error);
@@ -258,11 +310,15 @@ export class FirebaseKcsManagerService {
           // Get corresponding bangve data
           const bangveData = await this.getBangveDataByKyHieu(data['kyhieubangve']);
           
+          // Extract base bangve symbol from boiday symbol
+          // For example: "testbangve1-065" -> "testbangve1"
+          const baseBangveSymbol = data['kyhieubangve'].replace(/-\d+$/, '');
+          
           const drawing: ProcessedDrawingData = {
             id: doc.id,
-            kyhieubangve: data['kyhieubangve'] || '',
-            kyhieuquanday: bangveData?.kyhieuquanday || data['kyhieubangve'] || '',
-            tenbangve: bangveData?.tenbangve || data['kyhieubangve'] || '',
+            kyhieubangve: baseBangveSymbol, // Use extracted base symbol as the actual bangve symbol
+            kyhieuquanday: bangveData?.kyhieuquanday || baseBangveSymbol,
+            tenbangve: bangveData?.tenbangve || baseBangveSymbol,
             congsuat: bangveData?.congsuat || '',
             tbkt: bangveData?.tbkt || '',
             nhasanxuat: data['nhasanxuat'] || bangveData?.nhasanxuat || '',
@@ -276,8 +332,8 @@ export class FirebaseKcsManagerService {
             updated_at: this.toDateAny(data['updated_at'])
           };
 
-          // Use kyhieubangve as key to avoid duplicates
-          drawingsMap.set(data['kyhieubangve'], drawing);
+          // Use base bangve symbol as key to avoid duplicates
+          drawingsMap.set(baseBangveSymbol, drawing);
         }
       } catch (error) {
         console.log(`Error fetching from tbl_bd_ha:`, error);
@@ -297,11 +353,15 @@ export class FirebaseKcsManagerService {
           // Get corresponding bangve data
           const bangveData = await this.getBangveDataByKyHieu(data['kyhieubangve']);
           
+          // Extract base bangve symbol from boiday symbol
+          // For example: "testbangve1-066" -> "testbangve1"
+          const baseBangveSymbol = data['kyhieubangve'].replace(/-\d+$/, '');
+          
           const drawing: ProcessedDrawingData = {
             id: doc.id,
-            kyhieubangve: data['kyhieubangve'] || '',
-            kyhieuquanday: bangveData?.kyhieuquanday || data['kyhieubangve'] || '',
-            tenbangve: bangveData?.tenbangve || data['kyhieubangve'] || '',
+            kyhieubangve: baseBangveSymbol, // Use extracted base symbol as the actual bangve symbol
+            kyhieuquanday: bangveData?.kyhieuquanday || baseBangveSymbol,
+            tenbangve: bangveData?.tenbangve || baseBangveSymbol,
             congsuat: bangveData?.congsuat || '',
             tbkt: bangveData?.tbkt || '',
             nhasanxuat: data['nhasanxuat'] || bangveData?.nhasanxuat || '',
@@ -315,10 +375,10 @@ export class FirebaseKcsManagerService {
             updated_at: this.toDateAny(data['updated_at'])
           };
 
-          // Check if this kyhieubangve already exists
-          if (drawingsMap.has(data['kyhieubangve'])) {
+          // Check if this base bangve symbol already exists
+          if (drawingsMap.has(baseBangveSymbol)) {
             // If exists, determine the overall status based on both bd_ha and bd_cao
-            const existingDrawing = drawingsMap.get(data['kyhieubangve'])!;
+            const existingDrawing = drawingsMap.get(baseBangveSymbol)!;
             const overallStatus = this.determineOverallStatus(existingDrawing.trang_thai_approve || 'pending', data['trang_thai_approve'] || 'pending');
             
             // Update the existing drawing with overall status
@@ -327,7 +387,7 @@ export class FirebaseKcsManagerService {
             existingDrawing.loai_boi_day = 'both'; // Indicate both types exist
           } else {
             // If not exists, add new drawing
-            drawingsMap.set(data['kyhieubangve'], drawing);
+            drawingsMap.set(baseBangveSymbol, drawing);
           }
         }
       } catch (error) {
@@ -352,6 +412,12 @@ export class FirebaseKcsManagerService {
       }
 
       // Apply filtering for KCS Manager based on trang_thai_approve from tbl_bd_ha and tbl_bd_cao
+      // Chỉ hiển thị những bảng vẽ đã thi công bối dây hạ và bối dây cao
+      filteredDrawings = filteredDrawings.filter(drawing => {
+        return drawing.loai_boi_day === 'ha' || drawing.loai_boi_day === 'cao' || drawing.loai_boi_day === 'both';
+      });
+      console.log(`After filtering for completed boiday (ha/cao/both): ${filteredDrawings.length} items remain`);
+
       if (criteria.trang_thai === 'pending') {
         // Show drawings that have trang_thai_approve = 'pending' (not yet KCS checked)
         filteredDrawings = filteredDrawings.filter(drawing => {
@@ -415,7 +481,7 @@ export class FirebaseKcsManagerService {
   public async debugCollectionData(): Promise<void> {
     console.log('=== DEBUG: Checking Collection Data ===');
     
-    const collections = ['bangve', 'quan_day', 'boi_day_ha', 'boi_day_cao', 'ep_boi_day'];
+    const collections = ['bangve', 'quan_day', 'tbl_bd_ha', 'tbl_bd_cao', 'ep_boi_day'];
     
     for (const collectionName of collections) {
       try {
@@ -428,10 +494,12 @@ export class FirebaseKcsManagerService {
           console.log('   Sample documents:');
           let index = 0;
           snapshot.forEach((doc) => {
-            if (index < 3) { // Only show first 3 documents
+            if (index < 5) { // Show first 5 documents
               const data = doc.data();
               console.log(`     ${index + 1}. ID: ${doc.id}`);
               console.log(`        kyhieubangve: ${data['kyhieubangve'] || data['ky_hieu_bang_ve'] || 'N/A'}`);
+              console.log(`        kyhieuquanday: ${data['kyhieuquanday'] || data['ky_hieu_quan_day'] || 'N/A'}`);
+              console.log(`        tenbangve: ${data['tenbangve'] || data['ten_bang_ve'] || 'N/A'}`);
               console.log(`        trang_thai: ${data['trang_thai'] || 'N/A'}`);
               console.log(`        trang_thai_approve: ${data['trang_thai_approve'] || 'N/A'}`);
               console.log(`        created_at: ${data['created_at'] || 'N/A'}`);

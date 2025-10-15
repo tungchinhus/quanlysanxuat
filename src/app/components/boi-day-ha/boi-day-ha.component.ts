@@ -150,7 +150,7 @@ export class BoiDayHaComponent implements OnInit {
       chuViKhuon: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required, Validators.min(0)]],
       ktBungBdTruoc: [{ value: null, disabled: isViewMode }],
       bungBdSau: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
-      chieuQuanDay: [{ value: 'trai', disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
+      chieuQuanDay: [{ value: 'phai', disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
       mayQuanDay: [{ value: null, disabled: isViewMode }, isViewMode ? [] : [Validators.required]],
       // QTD Hạ - Xung quanh
       xqDay2: [{ value: null, disabled: isViewMode }],

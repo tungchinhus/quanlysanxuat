@@ -295,7 +295,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       chu_vi_khuon: [0, [Validators.min(0)]],
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: [true],
+      chieu_quan_day: [false],
       may_quan_day: ['', Validators.required],
       xung_quanh_day_2: [0, [Validators.min(0)]],
       xung_quanh_day_3: [0, [Validators.min(0)]],
@@ -378,6 +378,35 @@ export class BoiDayHaPopupComponent implements OnInit {
     this.autoPopulateFromBangve();
   }
   
+  // Method to get actual bangve symbol from bangve collection
+  private async getActualBangveSymbol(): Promise<string> {
+    try {
+      // Try to get from quanDay data first
+      const quanDayBangveSymbol = this.data.quanDay?.kyhieuquanday;
+      if (quanDayBangveSymbol) {
+        console.log('Using quanDay bangve symbol:', quanDayBangveSymbol);
+        return quanDayBangveSymbol;
+      }
+      
+      // If not available, try to extract from ky_hieu_bv_boidayha
+      const boidaySymbol = this.data.quanDay?.ky_hieu_bv_boidayha;
+      if (boidaySymbol) {
+        // Extract base symbol: "testbangve1-065" -> "testbangve1"
+        const baseSymbol = boidaySymbol.replace(/-\d+$/, '');
+        console.log('Extracted base symbol from boiday:', baseSymbol);
+        return baseSymbol;
+      }
+      
+      // Fallback to quanDay id or default
+      const fallbackSymbol = this.data.quanDay?.id || 'unknown';
+      console.log('Using fallback symbol:', fallbackSymbol);
+      return fallbackSymbol;
+    } catch (error) {
+      console.error('Error getting actual bangve symbol:', error);
+      return this.data.quanDay?.kyhieuquanday || 'unknown';
+    }
+  }
+
   // Method to populate form with quanDay data
   private populateFormWithQuanDayData(): void {
     console.log('Populating form with quanDay data:', this.data.quanDay);
@@ -394,7 +423,7 @@ export class BoiDayHaPopupComponent implements OnInit {
       chu_vi_khuon: this.data.quanDay.chu_vi_khuon || 0,
       kt_bung_bd_truoc: this.data.quanDay.bung_bd || 0,
       bung_bd_sau: this.data.quanDay.bung_bd_sau || 0,
-      chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : true,
+      chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : false,
       may_quan_day: this.data.quanDay.may_quan_day || '',
       
       // Thông số dây quấn từ bangve - default to 0
@@ -857,10 +886,13 @@ export class BoiDayHaPopupComponent implements OnInit {
         throw new Error('Không tìm thấy user trong hệ thống');
       }
 
+      // Lấy ký hiệu bảng vẽ thực sự từ bảng bangve
+      const actualBangveSymbol = await this.getActualBangveSymbol();
+      
       // Tạo data cho bd_ha
       const bdHaData: Omit<BdHaData, 'id'> = {
         masothe_bd_ha: this.data.quanDay.ky_hieu_bv_boidayha || `${this.data.quanDay.kyhieuquanday}-065`,
-        kyhieubangve: this.data.quanDay.ky_hieu_bv_boidayha || this.data.quanDay.kyhieuquanday,
+        kyhieubangve: actualBangveSymbol, // Sử dụng ký hiệu bảng vẽ thực sự
         ngaygiacong: new Date(),
         nguoigiacong: currentUser.fullName || currentUser.username || currentUser.email || 'Unknown',
         quycachday: formData.quy_cach_day,

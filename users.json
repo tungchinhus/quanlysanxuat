@@ -1,0 +1,343 @@
+{"users": [
+{
+  "localId": "1A2R6SUptNXmCF0aAs3NpAdVu5E2",
+  "email": "thaitruong2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "f7LCkxxZQDtVODtWo1aqUm2zWO0+/XyrVVm2mYoXhpZrr2A6aL8a9U4cfCLXxyDUjAU3SF7CJw1ZnA3bVvJdkg==",
+  "salt": "MWOV7oMIMJUAiA==",
+  "lastSignedInAt": "1759807043438",
+  "createdAt": "1759807043438",
+  "providerUserInfo": []
+},
+{
+  "localId": "5gsCqoCGInRmiiR7g5juJW3wzz13",
+  "email": "vannguyen2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "oZD5i/DO6t2hj6a9duU63ZJYV+T4ep+FkOg3heQohEQteyl6BzhxXmo/0XOfAQESEXKsog2KeSrFkmzg7S2ZmQ==",
+  "salt": "u6a+lm7DtiLXAg==",
+  "lastSignedInAt": "1759814455847",
+  "createdAt": "1759814455847",
+  "providerUserInfo": []
+},
+{
+  "localId": "6JH47NqxVLg9NRXx1rBHLJ7gp982",
+  "email": "dinhthuan2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "2WMN6mjUyzoTT7YQeq9D3ZD5FH2R6vLAwppQ6Yc4MpHl/e/ZEZuR4vpUAPkCOm9M4aR6LDtU2uMaqmTy3El8Tw==",
+  "salt": "UI1jwwFfTHjo7A==",
+  "lastSignedInAt": "1759811407397",
+  "createdAt": "1759811407397",
+  "providerUserInfo": []
+},
+{
+  "localId": "81UyB7qQG9V3okWxuy4ru3zgbj53",
+  "email": "vanthu2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "dMC/oSWtKJjP7pMIaQqjQFzuARRPKLwqr2i63QIe8cHnZfq7RUkUno8tC90GC36I1UXnNBvlqnU0kMAP7eIkpw==",
+  "salt": "QWj0cignIy3Zgg==",
+  "lastSignedInAt": "1760327014624",
+  "createdAt": "1759814544996",
+  "providerUserInfo": []
+},
+{
+  "localId": "8RehffG04VUcB1NImGD1IRrBgWj2",
+  "email": "hongly2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "HuPwWMzWXkrP1QP3XsboaNE7RvnepjVBJt3eFzLxqaoJM/tcpIslNMY0CRo9zv7acOhAOLPKUcGW2s6E9Nc6JQ==",
+  "salt": "kUhT1DIm8p11xQ==",
+  "lastSignedInAt": "1759814720042",
+  "createdAt": "1759814720042",
+  "providerUserInfo": []
+},
+{
+  "localId": "CiuUTuWZcTey1AjYJaX43EbRcSN2",
+  "email": "chicong2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "0FABZFfXzmJ+Ka64e9SshTTtMf/lMEhVvlq+FJQsEV4iG644qaWDe6Ew5TJcuXgVx2PB3q9X8vx50xksi6qJzw==",
+  "salt": "+rMy+v1ki9sEZA==",
+  "lastSignedInAt": "1759811442880",
+  "createdAt": "1759811442880",
+  "providerUserInfo": []
+},
+{
+  "localId": "CsO2xElw5WUFrDTJAFuEkj3Fjex1",
+  "email": "chinh.dvt@thibidi.com",
+  "emailVerified": true,
+  "passwordHash": "hIpehcrS1xOVmnTpCl/Ne0JEl7hye2ABNlJMesAAc87uCmdV8BC9e5pILTWGVcz84vcEbHcmXwAbS5uvE538uw==",
+  "salt": "GpXQnyKK6iYpsQ==",
+  "lastSignedInAt": "1760497170001",
+  "createdAt": "1758164239992",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "DZhaJGpidnbjf9y0OzM1YlIEZrL2",
+  "email": "phuong2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "IQxVjDEbxKaECDN86uWValyadG3dWHU1UtmzLvLp3E+LulwGu2ZEQbbbQ9vdQZ058A295VRRHXK1ikoD/O8cuQ==",
+  "salt": "JW35U/DATUFzXw==",
+  "lastSignedInAt": "1759719172083",
+  "createdAt": "1759469392872",
+  "providerUserInfo": []
+},
+{
+  "localId": "I8NRNYmDOHdLvn1Gn7jviYz7FOy2",
+  "email": "trungthanh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "pQbbdr/XZe2ISBzx8UO1jarpiTvdYk1amUH8WNDsrZs7cBajeuxOH0EovT9BWc8Ho10UvZIKH4tvfLSMRuP4Tw==",
+  "salt": "IsWi5DtrGx+FVg==",
+  "lastSignedInAt": "1759814496115",
+  "createdAt": "1759814496115",
+  "providerUserInfo": []
+},
+{
+  "localId": "IgSARsDjaIMe1DQfmUNUWK0nixA3",
+  "email": "ngocphung2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "uT/QE6KCbkwkOIfimgLVBcA/M26YZsMpv8YYL6LmNW3duxiOsPe2Ar9t2az3o4tSloqdC5NJEvRBhYmuiftpTw==",
+  "salt": "2CDBd8QrCfqkmQ==",
+  "lastSignedInAt": "1759807099018",
+  "createdAt": "1759807099018",
+  "providerUserInfo": []
+},
+{
+  "localId": "L7K8rKjnO0dC9rrO7rCO4AVPn0Q2",
+  "email": "vancong2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "BfivJbAQr17IPSyRt7EAopQ/+Xs6Xd3Tx56bx3GMUfEEFzwHDSc86uZVnBmwRtkvSicyZ+IAIT0+Guhl4ZyfQg==",
+  "salt": "uJa8iAqotV4oAw==",
+  "lastSignedInAt": "1759806727939",
+  "createdAt": "1759806727939",
+  "providerUserInfo": []
+},
+{
+  "localId": "PXhwPl5YnwMFDSz2iZwHM1m3SbM2",
+  "email": "dat2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "nM4OucM61/Kmd636lsNAhACu+z74ASV8nJZlHvMB61qiRZ4Oh9RJ+ITEYx8AEy7m4ZMMFbMmOork3wIDcV/QKA==",
+  "salt": "6zIvu/G4BCtnqg==",
+  "lastSignedInAt": "1759719666499",
+  "createdAt": "1759471284605",
+  "providerUserInfo": []
+},
+{
+  "localId": "PducDI3kbXS86fIJhqPONBeU77w1",
+  "email": "hoanganh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "lJ9D3dNXN1784GjfitdZFGqdYYnVavaOXnCjYna1DSs4uEEz1RxSztnbrLCJwVNcEKLGYGRAiQ0VR3L7NED4LA==",
+  "salt": "yHrFOr9MpJXMFA==",
+  "lastSignedInAt": "1759814587029",
+  "createdAt": "1759814587029",
+  "providerUserInfo": []
+},
+{
+  "localId": "Q1hWk9EexsUuM7cWngJwpGRB8c13",
+  "email": "canhdat2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "c+r8OR25VykCoJF7Bjw1bfkJMPDZZQTDma6lGYJC4rbomAmI5zffnUo4979xP+YGsw/FPx6Pu5/RrNzWX7Fk5w==",
+  "salt": "lZFIf3CrnxTS5g==",
+  "lastSignedInAt": "1759814651669",
+  "createdAt": "1759814651669",
+  "providerUserInfo": []
+},
+{
+  "localId": "Q53QuyM1cPY59bMZRG6d8OYbclm2",
+  "email": "quangbinh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "3weqxzxBXJx/XdBcnugiGz32sp3T20GtnBsR8EokTljsstwajQyhhrfiugWKllFTAIpid24vpUrjxKUTqo85Tw==",
+  "salt": "YnZ0qFqD2IPFfQ==",
+  "lastSignedInAt": "1759814818690",
+  "createdAt": "1759814818690",
+  "providerUserInfo": []
+},
+{
+  "localId": "QK3sFJwLuMaueumGbWQf5u4cZc03",
+  "email": "minhquan2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "Lhy3Y9wMKgvYvwZTMgzOhvSCEJDS0DkvoqE84rAjPkUzdBTcDAvt8GEFc9a9yZ/4CNz3dbJs8oZX62RhI57FRA==",
+  "salt": "Sx/PxD3r3KOgPg==",
+  "lastSignedInAt": "1759814617304",
+  "createdAt": "1759814617304",
+  "providerUserInfo": []
+},
+{
+  "localId": "SFJlakJcfcUOs4RGqHlUKn75SzH2",
+  "email": "thanh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "9B5kQ2CJxbGCXoT+jsnOya2ZLgXRuGmIZrcjhHMo3293UEOXkVfZLgL8y9PMft4xWQeTG9u7YPlUXC+zfToXUw==",
+  "salt": "O+82QiH7Ej2xjw==",
+  "lastSignedInAt": "1759470625943",
+  "createdAt": "1759470625943",
+  "providerUserInfo": []
+},
+{
+  "localId": "Sbm8TenQc8TSGTteaUPdGtj9z872",
+  "email": "dinhan2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "YolusX7UnHlfbsedIy8xTsI//tu2j6h70L1Pl/kHluHwQKaz1A67E9dFKcqpIidGPakCoDMJdz7DxaeJW42AjA==",
+  "salt": "AGv6tVi+2BFhKA==",
+  "lastSignedInAt": "1759814683552",
+  "createdAt": "1759814683552",
+  "providerUserInfo": []
+},
+{
+  "localId": "TW9QCSUoYIbcjcPKKEoAj9qxzcQ2",
+  "email": "boidayha_test@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "HOH7iVbTviNU+dkalsfPW6SZx5nfDTSCpkM+UZ60gYhigyGgJWMgFf5OMbNSUmS2sUF2p2x/DskVyl1tIorWMA==",
+  "salt": "ZV1iz33qFMg4iA==",
+  "lastSignedInAt": "1760496854716",
+  "createdAt": "1759723449507",
+  "providerUserInfo": []
+},
+{
+  "localId": "Wop20UKV2hhT1DKRCQMV4XrqsI43",
+  "email": "kimnguyen2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "SYbtvG9nXFrfD8jXUQGzpkipZZGRMnteud1OSZizQXIetqPA+Dt5631em2NSP6q+jfwRxDw5MMhnJYPUAFKwDg==",
+  "salt": "msIwMKoj+4DMiQ==",
+  "lastSignedInAt": "1759806859855",
+  "createdAt": "1759806859855",
+  "providerUserInfo": []
+},
+{
+  "localId": "ZQCoOKu6WSdGt17s0RSSjccKZ5s1",
+  "email": "kcs_test@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "zriaNLGBRWebcO5GZ9Q2RHERImuhel1orl+GXF7LxQ74vtQSYYzTyZNTm7IM3oWxwrZ0L3X0EW8A44qThB+UBQ==",
+  "salt": "Stw7w19P2udhiQ==",
+  "lastSignedInAt": "1760496995737",
+  "createdAt": "1759723819479",
+  "providerUserInfo": []
+},
+{
+  "localId": "auVl6KDhRMdnu33Blr2b3b6Ptr22",
+  "email": "vanloc2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "3VBf8K21YaxvbzrY3hvdGtfT1TSpvrzc/tju5BJ0BYHKmIkosGvYxJ/sqCfGPHba7qOOZIdoLMBCjVWaE3YT7g==",
+  "salt": "TXlSzu/dhlo7pQ==",
+  "lastSignedInAt": "1760340825813",
+  "createdAt": "1759806926310",
+  "providerUserInfo": []
+},
+{
+  "localId": "awvOt1syG3P3w2Xy20tsSw346MC3",
+  "email": "trungkien2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "M8ZO56x66UopIDFG2F+VPN+L3goo4PJJO77y1rG//rpg9xFxLNJX+OyV1jTIgW9Ha431tUBFbCQLjmZHEq+q9w==",
+  "salt": "WKjaL/zsGRktEA==",
+  "lastSignedInAt": "1760334053677",
+  "createdAt": "1760334053677",
+  "providerUserInfo": []
+},
+{
+  "localId": "joSz5QVtWsUbdkgwyi27lwOVyFw2",
+  "email": "minhphuong2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "cbPOVqXhRvLca8xUEzQHhPhoUNcC3xQQ1b92BIJX+A0AqB3i391xvkHSMSj9y5zQEy7j4x26l1+e2TCNiTBmiw==",
+  "salt": "EHdY4+gzrAoElg==",
+  "lastSignedInAt": "1759806775088",
+  "createdAt": "1759806775088",
+  "providerUserInfo": []
+},
+{
+  "localId": "lPc5gCflSQYPUmydO2CRXZzozeD3",
+  "email": "quanbinhh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "cxT1/WxNuP3LA3QTvWgZ92XKu0O7uoVtr+w3imvV/dBMAGx5jsL5JYwjd7s+Xe0feXvSD9m0ymKofureOPv5mA==",
+  "salt": "XeSLPn1IfS7yBA==",
+  "lastSignedInAt": "1759807156671",
+  "createdAt": "1759807156671",
+  "providerUserInfo": []
+},
+{
+  "localId": "o8lTQugU4uVFepJegulNWWfRgw43",
+  "email": "huy2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "ZAiJL/2gWEnT4idLq3FJQEEE5/N5G3eLmgfwbYu/gIGpm60HA/Zadx92dnKYQSdns+cWjpnOA2oEbYX6ZugD8g==",
+  "salt": "Hf7JW2Evu+/i+Q==",
+  "lastSignedInAt": "1759470577652",
+  "createdAt": "1759470577652",
+  "providerUserInfo": []
+},
+{
+  "localId": "pRCmsOWDL4bVciKOUyiKWNdpjhr1",
+  "email": "vanthoi2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "E+tQYzJTWy/18vGXZQfI4IinvsH9/Qo73DQ48tb2fUu86PGz3wGleD4hJAvILiqvrdEesxQNi9wFO16ASKyi8Q==",
+  "salt": "IVbcdhZZ9hJCZQ==",
+  "lastSignedInAt": "1759807220661",
+  "createdAt": "1759807220661",
+  "providerUserInfo": []
+},
+{
+  "localId": "pfAjrfoASybWUzRbc3DZIJpzltx2",
+  "email": "boidaycao_test@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "UY+R2dS101i6lgLIeDhFb54HFIyUmhR1rLOCMHswRbecJvQhiGasacefou4EpZkYyWtKVen+CIvOv6UERUxLxg==",
+  "salt": "+6+lx9q1MNXJoA==",
+  "lastSignedInAt": "1760496928389",
+  "createdAt": "1759723637027",
+  "providerUserInfo": []
+},
+{
+  "localId": "pzwweU0435cx8R4OyEpkiaXRGV32",
+  "email": "huuvi2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "d1vzNZ9B7cVjaBFFdS/RP6+p+eeSSSSlvs3hBgoMxwDiDJJrKVT5aPicSp4f6lbTRC+vb0HNamjVAf6MlXOn+g==",
+  "salt": "X2sOZ1IqHpuBdA==",
+  "lastSignedInAt": "1759811485729",
+  "createdAt": "1759811485729",
+  "providerUserInfo": []
+},
+{
+  "localId": "uVlN5pQgXrUrQs19TjqrpYFTtUk1",
+  "email": "manager@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "K5QbSKhYtNrbN+bY+iChPjFcwlwMxpJk+yVltj+E91jLO0pzdxOoy0lDHZOv1fDWwIsHqcGa2kn6khR3c4SXrA==",
+  "salt": "XntBPcFvD4xyng==",
+  "lastSignedInAt": "1760332747706",
+  "createdAt": "1758424300126",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "ui4N0NbrL4VfC1Ee2uvuiecubL02",
+  "email": "ngocvinh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "3sgV7zYEVHSXlQe+Q++hAW6KBVHbmZENp27HA2YHJJ/Rt1PnEwJReDXhiS6xXQjMKP/t8YyQ91pYbeOxu2m2+g==",
+  "salt": "YRPAdqJca0PhaQ==",
+  "lastSignedInAt": "1759806461034",
+  "createdAt": "1759806461034",
+  "providerUserInfo": []
+},
+{
+  "localId": "x00SItYzxMfecKS0wyGS3sCubLM2",
+  "email": "vananh2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "pSv56feptXzjbMnY+JDjH8af8MkTpgHwOtZF3D8Bt8Ku0IVsYxXC/wD/paUHg5Ngejr/lpPf9C4epBODPJDUoQ==",
+  "salt": "6A7PniKxHWcpuQ==",
+  "lastSignedInAt": "1759819612510",
+  "createdAt": "1759807284246",
+  "providerUserInfo": []
+},
+{
+  "localId": "y5e8pdlRM9bGm7mg8mG4ilG7Cmt1",
+  "email": "hongtien2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "BhMUkfrqGO9NkWnWvS1aTRxNmynKEdQ6SAFv8/FQ03BSkDnwbonoJInJi4U1q0dPPtDelCY3COdcHsOLbeykVw==",
+  "salt": "OIDfSFelAiaCmw==",
+  "lastSignedInAt": "1759806990056",
+  "createdAt": "1759806990056",
+  "providerUserInfo": []
+},
+{
+  "localId": "zWybhquYzPP8Wce5o3Svrt3xVAu2",
+  "email": "kieng2025@thibidi.com",
+  "emailVerified": false,
+  "passwordHash": "stDl0JvSqCD2TccTAgIpXw+qm8RZQG0k/89icGMq1YybpP9x6xpTsWINI/q2l1vShyxsX7quDVJmC49qC/uS+A==",
+  "salt": "UHsXDFIPGNuL9g==",
+  "lastSignedInAt": "1759737449383",
+  "createdAt": "1759470435185",
+  "providerUserInfo": []
+}]}

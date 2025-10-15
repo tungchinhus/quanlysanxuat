@@ -90,10 +90,8 @@ service cloud.firestore {
     
     // Rules cho collection users (quản lý người dùng)
     match /users/{userId} {
-      // Users can read their own data
-      allow read: if isOwner(userId);
-      // Only admins can read all users
-      allow read: if isAdmin() || isSuperAdmin();
+      // Allow authenticated users to read all users (needed for login matching)
+      allow read: if isAuthenticated();
       // Only admins can create users
       allow create: if isAdmin() || isSuperAdmin();
       // Users can update their own data, admins can update any user
@@ -104,16 +102,16 @@ service cloud.firestore {
     
     // Rules cho collection roles (quản lý vai trò)
     match /roles/{roleId} {
-      // All authenticated users can read roles
-      allow read: if isAuthenticated();
+      // Allow public read access for roles (needed for login)
+      allow read: if true;
       // Only super admins can create, update, or delete roles
       allow write: if isSuperAdmin();
     }
     
     // Rules cho collection permissions (quản lý quyền)
     match /permissions/{permissionId} {
-      // All authenticated users can read permissions
-      allow read: if isAuthenticated();
+      // Allow public read access for permissions (needed for login)
+      allow read: if true;
       // Only super admins can create, update, or delete permissions
       allow write: if isSuperAdmin();
     }

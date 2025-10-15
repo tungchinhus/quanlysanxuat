@@ -104,7 +104,7 @@ export class BoiDayHaComponent implements OnInit {
       chuViKhuon: [null, [Validators.required, Validators.min(0)]],
       ktBungBdTruoc: [{ value: null, disabled: true }], // Disabled by default
       bungBdSau: [null, Validators.required],
-      chieuQuanDay: ['trai', Validators.required], // Default to 'trai'
+      chieuQuanDay: ['phai', Validators.required], // Default to 'phai'
       mayQuanDay: ['', Validators.required],
       // QTD Hạ - Xung quanh
       xqDay2: [null],

@@ -26,6 +26,7 @@ export interface BdCaoData {
   nguoigiacong: string;
   quycachday: string;
   sosoiday: number;
+  soboi_day: string; // Number of coils
   ngaysanxuat: Date;
   nhasanxuat: string;
   chuvikhuon: number;
@@ -108,6 +109,7 @@ export class FirebaseBdCaoService {
       nguoigiacong: data?.['nguoigiacong'] || '',
       quycachday: data?.['quycachday'] || '',
       sosoiday: data?.['sosoiday'] || 0,
+      soboi_day: data?.['soboi_day'] || '',
       ngaysanxuat: data?.['ngaysanxuat']?.toDate() || new Date(),
       nhasanxuat: data?.['nhasanxuat'] || '',
       chuvikhuon: data?.['chuvikhuon'] || 0,

@@ -18,7 +18,8 @@ export class UserManagementFirebaseService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private firebaseUserService: FirebaseUserManagementService) {
-    this.initializeData();
+    // Don't auto-initialize data to avoid permission issues
+    // Data will be loaded when needed
   }
 
   /**
@@ -38,7 +39,11 @@ export class UserManagementFirebaseService {
     });
   }
 
-  private initializeData(): void {
+  /**
+   * Initialize data when user is authenticated
+   * This should be called after successful login
+   */
+  initializeData(): void {
     // Subscribe to Firebase data
     this.firebaseUserService.users$.subscribe(users => {
       this.usersSubject.next(users);
@@ -51,6 +56,13 @@ export class UserManagementFirebaseService {
     this.firebaseUserService.permissions$.subscribe(permissions => {
       this.permissionsSubject.next(permissions);
     });
+  }
+
+  /**
+   * Load users from Firebase (should be called after authentication)
+   */
+  async loadUsers(): Promise<void> {
+    await this.firebaseUserService.loadUsers();
   }
 
   // ==================== USER METHODS ====================

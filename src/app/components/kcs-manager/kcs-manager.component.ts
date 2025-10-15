@@ -185,7 +185,7 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
         
         if (response.data.length === 0) {
           console.log('⚠️ No data found, this might be normal if no processed drawings exist');
-          this.thongbao('Không có dữ liệu bảng vẽ đã xử lý', 'Đóng', 'info');
+          this.thongbao('Không có dữ liệu bảng vẽ đã thi công bối dây hạ/cao', 'Đóng', 'info');
         }
       },
       error: (error) => {
@@ -222,10 +222,10 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
   }
 
 
-  onApproveKcs(element: ProcessedDrawingData): void {
-    console.log('Approving KCS for element:', element);
+  onKiemDuyet(element: ProcessedDrawingData): void {
+    console.log('Navigating to KCS Check for element:', element);
     
-    // Navigate to kcs-check component with the specific data
+    // Navigate to kcs-check component
     this.router.navigate(['/kcs-check'], {
       queryParams: {
         type: element.loai_boi_day,
@@ -234,6 +234,7 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
       }
     });
   }
+
 
   onViewDetails(element: ProcessedDrawingData): void {
     console.log('Viewing details for element:', element);
@@ -310,14 +311,6 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Kiểm tra xem có thể hiển thị option "Kiểm duyệt KCS" không
-   * Chỉ hiển thị khi cả hai loại bối dây (ha và cao) đã được xử lý
-   */
-  canShowKcsApproval(element: ProcessedDrawingData): boolean {
-    // Chỉ hiển thị khi loai_boi_day = 'both' (cả hai loại đã được xử lý)
-    return element.loai_boi_day === 'both';
-  }
 
   private debugDatabaseData(): void {
     this.firebaseKcsManagerService.debugDatabaseData().then(() => {
@@ -351,6 +344,17 @@ export class KcsManagerComponent implements OnInit, OnDestroy {
     }).catch(error => {
       console.error('❌ Firebase connection test failed:', error);
       this.thongbao('Firebase kết nối thất bại: ' + (error.message || 'Unknown error'), 'Đóng', 'error');
+    });
+  }
+
+  // Method to debug collection data
+  debugCollectionData(): void {
+    console.log('🔍 Debugging collection data...');
+    this.firebaseKcsManagerService.debugCollectionData().then(() => {
+      this.thongbao('Debug hoàn thành! Kiểm tra console để xem kết quả.', 'Đóng', 'info');
+    }).catch(error => {
+      console.error('❌ Debug failed:', error);
+      this.thongbao('Debug thất bại: ' + (error.message || 'Unknown error'), 'Đóng', 'error');
     });
   }
 }

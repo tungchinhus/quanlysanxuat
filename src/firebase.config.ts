@@ -10,7 +10,7 @@ import { getFirestore } from "firebase/firestore";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAuIT3ZuNI7gz3eQKPnR1uM6M5j7JggkXs",
-  authDomain: "quanlysanxuat-b7346.firebaseapp.com",
+  authDomain: "quanlysanxuat.firebaseapp.com",
   databaseURL: "https://quanlysanxuat-default-rtdb.firebaseio.com",
   projectId: "quanlysanxuat",
   storageBucket: "quanlysanxuat.firebasestorage.app",

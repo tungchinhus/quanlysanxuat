@@ -159,6 +159,7 @@ export interface BoiDayCaoApiRequest {
   nguoigiacong: string;
   quycachday: string;
   sosoiday: number;
+  soboi_day: string;
   ngaysanxuat: string;
   nhasanxuat: string;
   chuvikhuon: number;
@@ -261,6 +262,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       // Các field bắt buộc
       quy_cach_day: ['', Validators.required],
       so_soi_day: [1, [Validators.required, Validators.min(0)]],
+      so_boi_day: ['', Validators.required],
       nha_san_xuat: [Manufacturer.bsHN, Validators.required],
       nha_san_xuat_other: [''],
       ngay_san_xuat: [new Date(), Validators.required],
@@ -269,7 +271,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       chu_vi_khuon: [0, [Validators.min(0)]],
       kt_bung_bd_truoc: [0, [Validators.min(0)]],
       bung_bd_sau: [0, [Validators.min(0)]],
-      chieu_quan_day: [true],
+      chieu_quan_day: [false],
       may_quan_day: ['', Validators.required],
       xung_quanh_day_2: [0, [Validators.min(0)]],
       xung_quanh_day_3: [0, [Validators.min(0)]],
@@ -343,6 +345,35 @@ export class BoiDayCaoPopupComponent implements OnInit {
     // Auto-populate from bangve if available
     this.autoPopulateFromBangve();
   }
+
+  // Method to get actual bangve symbol from bangve collection
+  private async getActualBangveSymbol(): Promise<string> {
+    try {
+      // Try to get from quanDay data first
+      const quanDayBangveSymbol = this.data.quanDay?.kyhieuquanday;
+      if (quanDayBangveSymbol) {
+        console.log('Using quanDay bangve symbol:', quanDayBangveSymbol);
+        return quanDayBangveSymbol;
+      }
+      
+      // If not available, try to extract from ky_hieu_bv_boidaycao
+      const boidaySymbol = this.data.quanDay?.ky_hieu_bv_boidaycao;
+      if (boidaySymbol) {
+        // Extract base symbol: "testbangve1-066" -> "testbangve1"
+        const baseSymbol = boidaySymbol.replace(/-\d+$/, '');
+        console.log('Extracted base symbol from boiday:', baseSymbol);
+        return baseSymbol;
+      }
+      
+      // Fallback to quanDay id or default
+      const fallbackSymbol = this.data.quanDay?.id || 'unknown';
+      console.log('Using fallback symbol:', fallbackSymbol);
+      return fallbackSymbol;
+    } catch (error) {
+      console.error('Error getting actual bangve symbol:', error);
+      return this.data.quanDay?.kyhieuquanday || 'unknown';
+    }
+  }
   
   // Method to populate form with quanDay data
   private populateFormWithQuanDayData(): void {
@@ -354,6 +385,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       quy_cach_day: this.data.quanDay.quy_cach_day || '',
       auto_pi_prefix: false, // Mặc định là false
       so_soi_day: this.data.quanDay.so_soi_day || 1,
+      so_boi_day: this.data.quanDay.soboiday || this.data.quanDay.so_boi_day || this.data.quanDay.soboidaycao || this.data.quanDay.so_boi_day_cao || '',
       nha_san_xuat: this.data.quanDay.nha_san_xuat || Manufacturer.bsHN,
       ngay_san_xuat: this.data.quanDay.ngay_san_xuat ? new Date(this.data.quanDay.ngay_san_xuat) : new Date(),
       
@@ -361,7 +393,7 @@ export class BoiDayCaoPopupComponent implements OnInit {
       chu_vi_khuon: this.data.quanDay.chu_vi_khuon || 0,
       kt_bung_bd_truoc: this.data.quanDay.bung_bd || 0,
       bung_bd_sau: this.data.quanDay.bung_bd_sau || 0,
-      chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : true,
+      chieu_quan_day: this.data.quanDay.chieu_quan_day !== undefined ? this.data.quanDay.chieu_quan_day : false,
       may_quan_day: this.data.quanDay.may_quan_day || '',
       
       // Thông số dây quấn từ bangve
@@ -424,21 +456,11 @@ export class BoiDayCaoPopupComponent implements OnInit {
     // Kiểm tra tất cả các field bắt buộc
     const requiredFields = [
       'quy_cach_day',
-      'so_soi_day', 
+      'so_soi_day',
+      'so_boi_day',
       'nha_san_xuat',
       'ngay_san_xuat',
-      'may_quan_day',
-      'bung_bd_sau',
-      'chu_vi_bd_cao_trong_1p',
-      'chu_vi_bd_cao_trong_2p', 
-      'chu_vi_bd_cao_trong_3p',
-      'kt_bd_cao_ngoai_bv_1p',
-      'kt_bd_cao_ngoai_bv_2p',
-      'kt_bd_cao_ngoai_bv_3p',
-      'dien_tro_cao_ra',
-      'dien_tro_cao_rb',
-      'dien_tro_cao_rc',
-      'do_lech_dien_tro_giua_cac_pha'
+      'may_quan_day'
     ];
     
     // Kiểm tra các field bắt buộc
@@ -480,6 +502,9 @@ export class BoiDayCaoPopupComponent implements OnInit {
     }
     
     console.log('Form có thể submit - tất cả field bắt buộc đã được nhập');
+    console.log('Form valid:', this.boiDayCaoForm.valid);
+    console.log('Form errors:', this.boiDayCaoForm.errors);
+    console.log('Form value:', this.boiDayCaoForm.value);
     return true;
   }
 
@@ -561,11 +586,12 @@ export class BoiDayCaoPopupComponent implements OnInit {
       nguoigiacong: this.currentUser?.fullName || this.currentUser?.username || this.currentUser?.email || 'Unknown',
       quycachday: formData.quy_cach_day,
       sosoiday: formData.so_soi_day,
+      soboi_day: formData.so_boi_day,
       ngaysanxuat: formData.ngay_san_xuat?.toISOString() || new Date().toISOString(),
       nhasanxuat: formData.nha_san_xuat,
       chuvikhuon: formData.chu_vi_khuon || 0,
       kt_bung_bd: formData.kt_bung_bd_truoc || 0,
-      chieuquanday: formData.chieu_quan_day || true,
+      chieuquanday: formData.chieu_quan_day || false,
       mayquanday: formData.may_quan_day || '',
       // Xung quanh fields
       xungquanh_2: formData.xung_quanh_day_2 || 0,
@@ -631,14 +657,18 @@ export class BoiDayCaoPopupComponent implements OnInit {
         throw new Error('Không tìm thấy user trong hệ thống');
       }
 
+      // Lấy ký hiệu bảng vẽ thực sự từ bảng bangve
+      const actualBangveSymbol = await this.getActualBangveSymbol();
+      
       // Tạo data cho bd_cao
-      const bdCaoData: Omit<BdCaoData, 'id'> = {
+      const bdCaoData = {
         masothe_bd_cao: this.data.quanDay.ky_hieu_bv_boidaycao || `${this.data.quanDay.kyhieuquanday}-066`,
-        kyhieubangve: this.data.quanDay.ky_hieu_bv_boidaycao || this.data.quanDay.kyhieuquanday,
+        kyhieubangve: actualBangveSymbol, // Sử dụng ký hiệu bảng vẽ thực sự
         ngaygiacong: new Date(),
         nguoigiacong: currentUser.fullName || currentUser.username || currentUser.email || 'Unknown',
         quycachday: formData.quy_cach_day,
         sosoiday: formData.so_soi_day,
+        soboi_day: formData.so_boi_day,
         ngaysanxuat: formData.ngay_san_xuat,
         nhasanxuat: formData.nha_san_xuat,
         chieuquanday: formData.chieu_quan_day,
@@ -1063,6 +1093,10 @@ export class BoiDayCaoPopupComponent implements OnInit {
       
       if (currentFormValue.so_soi_day === 1 && bangveData.so_soi_day) {
         this.boiDayCaoForm.patchValue({ so_soi_day: bangveData.so_soi_day });
+      }
+      
+      if (!currentFormValue.so_boi_day && bangveData.soboiday) {
+        this.boiDayCaoForm.patchValue({ so_boi_day: bangveData.soboiday });
       }
       
       if (!currentFormValue.may_quan_day && bangveData.may_quan_day) {

@@ -50,10 +50,12 @@ export class FirebaseUserManagementService {
 
   private async initializeData(): Promise<void> {
     try {
-      // Load data from Firebase
-      await this.loadUsers();
+      // Only load roles and permissions on initialization
+      // Users will be loaded when needed (after authentication)
       await this.loadRoles();
       await this.loadPermissions();
+      // Initialize users as empty array - will be loaded after authentication
+      this.usersSubject.next([]);
     } catch (error) {
       console.error('Error initializing data:', error);
       // Initialize with default data if Firebase fails
@@ -89,6 +91,26 @@ export class FirebaseUserManagementService {
     } catch (error) {
       console.error('Error loading users:', error);
       this.usersSubject.next([]);
+    }
+  }
+
+  /**
+   * Load users only when authenticated (for admin/manager users)
+   * This method should be called after successful authentication
+   */
+  async loadUsersIfAuthenticated(): Promise<void> {
+    try {
+      // Check if user is authenticated
+      const auth = this.firebaseService.getAuth();
+      if (!auth.currentUser) {
+        console.log('User not authenticated, skipping users load');
+        return;
+      }
+      
+      console.log('User authenticated, loading users...');
+      await this.loadUsers();
+    } catch (error) {
+      console.error('Error loading users for authenticated user:', error);
     }
   }
 

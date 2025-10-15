@@ -1,0 +1,24 @@
+<div class="debug-admin-container">
+  <h2>Debug Admin Panel</h2>
+  
+  <div class="button-group">
+    <button mat-raised-button color="primary" (click)="createDemoUsersWithAuth()">Create Demo Users (Firebase Auth)</button>
+    <button mat-raised-button color="accent" (click)="debugLogin()">Debug Login Test</button>
+  </div>
+  
+  <div class="users-section">
+    <h3>Users in Firestore</h3>
+    <div *ngIf="users.length === 0" class="no-data">
+      No users found. Click "Create Demo Users" to create test users.
+    </div>
+    <div *ngIf="users.length > 0" class="users-list">
+      <div *ngFor="let user of users" class="user-item">
+        <strong>{{ user.email || user.username }}</strong>
+        <span class="roles">Roles: {{ user.roles?.join(', ') || 'None' }}</span>
+        <span class="status" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+          {{ user.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

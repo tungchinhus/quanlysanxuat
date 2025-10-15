@@ -42,6 +42,14 @@
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
         </div>
+
+        <!-- Debug Button -->
+        <div class="debug-field">
+          <button mat-raised-button color="warn" (click)="debugCollectionData()">
+            <mat-icon>bug_report</mat-icon>
+            Debug Data
+          </button>
+        </div>
       </div>
     </div>
 
@@ -56,7 +64,7 @@
       <!-- No data message -->
       <div *ngIf="!isLoading && dataSource.data.length === 0" class="no-data-container">
         <mat-icon>inbox</mat-icon>
-        <p>Không có dữ liệu bảng vẽ chờ kiểm duyệt</p>
+        <p>Không có dữ liệu bảng vẽ đã thi công bối dây hạ/cao chờ kiểm duyệt</p>
       </div>
 
       <!-- Data table -->
@@ -136,11 +144,9 @@
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item 
-                      *ngIf="canShowKcsApproval(element)"
-                      (click)="onApproveKcs(element)">
+              <button mat-menu-item (click)="onKiemDuyet(element)">
                 <mat-icon>verified</mat-icon>
-                <span>Kiểm duyệt KCS</span>
+                <span>Kiểm duyệt</span>
               </button>
               <button mat-menu-item (click)="onViewDetails(element)">
                 <mat-icon>visibility</mat-icon>
