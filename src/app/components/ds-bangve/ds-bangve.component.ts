@@ -534,15 +534,22 @@ export class DsBangveComponent implements OnInit {
         };
         this.processedDrawings.push(processedDrawing);
       } else if (trangThai === 2 || (isBoidayCaoCompleted && isAssignedToCurrentUser) || (isBoidayHaCompleted && isAssignedToCurrentUser)) {
-        // Hoàn thành theo cách cũ → Tab "Đã xử lý"
-
-        const processedDrawing: ProcessedBangVeData = {
-          ...drawing,
-          user_process: drawing.user_create || 'Unknown',
-          process_date: drawing.created_at || new Date(),
-          process_status: 'Completed'
-        };
-        this.processedDrawings.push(processedDrawing);
+        // Chỉ đưa vào tab "Đã xử lý" nếu đã được KCS duyệt
+        const isKcsApproved = drawing.trang_thai_approve === 'approved';
+        
+        if (isKcsApproved) {
+          // Hoàn thành và đã được KCS duyệt → Tab "Đã xử lý"
+          const processedDrawing: ProcessedBangVeData = {
+            ...drawing,
+            user_process: drawing.user_create || 'Unknown',
+            process_date: drawing.created_at || new Date(),
+            process_status: 'Completed'
+          };
+          this.processedDrawings.push(processedDrawing);
+        } else {
+          // Hoàn thành nhưng chưa được KCS duyệt → Tab "Đang gia công"
+          this.inProgressDrawings.push(drawing);
+        }
       } else if (trangThai === 1 || (isAssignedToCurrentUser && (drawing.trang_thai_bd_ha === 1 || drawing.trang_thai_bd_cao === 1))) {
         // Đang gia công → Tab "Đang gia công"
 
@@ -1630,27 +1637,52 @@ export class DsBangveComponent implements OnInit {
   }
 
   confirmGiaCong(drawing: BangVeData): void {
-    // Simulate processing
-    const processedDrawing: ProcessedBangVeData = {
-      ...drawing,
-      user_process: this.username || 'unknown',
-      process_date: new Date(),
-      process_status: 'completed'
-    };
+    // Chỉ đưa vào tab "Đã xử lý" nếu đã được KCS duyệt
+    const isKcsApproved = drawing.trang_thai_approve === 'approved';
     
-    // Move from new drawings to processed drawings
-    this.drawings = this.drawings.filter(d => d.id !== drawing.id);
-    this.processedDrawings.push(processedDrawing);
-    
-    // Update filtered lists
-    this.filteredDrawings = this.filteredDrawings.filter(d => d.id !== drawing.id);
-    this.filteredProcessedDrawings.push(processedDrawing);
-    
-    // Update paged lists
-    this.updatePagedNewDrawings();
-    this.updatePagedProcessedDrawings();
-    
-    this.thongbao('Gia công thành công!', 'Đóng', 'success');
+    if (isKcsApproved) {
+      // Đã được KCS duyệt → Tab "Đã xử lý"
+      const processedDrawing: ProcessedBangVeData = {
+        ...drawing,
+        user_process: this.username || 'unknown',
+        process_date: new Date(),
+        process_status: 'KCS Approved'
+      };
+      
+      // Move from new drawings to processed drawings
+      this.drawings = this.drawings.filter(d => d.id !== drawing.id);
+      this.processedDrawings.push(processedDrawing);
+      
+      // Update filtered lists
+      this.filteredDrawings = this.filteredDrawings.filter(d => d.id !== drawing.id);
+      this.filteredProcessedDrawings.push(processedDrawing);
+      
+      // Update paged lists
+      this.updatePagedNewDrawings();
+      this.updatePagedProcessedDrawings();
+      
+      this.thongbao('Gia công thành công và đã được KCS duyệt!', 'Đóng', 'success');
+    } else {
+      // Chưa được KCS duyệt → Tab "Đang gia công"
+      const inProgressDrawing = {
+        ...drawing,
+        trang_thai: 1 // Đánh dấu là đang gia công
+      };
+      
+      // Move from new drawings to in-progress drawings
+      this.drawings = this.drawings.filter(d => d.id !== drawing.id);
+      this.inProgressDrawings.push(inProgressDrawing);
+      
+      // Update filtered lists
+      this.filteredDrawings = this.filteredDrawings.filter(d => d.id !== drawing.id);
+      this.filteredInProgressDrawings.push(inProgressDrawing);
+      
+      // Update paged lists
+      this.updatePagedNewDrawings();
+      this.updatePagedInProgressDrawings();
+      
+      this.thongbao('Gia công thành công! Chờ KCS duyệt.', 'Đóng', 'info');
+    }
   }
 
   giacongboidayha(drawing: BangVeData) {
@@ -1716,25 +1748,41 @@ export class DsBangveComponent implements OnInit {
     // Gọi API để gia công bảng vẽ
     this.processDrawingApi(drawing.id, userQuanday1, userQuanday2).subscribe({
       next: (response) => {
-
-        
-        // Xóa bảng vẽ khỏi danh sách mới và thêm vào danh sách đã xử lý
+        // Xóa bảng vẽ khỏi danh sách mới
         this.drawings = this.drawings.filter(b => b.id !== drawing.id);
         this.filteredDrawings = this.filteredDrawings.filter(b => b.id !== drawing.id);
         this.updatePagedNewDrawings();
         
-        // Thêm vào danh sách đã xử lý
-        const processedDrawing: ProcessedBangVeData = {
-          ...drawing,
-          user_process: `${userName1}, ${userName2}`,
-          process_date: new Date(),
-          process_status: 'Completed'
-        };
-        this.processedDrawings = [...this.processedDrawings, processedDrawing];
-        this.filteredProcessedDrawings = this.processedDrawings.slice();
-        this.updatePagedProcessedDrawings();
+        // Kiểm tra KCS approval status
+        const isKcsApproved = drawing.trang_thai_approve === 'approved';
         
-        this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}!`, 'Đóng', 'success');
+        if (isKcsApproved) {
+          // Đã được KCS duyệt → Tab "Đã xử lý"
+          const processedDrawing: ProcessedBangVeData = {
+            ...drawing,
+            user_process: `${userName1}, ${userName2}`,
+            process_date: new Date(),
+            process_status: 'KCS Approved'
+          };
+          this.processedDrawings = [...this.processedDrawings, processedDrawing];
+          this.filteredProcessedDrawings = this.processedDrawings.slice();
+          this.updatePagedProcessedDrawings();
+          
+          this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}! (Đã KCS duyệt)`, 'Đóng', 'success');
+        } else {
+          // Chưa được KCS duyệt → Tab "Đang gia công"
+          const inProgressDrawing = {
+            ...drawing,
+            trang_thai: 1,
+            user_process: `${userName1}, ${userName2}`,
+            process_date: new Date()
+          };
+          this.inProgressDrawings.push(inProgressDrawing);
+          this.filteredInProgressDrawings.push(inProgressDrawing);
+          this.updatePagedInProgressDrawings();
+          
+          this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}! (Chờ KCS duyệt)`, 'Đóng', 'info');
+        }
       },
       error: (error) => {
         console.error('Error processing drawing:', error);
@@ -1745,17 +1793,34 @@ export class DsBangveComponent implements OnInit {
         this.filteredDrawings = this.filteredDrawings.filter(b => b.id !== drawing.id);
         this.updatePagedNewDrawings();
         
-        const processedDrawing: ProcessedBangVeData = {
-          ...drawing,
-          user_process: `${userName1}, ${userName2}`,
-          process_date: new Date(),
-          process_status: 'Completed'
-        };
-        this.processedDrawings = [...this.processedDrawings, processedDrawing];
-        this.filteredProcessedDrawings = this.processedDrawings.slice();
-        this.updatePagedProcessedDrawings();
+        // Kiểm tra KCS approval status cho fallback
+        const isKcsApproved = drawing.trang_thai_approve === 'approved';
         
-        this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}!`, 'Đóng', 'success');
+        if (isKcsApproved) {
+          const processedDrawing: ProcessedBangVeData = {
+            ...drawing,
+            user_process: `${userName1}, ${userName2}`,
+            process_date: new Date(),
+            process_status: 'KCS Approved'
+          };
+          this.processedDrawings = [...this.processedDrawings, processedDrawing];
+          this.filteredProcessedDrawings = this.processedDrawings.slice();
+          this.updatePagedProcessedDrawings();
+          
+          this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}! (Đã KCS duyệt)`, 'Đóng', 'success');
+        } else {
+          const inProgressDrawing = {
+            ...drawing,
+            trang_thai: 1,
+            user_process: `${userName1}, ${userName2}`,
+            process_date: new Date()
+          };
+          this.inProgressDrawings.push(inProgressDrawing);
+          this.filteredInProgressDrawings.push(inProgressDrawing);
+          this.updatePagedInProgressDrawings();
+          
+          this.thongbao(`Đã chuyển bảng vẽ "${drawing.kyhieubangve}" thành công cho ${userName1} và ${userName2}! (Chờ KCS duyệt)`, 'Đóng', 'info');
+        }
       }
     });
   }

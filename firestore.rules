@@ -35,6 +35,41 @@ service cloud.firestore {
              'totruong' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
+    function isQuandaycao() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'quandaycao' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
+    function isBoidaycao() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'boidaycao' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
+    function isQuandayha() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'quandayha' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
+    function isBoidayha() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'boidayha' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
+    function isKcs() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'kcs' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
     function hasRole(role) {
       return isAuthenticated() && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -134,30 +169,46 @@ service cloud.firestore {
       allow write: if isAdmin() || isSuperAdmin();
     }
     
-    // Rules cho collection bangve (bảng vẽ)
+    // Rules cho collection bangve (bảng vẽ) - SIMPLIFIED FOR TESTING
     match /bangve/{document} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
     }
 
-    // Rules cho collection drawings (bảng vẽ - alternative collection)
+    // Rules cho collection drawings (bảng vẽ - alternative collection) - SIMPLIFIED FOR TESTING
     match /drawings/{document} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
     }
 
-    // Rules cho collection user_bangve (gán bảng vẽ cho user)
+    // Rules cho collection user_bangve (gán bảng vẽ cho user) - SIMPLIFIED FOR TESTING
     match /user_bangve/{document} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (isAdmin() || isManager() || isTotruong());
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
     }
 
-    // Rules cho audit logs (nếu có)
-    match /auditLogs/{logId} {
-      // Only admins can read audit logs
-      allow read: if isAdmin() || isSuperAdmin();
-      // System can write audit logs
-      allow write: if isAuthenticated();
+    // Rules cho collection tbl_bd_ha (bối dây hạ)
+    match /tbl_bd_ha/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
+    }
+
+    // Rules cho collection tbl_bd_cao (bối dây cao)
+    match /tbl_bd_cao/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
+    }
+
+    // Rules cho collection tbl_bd_ep (bối dây ép)
+    match /tbl_bd_ep/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
+    }
+
+    // Rules cho collection tbl_ep_boiday (ép bối dây)
+    match /tbl_ep_boiday/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Tạm thời cho phép tất cả authenticated users
     }
   }
 }

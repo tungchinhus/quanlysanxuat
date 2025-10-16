@@ -395,30 +395,37 @@ export class DsQuanDayComponent implements OnInit {
       console.log('Current user UID for filtering:', currentUserUID);
       
       // Filter assignments theo user đang login
+      // Kiểm tra cả user_id và firebase_uid để tìm assignments được gán cho user hiện tại
       const relevantAssignments = userAssignments.filter(assignment => {
-        // Handle both string and array cases for assigned_by_user_id
-        let isAssignedToCurrentUser = false;
-        if (assignment.assigned_by_user_id && currentUserUID) {
-          if (Array.isArray(assignment.assigned_by_user_id)) {
-            // If it's an array, check if currentUserUID is in the array
-            isAssignedToCurrentUser = assignment.assigned_by_user_id.includes(currentUserUID);
+        // Kiểm tra theo user_id (từ Firestore users collection)
+        const matchesUserId = assignment.user_id === parseInt(user.id);
+        
+        // Kiểm tra theo firebase_uid
+        let matchesFirebaseUID = false;
+        if (assignment.firebase_uid && this.currentUser.uid) {
+          if (Array.isArray(assignment.firebase_uid)) {
+            matchesFirebaseUID = assignment.firebase_uid.includes(this.currentUser.uid);
           } else {
-            // If it's a string, do direct comparison
-            isAssignedToCurrentUser = assignment.assigned_by_user_id === currentUserUID;
+            matchesFirebaseUID = assignment.firebase_uid === this.currentUser.uid;
           }
         }
         
-        console.log('Assignment user check:', {
+        const isRelevant = matchesUserId || matchesFirebaseUID;
+        
+        console.log('Assignment relevance check:', {
           assignment_id: assignment.id,
-          assigned_by_user_id: assignment.assigned_by_user_id,
-          currentUserUID: currentUserUID,
-          isAssignedToCurrentUser: isAssignedToCurrentUser,
-          bd_ha_id: assignment.bd_ha_id,
-          bd_cao_id: assignment.bd_cao_id,
-          bd_ep_id: assignment.bd_ep_id
+          user_id: assignment.user_id,
+          firebase_uid: assignment.firebase_uid,
+          current_user_id: parseInt(user.id),
+          current_firebase_uid: this.currentUser.uid,
+          matchesUserId: matchesUserId,
+          matchesFirebaseUID: matchesFirebaseUID,
+          isRelevant: isRelevant,
+          khau_sx: assignment.khau_sx,
+          bangve_id: assignment.bangve_id
         });
         
-        return isAssignedToCurrentUser;
+        return isRelevant;
       });
       
       console.log('Filtered assignments for current user:', relevantAssignments.length, 'items');

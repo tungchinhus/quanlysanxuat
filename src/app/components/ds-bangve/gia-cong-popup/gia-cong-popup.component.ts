@@ -107,20 +107,11 @@ export class GiaCongPopupComponent implements OnInit {
     // Load danh sách người gia công
     this.loadWorkers();
     
-    // Subscribe to form changes for validation state refresh
-    this.giaCongForm.valueChanges.subscribe(() => {
-      // Force refresh validation state
-      this.forceValidationRefresh();
-    });
+    // REMOVED: Subscribe to form changes for validation state refresh
+    // This was causing infinite logging loop
   }
 
-  // Method để force refresh validation state
-  private forceValidationRefresh(): void {
-    // Trigger change detection để cập nhật UI
-    setTimeout(() => {
-      this.giaCongForm.updateValueAndValidity();
-    }, 100);
-  }
+  // REMOVED: forceValidationRefresh method - was causing infinite logging loop
 
   // Kiểm tra quyền admin hoặc manager
   hasAdminOrManagerRole(): boolean {
@@ -393,55 +384,25 @@ export class GiaCongPopupComponent implements OnInit {
 
   // Method to log worker details for debugging
   private logWorkerDetails(): void {
-
-    this.nguoiGiaCongOptions.forEach(worker => {
-      console.log('Worker:', {
-        id: worker.id,
-        userId: worker.userId,
-        username: worker.username,
-        email: worker.email,
-        role: worker.role,
-        department: worker.department,
-        khau_sx: worker.khau_sx,
-        FirstName: worker.FirstName,
-        LastName: worker.LastName,
-        displayName: this.getWorkerDisplayName(worker)
-      });
-    });
+    // Reduced logging to prevent console spam
+    if (this.nguoiGiaCongOptions.length > 0) {
+      console.log('Loaded workers count:', this.nguoiGiaCongOptions.length);
+    }
     
-
-    this.quandayhaUsers.forEach(worker => {
-      console.log('Quan Day Ha:', {
-        id: worker.id,
-        FirstName: worker.FirstName,
-        LastName: worker.LastName,
-        email: worker.email,
-        khau_sx: worker.khau_sx,
-        displayName: this.getWorkerDisplayName(worker)
-      });
-    });
+    if (this.quandayhaUsers.length > 0) {
+      console.log('Quan Day Ha users count:', this.quandayhaUsers.length);
+    }
     
-
-    this.quandaycaoUsers.forEach(worker => {
-      console.log('Quan Day Cao:', {
-        id: worker.id,
-        FirstName: worker.FirstName,
-        LastName: worker.LastName,
-        email: worker.email,
-        khau_sx: worker.khau_sx,
-        displayName: this.getWorkerDisplayName(worker)
-      });
-    });
+    if (this.quandaycaoUsers.length > 0) {
+      console.log('Quan Day Cao users count:', this.quandaycaoUsers.length);
+    }
   }
 
   // Method to clean and validate worker data
   private cleanAndValidateWorkerData(): void {
     // Khau_sx đã được set từ roles trong getWorkers(), không cần cập nhật thêm
-    console.log('Workers khau_sx already set from roles:', this.nguoiGiaCongOptions.map(w => ({
-      name: w.name,
-      roles: w.roles,
-      khau_sx: w.khau_sx
-    })));
+    // Reduced logging to prevent console spam
+    console.log('Workers data validated successfully');
   }
 
   // Method to check if workers are available
@@ -613,7 +574,7 @@ export class GiaCongPopupComponent implements OnInit {
       if (boiDayHaUserIds.length > 0) {
         const userBangVeHa: UserBangVeData = {
           user_id: boiDayHaUserIds[0], // Sử dụng user đầu tiên làm primary
-          firebase_uid: boiDayHaFirebaseUids, // Array của tất cả Firebase UIDs
+          firebase_uid: boiDayHaFirebaseUids[0], // Sử dụng Firebase UID đầu tiên
           bangve_id: bangveId,
           bd_ha_id: '',
           bd_cao_id: '',
@@ -625,9 +586,9 @@ export class GiaCongPopupComponent implements OnInit {
           trang_thai_bd_cao: 0,
           trang_thai_bd_ep: 0,
           assigned_at: new Date(),
-          assigned_by_user_id: boiDayHaFirebaseUids, // Array của tất cả Firebase UIDs
+          assigned_by_user_id: assignedByUserId, // Sử dụng Firebase UID của người gán
           created_at: new Date(),
-          created_by: parseInt(currentUserId),
+          created_by: parseInt(currentUserId) || 0, // Đảm bảo có giá trị mặc định
           khau_sx: 'bd_ha',
           trang_thai: 0
         };
@@ -638,7 +599,7 @@ export class GiaCongPopupComponent implements OnInit {
       if (boiDayCaoUserIds.length > 0) {
         const userBangVeCao: UserBangVeData = {
           user_id: boiDayCaoUserIds[0], // Sử dụng user đầu tiên làm primary
-          firebase_uid: boiDayCaoFirebaseUids, // Array của tất cả Firebase UIDs
+          firebase_uid: boiDayCaoFirebaseUids[0], // Sử dụng Firebase UID đầu tiên
           bangve_id: bangveId,
           bd_ha_id: '',
           bd_cao_id: '',
@@ -650,9 +611,9 @@ export class GiaCongPopupComponent implements OnInit {
           trang_thai_bd_cao: 0,
           trang_thai_bd_ep: 0,
           assigned_at: new Date(),
-          assigned_by_user_id: boiDayCaoFirebaseUids, // Array của tất cả Firebase UIDs
+          assigned_by_user_id: assignedByUserId, // Sử dụng Firebase UID của người gán
           created_at: new Date(),
-          created_by: parseInt(currentUserId),
+          created_by: parseInt(currentUserId) || 0, // Đảm bảo có giá trị mặc định
           khau_sx: 'bd_cao',
           trang_thai: 0
         };

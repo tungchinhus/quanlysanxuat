@@ -141,7 +141,8 @@ export class AuthGuard implements CanActivate {
     }
 
     // Special check for KCS Manager route - exclude quanboiday users
-    if (roles.includes('kcs') || roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager')) {
+    // Only apply this restriction to specific routes, not dashboard
+    if (roles.includes('kcs') && !roles.includes('quandaycao') && !roles.includes('boidaycao') && !roles.includes('quandayha') && !roles.includes('boidayha')) {
       const isQuanBoiDay = userRoles.some((userRole: any) => {
         const roleName = typeof userRole === 'string' ? userRole : (userRole as any).name;
         return roleName?.toLowerCase().includes('quanboiday') || 

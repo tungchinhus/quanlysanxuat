@@ -19,7 +19,7 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'super_admin', 'manager', 'kcs', 'totruong'] }
+    data: { roles: ['admin', 'super_admin', 'manager', 'kcs', 'totruong', 'quandaycao', 'boidaycao', 'quandayha', 'boidayha'] }
   },
   {
     path: 'quan-ly-nhan-vien',
@@ -107,6 +107,20 @@ export const routes: Routes = [
     path: 'ui-debug',
     loadComponent: () => import('./components/ui-debug/ui-debug.component').then(m => m.UiDebugComponent),
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'debug-user-permissions',
+    loadComponent: () => import('./debug-user-permissions.component').then(m => m.DebugUserPermissionsComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'simple-permission-test',
+    loadComponent: () => import('./simple-permission-test.component').then(m => m.SimplePermissionTestComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'boi-day-ha-test',
+    loadComponent: () => import('./boi-day-ha-test.component').then(m => m.BoiDayHaTestComponent)
   },
   {
     path: 'kcs-manager',

@@ -288,6 +288,7 @@ export class FirebaseBangVeService {
    */
   async updateBangVeStatus(id: string, trangThai: number): Promise<void> {
     try {
+      // Reduced logging to prevent console spam
       console.log('Updating bang ve status for ID:', id, 'to status:', trangThai);
       
       const docRef = doc(this.firestore, this.COLLECTION_NAME, id);
@@ -299,7 +300,6 @@ export class FirebaseBangVeService {
         throw new Error(`Document with ID ${id} does not exist in bangve collection`);
       }
       
-      console.log('Document exists, proceeding with update...');
       await updateDoc(docRef, {
         trang_thai: trangThai,
         updated_at: Timestamp.fromDate(new Date())
