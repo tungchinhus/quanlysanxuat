@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -53,10 +53,10 @@ export class ApproveDialogComponent implements OnInit {
       qualityScore: [5, [Validators.required, Validators.min(1), Validators.max(10)]],
       inspectorName: [inspectorName, [Validators.required]],
       inspectionDate: [new Date(), [Validators.required]],
-      // Điện trở: không bắt buộc, chỉ kiểm tra số không âm
-      ra: [null, [Validators.min(0)]],
-      rb: [null, [Validators.min(0)]],
-      rc: [null, [Validators.min(0)]]
+      // Điện trở: bắt buộc và phải là số dương (> 0)
+      ra: [null, [Validators.required, positiveNumberValidator]],
+      rb: [null, [Validators.required, positiveNumberValidator]],
+      rc: [null, [Validators.required, positiveNumberValidator]]
     });
   }
 
@@ -125,4 +125,17 @@ export class ApproveDialogComponent implements OnInit {
         return itemType;
     }
   }
+}
+
+// Validator: giá trị phải là số dương (> 0)
+function positiveNumberValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (value === null || value === undefined || value === '') {
+    return null; // để Validators.required xử lý trường hợp rỗng
+  }
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (Number.isNaN(numeric)) {
+    return { positiveNumber: 'Giá trị không hợp lệ' };
+  }
+  return numeric > 0 ? null : { positiveNumber: 'Phải lớn hơn 0' };
 }
