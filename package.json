@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "build:prod": "ng build --configuration production",
-    "deploy": "npm run build:prod && firebase deploy"
+    "deploy": "npm run build:prod && firebase deploy",
+    "deploy:site": "firebase deploy --only hosting:quanlysx"
   },
   "prettier": {
     "overrides": [
@@ -22,6 +23,7 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^20.1.0",
     "@angular/cdk": "^20.2.2",
     "@angular/common": "^20.1.0",
     "@angular/compiler": "^20.1.0",
