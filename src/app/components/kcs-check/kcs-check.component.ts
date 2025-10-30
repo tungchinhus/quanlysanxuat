@@ -469,6 +469,13 @@ export class KcsCheckComponent implements OnInit {
   approveKcs(element: any): void {
     console.log('Opening approve dialog for:', element);
     
+    // Double-check KCS permissions before allowing approval
+    if (!this.checkKcsPermission()) {
+      console.error('Access denied: User does not have KCS permissions for approval');
+      this.thongbao('Bạn không có quyền duyệt KCS', 'Đóng', 'error');
+      return;
+    }
+    
     const dialogData: ApproveDialogData = {
       itemId: Number(element.id),
       itemName: element.kyhieuquanday,
@@ -599,6 +606,13 @@ export class KcsCheckComponent implements OnInit {
    */
   private saveApprovalToFirebase(element: any, approvalData: any): void {
     try {
+      // Final permission check before saving to Firebase
+      if (!this.checkKcsPermission()) {
+        console.error('Access denied: User does not have KCS permissions for saving approval');
+        this.thongbao('Bạn không có quyền lưu dữ liệu KCS', 'Đóng', 'error');
+        return;
+      }
+      
       const currentUser = this.authService.getCurrentUser();
       const userEmail = currentUser?.email || currentUser?.username || 'unknown';
       
@@ -619,7 +633,11 @@ export class KcsCheckComponent implements OnInit {
         user_kcs_approve: userEmail,
         kcs_approve_status: 'approved',
         ghi_chu: approvalData?.notes || 'Đạt tiêu chuẩn chất lượng KCS',
-        ngay_approve: new Date()
+        ngay_approve: new Date(),
+        // Ghi lại điện trở nếu người dùng nhập
+        dien_tro_ra: approvalData?.ra ?? undefined,
+        dien_tro_rb: approvalData?.rb ?? undefined,
+        dien_tro_rc: approvalData?.rc ?? undefined
       };
 
       console.log('Saving KCS approval to Firebase:', kcsApproveData);

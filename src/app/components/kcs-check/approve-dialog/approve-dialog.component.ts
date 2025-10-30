@@ -52,7 +52,11 @@ export class ApproveDialogComponent implements OnInit {
       notes: ['Đạt tiêu chuẩn chất lượng KCS', [Validators.required]],
       qualityScore: [5, [Validators.required, Validators.min(1), Validators.max(10)]],
       inspectorName: [inspectorName, [Validators.required]],
-      inspectionDate: [new Date(), [Validators.required]]
+      inspectionDate: [new Date(), [Validators.required]],
+      // Điện trở: không bắt buộc, chỉ kiểm tra số không âm
+      ra: [null, [Validators.min(0)]],
+      rb: [null, [Validators.min(0)]],
+      rc: [null, [Validators.min(0)]]
     });
   }
 
@@ -85,7 +89,10 @@ export class ApproveDialogComponent implements OnInit {
       inspectorName: formData.inspectorName,
       inspectionDate: formData.inspectionDate instanceof Date ? formData.inspectionDate.toISOString() : formData.inspectionDate,
       approvedAt: new Date().toISOString(),
-      itemType: this.data.itemType
+      itemType: this.data.itemType,
+      ra: formData.ra,
+      rb: formData.rb,
+      rc: formData.rc
       // Không cần thêm thông tin phức tạp nữa, sử dụng endpoint đơn giản
     };
 

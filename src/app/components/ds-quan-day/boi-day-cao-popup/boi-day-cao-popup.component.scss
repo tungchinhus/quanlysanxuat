@@ -80,6 +80,10 @@
     color: #000;
   }
 
+  .form-section {
+    margin-bottom: 16px; // Giảm từ 24px xuống 16px
+  }
+
   // Main 2x2 Grid Container
   .main-grid-container {
     display: grid;
@@ -105,100 +109,26 @@
       padding-bottom: 8px;
     }
 
-  .form-field {
-    width: 100%;
-    margin-bottom: 4px;
-    
-    .full-width {
+    .form-field {
       width: 100%;
-    }
-  }
-
-  // New layout styles for balanced field arrangement
-  .form-field-row {
-    display: flex;
-    gap: 16px;
-    
-    .half-width {
-      flex: 1;
+      margin-bottom: 4px;
+      margin-top: -20px;
       
-      .mat-form-field {
+      .full-width {
         width: 100%;
       }
     }
-  }
-
-  .winding-direction-group.half-width {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    
-    .mat-label {
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    
-    .radio-group {
-      display: flex;
-      gap: 16px;
-      
-      .mat-radio-group {
-        display: flex;
-        gap: 16px;
-      }
-    }
-  }
-
-  // Styling for quy cach day row with checkbox
-  .quy-cach-day-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 8px;
-    
-    .quy-cach-day-field {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .pi-checkbox {
-      flex-shrink: 0;
-      margin-top: 8px; // Căn chỉnh với input field
-      font-size: 12px;
-      color: #666;
-      white-space: nowrap;
-      
-      ::ng-deep .mat-mdc-checkbox-label {
-        font-size: 12px;
-        line-height: 1.3;
-        color: #666;
-        white-space: nowrap;
-      }
-      
-      ::ng-deep .mat-mdc-checkbox-frame {
-        border-color: #ccc;
-      }
-      
-      ::ng-deep .mat-mdc-checkbox-checked .mat-mdc-checkbox-background {
-        background-color: #1976d2;
-      }
-    }
-  }
 
     // Special styling for winding controls row
     .winding-controls-row {
       display: flex;
       gap: 16px;
-      align-items: center; // Thay đổi từ flex-start thành center để align ngang hàng
+      align-items: flex-start;
       margin-bottom: 4px;
 
       .winding-direction-group {
         flex: 1;
         min-width: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center; // Thêm để center vertical
-        margin-top: -35px;
 
         .mat-label {
           font-size: 14px;
@@ -209,35 +139,49 @@
 
         .radio-group {
           display: flex;
-          gap: 8px;
-          align-items: center; // Đảm bảo radio buttons align center
+          gap: 16px;
+          align-items: center;
+
+          .radio-button {
+            margin-right: 12px;
+          }
         }
       }
 
       .winding-machine-field {
         flex: 1;
         min-width: 0;
-        
-        // Đảm bảo mat-form-field có cùng height với radio group
-        ::ng-deep .mat-form-field-wrapper {
-          padding-top: 0;
-          padding-bottom: 0;
-        }
-        
-        ::ng-deep .mat-form-field-infix {
-          padding-top: 0;
-          padding-bottom: 0;
-        }
       }
     }
+  }
 
-  .radio-group {
+  /* Phase inputs group used for 1P/2P/3P fields */
+  .phase-inputs-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .phase-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Form field row for inline layout */
+  .form-field-row {
     display: flex;
     gap: 16px;
-    align-items: center;
+    align-items: flex-start;
+    margin-bottom: 8px;
 
-    .radio-button {
-      margin-right: 12px;
+    .half-width {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .full-width {
+      width: 100%;
     }
   }
 
@@ -264,66 +208,20 @@
         padding-bottom: 4px;
       }
     }
-  }
 
-  // Reuse improved layout styles from bôi dây hạ
-  .wire-spec-row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-
-    .wire-spec-field {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .strand-count-field {
-      flex: 1;
-      min-width: 0;
+    // Responsive input groups for smaller screens
+    .combined-field .input-group {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
     }
   }
 
-  .basic-dimensions-row {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    margin-top: 8px; // Giảm từ 20px xuống 8px
-
-    .dimension-field {
-      flex: 1;
-      min-width: 0;
+  @media (max-width: 480px) {
+    // For very small screens, stack inputs vertically
+    .combined-field .input-group {
+      grid-template-columns: 1fr;
+      gap: 4px;
     }
-  }
-
-  .manufacturer-date-row {
-    display: flex;
-    gap: 24px; // Increased gap for better spacing
-    align-items: flex-start;
-
-    .manufacturer-field {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .date-field {
-      flex: 1;
-      min-width: 0;
-      margin-left: 8px; // Additional spacing for date field
-    }
-  }
-
-  .header-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 24px;
-    margin-top: 8px;
-    margin-bottom: 20px;
-  }
-
-  .header-info-grid .info-item .value {
-    font-weight: 700;
-    font-style: normal;
-    color: #000;
   }
 
   .form-grid {
@@ -377,6 +275,23 @@
     }
   }
 
+  /* Quy cách dây + checkbox phi on one line */
+  .quy-cach-day-row {
+    display: flex;
+    align-items: flex-start; // Căn đỉnh để thẳng hàng với các field bên phải
+    gap: 12px;
+
+    .quy-cach-day-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pi-checkbox {
+      white-space: nowrap;
+      margin: 4px 0 0 0; // đẩy checkbox xuống 1 chút để cân với label
+    }
+  }
+
   // Special styling for basic dimensions row
   .basic-dimensions-row {
     display: flex;
@@ -385,6 +300,41 @@
     margin-top: 8px; // Giảm từ 20px xuống 8px
 
     .dimension-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // Special styling for winding controls row
+  .winding-controls-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start; // Thay đổi từ flex-end thành flex-start để căn chỉnh với phần Độ dày
+    margin-bottom: 4px; // Giảm khoảng cách với row tiếp theo
+
+    .winding-direction-group {
+      flex: 1;
+      min-width: 0;
+
+      .mat-label {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      .radio-group {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        .radio-button {
+          margin-right: 12px;
+        }
+      }
+    }
+
+    .winding-machine-field {
       flex: 1;
       min-width: 0;
     }
@@ -424,51 +374,36 @@
     .input-group {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
+      gap: 8px;
       width: 100%;
     }
 
     .small-input {
       min-width: 0; // Tránh đẩy rộng cột
       width: 100%;
-      
-      // Đảm bảo input không bị wrap
-      ::ng-deep .mat-form-field-wrapper {
-        width: 100%;
-        min-width: 0;
-      }
-      
-      ::ng-deep .mat-form-field-infix {
-        width: 100%;
-        min-width: 0;
-      }
-      
-      ::ng-deep .mat-input-element {
-        width: 100%;
-        min-width: 0;
-      }
     }
   }
 
-  // Responsive design for input groups
-  @media (max-width: 1200px) {
-    .combined-field .input-group {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
+  .combined-field-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+
+    .form-field {
+      flex: 1;
+      min-width: 0;
+      margin-bottom: 0;
     }
   }
 
-  @media (max-width: 768px) {
-    .combined-field .input-group {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-    }
-  }
+  /* Helper: move a block to the right side */
+  .align-right {
+    margin-left: auto;
+    width: auto;
 
-  @media (max-width: 480px) {
-    .combined-field .input-group {
-      grid-template-columns: 1fr;
-      gap: 3px;
+    .phase-inputs-group {
+      width: auto;
     }
   }
 
@@ -582,105 +517,7 @@
     font-size: 12px;
     color: #666;
     margin-left: 8px;
-    font-style: italic;
   }
-
-// Global styling để làm compact form fields
-::ng-deep .mat-mdc-form-field-infix {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  min-height: 32px !important;
-}
-
-::ng-deep .mat-mdc-form-field-flex {
-  min-height: 32px !important;
-}
-
-::ng-deep input.mat-mdc-input-element,
-::ng-deep textarea.mat-mdc-input-element {
-  height: 32px !important;
-  padding: 2px 6px !important;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-::ng-deep .mat-mdc-text-field-wrapper {
-  min-height: 32px !important;
-}
-
-::ng-deep .mat-mdc-select-trigger {
-  min-height: 32px !important;
-  padding: 2px 6px !important;
-  font-size: 13px;
-}
-
-// CSS để hiển thị border đỏ khi có lỗi
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
-  .mat-mdc-form-field-outline {
-    color: #f44336 !important;
-  }
-  
-  .mat-mdc-form-field-outline-thick {
-    color: #f44336 !important;
-    border-width: 2px !important;
-  }
-}
-
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline {
-  color: #f44336 !important;
-}
-
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
-  color: #f44336 !important;
-  border-width: 2px !important;
-}
-
-// Đảm bảo mat-error luôn hiển thị khi có lỗi
-::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
-  height: auto !important;
-  min-height: 24px !important;
-  margin-bottom: 8px !important;
-}
-
-// Đảm bảo form field có đủ không gian cho error message
-::ng-deep .mat-mdc-form-field {
-  display: block !important;
-}
-
-// Đảm bảo form field wrapper có đủ không gian
-::ng-deep .mat-mdc-form-field-wrapper {
-  padding-bottom: 8px !important; // Giảm từ 16px xuống 8px
-}
-
-// CSS mạnh để đảm bảo mat-error hiển thị đúng vị trí
-::ng-deep .mat-mdc-form-field-error {
-  position: relative !important;
-  display: block !important;
-  margin-top: 2px !important; // Giảm từ 4px xuống 2px
-  margin-bottom: 4px !important; // Giảm từ 8px xuống 4px
-  font-size: 12px !important;
-  color: #f44336 !important;
-  line-height: 1.2 !important;
-}
-
-// Đảm bảo subscript wrapper không bị absolute positioning
-::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  position: relative !important;
-  min-height: 20px !important;
-  height: auto !important;
-}
-
-::ng-deep mat-error {
-  margin-top: 2px; // Giảm từ 4px xuống 2px
-  font-size: 12px;
-  line-height: 1.2;
-  color: #f44336 !important;
-  display: block !important;
-  position: relative;
-  font-weight: 500;
-  padding: 2px 0;
-  margin-bottom: 4px; // Giảm từ 8px xuống 4px
-}
 
   .popup-actions {
     display: flex;
@@ -743,4 +580,102 @@
     color: #666;
     white-space: nowrap; // Ngăn không cho xuống dòng
   }
-}}
+}
+
+::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  min-height: 32px !important;
+}
+
+::ng-deep .mat-mdc-form-field-flex {
+  min-height: 32px !important;
+}
+
+::ng-deep input.mat-mdc-input-element,
+::ng-deep textarea.mat-mdc-input-element {
+  height: 32px !important;
+  padding: 2px 6px !important;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  min-height: 32px !important;
+}
+
+::ng-deep .mat-mdc-select-trigger {
+  min-height: 32px !important;
+  padding: 2px 6px !important;
+  font-size: 13px;
+}
+
+// CSS để hiển thị border đỏ khi có lỗi
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+  .mat-mdc-form-field-outline {
+    color: #f44336 !important;
+  }
+  
+  .mat-mdc-form-field-outline-thick {
+    color: #f44336 !important;
+    border-width: 2px !important;
+  }
+}
+
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline {
+  color: #f44336 !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
+  color: #f44336 !important;
+  border-width: 2px !important;
+}
+
+// Đảm bảo mat-error luôn hiển thị khi có lỗi
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+  height: auto !important;
+  min-height: 24px !important;
+  margin-bottom: 8px !important;
+}
+
+// Đảm bảo form field có đủ không gian cho error message
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: 8px !important; // Giảm từ 16px xuống 8px
+  display: block !important;
+}
+
+// Đảm bảo form field wrapper có đủ không gian
+::ng-deep .mat-mdc-form-field-wrapper {
+  padding-bottom: 8px !important; // Giảm từ 16px xuống 8px
+}
+
+// CSS mạnh để đảm bảo mat-error hiển thị đúng vị trí
+::ng-deep .mat-mdc-form-field-error {
+  position: relative !important;
+  display: block !important;
+  margin-top: 2px !important; // Giảm từ 4px xuống 2px
+  margin-bottom: 4px !important; // Giảm từ 8px xuống 4px
+  font-size: 12px !important;
+  color: #f44336 !important;
+  line-height: 1.2 !important;
+}
+
+// Đảm bảo subscript wrapper không bị absolute positioning
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  position: relative !important;
+  margin-top: 4px !important;
+  min-height: 20px !important;
+  height: auto !important;
+}
+
+::ng-deep mat-error {
+  margin-top: 2px; // Giảm từ 4px xuống 2px
+  font-size: 12px;
+  line-height: 1.2;
+  color: #f44336 !important;
+  display: block !important;
+  position: relative;
+  font-weight: 500;
+  padding: 2px 0;
+  margin-bottom: 4px; // Giảm từ 8px xuống 4px
+}

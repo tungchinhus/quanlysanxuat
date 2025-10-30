@@ -7,6 +7,10 @@ export interface KcsApproveData {
   kcs_approve_status?: string;  // nvarchar(255) - Trạng thái approve KCS
   ghi_chu?: string;             // nvarchar(255) - Ghi chú
   ngay_approve?: Date;          // datetime - Ngày approve
+  // Điện trở (nếu KCS nhập)
+  dien_tro_ra?: number;
+  dien_tro_rb?: number;
+  dien_tro_rc?: number;
   created_at?: Date;            // Thời gian tạo (Firebase)
   updated_at?: Date;            // Thời gian cập nhật (Firebase)
 }

@@ -56,6 +56,25 @@
     }
 
     .approve-form {
+      .resistance-fields {
+        h3 {
+          margin: 0 0 12px 0;
+          color: #333;
+          font-size: 16px;
+          font-weight: 500;
+        }
+
+        .resistance-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+
+          mat-form-field {
+            width: 150px;
+            padding-right: 8px;
+          }
+        }
+      }
       .form-row {
         display: flex;
         gap: 16px;

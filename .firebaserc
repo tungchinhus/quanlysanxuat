@@ -12,6 +12,13 @@
           "quanlysanxuat-b7346"
         ]
       }
+    },
+    "quanlysx123": {
+      "hosting": {
+        "quanlysanxuat-b7346": [
+          "quanlysx123"
+        ]
+      }
     }
   },
   "etags": {}

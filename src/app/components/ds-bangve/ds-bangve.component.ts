@@ -1160,16 +1160,9 @@ export class DsBangveComponent implements OnInit {
   async onGiaCong(drawing: BangVeData): Promise<void> {
     console.log('onGiaCong called with drawing:', drawing);
     
-    // Kiểm tra quyền admin hoặc manager
+    // Luôn cho phép mở popup; quyền hạn sẽ được xử lý bên trong popup khi xác nhận
     const hasPermission = this.hasAdminOrManagerRole();
-    console.log('hasPermission:', hasPermission);
-    
-    if (!hasPermission) {
-      console.log('No permission, redirecting based on khau_sx');
-      // Nếu không phải admin/manager, tự động chuyển trang dựa trên khau_sx
-      this.redirectBasedOnKhauSx(drawing);
-      return;
-    }
+    console.log('hasPermission (for info):', hasPermission);
 
     console.log('Opening dialog with data:', { drawing });
     let dialogRef;
@@ -1177,7 +1170,7 @@ export class DsBangveComponent implements OnInit {
       // Mở popup để user chọn workers
       dialogRef = this.dialog.open(GiaCongPopupComponent, {
         width: '500px',
-        data: { drawing }
+        data: { drawing, hasAdminPermission: hasPermission }
       });
       console.log('Dialog opened successfully');
     } catch (error) {

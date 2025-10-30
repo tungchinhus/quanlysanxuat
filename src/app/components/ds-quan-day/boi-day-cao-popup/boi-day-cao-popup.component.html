@@ -94,7 +94,95 @@
               </mat-form-field>
             </div>
 
-            <!-- Row 2: Nhà sản xuất và Ngày sản xuất -->
+            <div class="form-field-row">
+              <div class="form-field combined-field">
+                <div class="field-label">QTD Xung quanh</div>
+                <div class="input-group">                
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>2</mat-label>
+                    <input matInput type="number" formControlName="xung_quanh_day_2" placeholder="2">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>3</mat-label>
+                    <input matInput type="number" formControlName="xung_quanh_day_3" placeholder="3">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>4</mat-label>
+                    <input matInput type="number" formControlName="xung_quanh_day_4" placeholder="4">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>6</mat-label>
+                    <input matInput type="number" formControlName="xung_quanh_day_6" placeholder="6">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>8</mat-label>
+                    <input matInput type="number" formControlName="xung_quanh_day_8" placeholder="8">
+                  </mat-form-field>
+                </div>
+              </div>              
+            </div>
+            <!-- Hai đầu -->
+            <div class="form-field-row">
+              <div class="form-field combined-field">
+                <div class="field-label">Hai đầu</div>
+                <div class="input-group">                
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>2</mat-label>
+                    <input matInput type="number" formControlName="hai_dau_day_2" placeholder="2">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>3</mat-label>
+                    <input matInput type="number" formControlName="hai_dau_day_3" placeholder="3">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>4</mat-label>
+                    <input matInput type="number" formControlName="hai_dau_day_4" placeholder="4">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>6</mat-label>
+                    <input matInput type="number" formControlName="hai_dau_day_6" placeholder="6">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>8</mat-label>
+                    <input matInput type="number" formControlName="hai_dau_day_8" placeholder="8">
+                  </mat-form-field>
+                </div>
+              </div>
+              
+            </div>
+            <!-- Một đầu -->
+            <div class="form-field-row">
+              <div class="form-field combined-field">
+                <div class="field-label">Một đầu</div>
+                <div class="input-group">                
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>2</mat-label>
+                    <input matInput type="number" formControlName="mot_dau_day_2" placeholder="2">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>3</mat-label>
+                    <input matInput type="number" formControlName="mot_dau_day_3" placeholder="3">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>4</mat-label>
+                    <input matInput type="number" formControlName="mot_dau_day_4" placeholder="4">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>6</mat-label>
+                    <input matInput type="number" formControlName="mot_dau_day_6" placeholder="6">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="small-input">
+                    <mat-label>8</mat-label>
+                    <input matInput type="number" formControlName="mot_dau_day_8" placeholder="8">
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid Cell 2: Kích thước và máy móc -->
+          <div class="grid-cell dimensions-machine-cell" style="margin-top: -20px;">
+            <!-- Row: Nhà sản xuất và Ngày sản xuất (moved to right column) -->
             <div class="form-field-row">
               <mat-form-field appearance="outline" class="half-width">
                 <mat-label>Nhà sản xuất *</mat-label>
@@ -118,30 +206,10 @@
                 </mat-error>
               </mat-form-field>
             </div>
-          </div>
-
-          <!-- Grid Cell 2: Kích thước và máy móc -->
-          <div class="grid-cell dimensions-machine-cell" style="margin-top: -20px;">
-            <!-- Row 1: KT bd Cao BV và Chu vi bd Cao TT -->
-            <div class="form-field-row">
-              <div class="form-field half-width">
-                <label class="mat-label">KT bd Cao BV: </label>
-                <mat-form-field appearance="outline" class="full-width">
-                  <input matInput type="number" formControlName="kt_bd_cao_bv">
-                </mat-form-field>
-              </div>
-              
-              <div class="form-field half-width">
-                <mat-form-field appearance="outline" class="full-width" style="margin-top: 20px;">
-                  <mat-label>Chu vi bd Cao TT</mat-label>
-                  <input matInput type="number" formControlName="chu_vi_khuon" placeholder="Nhập chu vi bd TT">
-                </mat-form-field>
-              </div>
-            </div>
 
             <!-- Row 2: Chiều quấn dây và Máy quấn dây -->
-            <div class="form-field-row">
-              <div class="winding-direction-group half-width">
+            <div class="winding-controls-row">
+              <div class="winding-direction-group">
                 <label class="mat-label">Chiều quấn dây</label>
                 <div class="radio-group">
                   <mat-radio-group formControlName="chieu_quan_day">
@@ -151,8 +219,8 @@
                 </div>
               </div>
               
-              <div class="form-field half-width">
-                <mat-form-field appearance="outline" class="full-width">
+              <div class="winding-machine-field">
+                <mat-form-field appearance="outline">
                   <mat-label>Máy quấn dây *</mat-label>
                   <mat-select formControlName="may_quan_day">
                     <mat-option *ngFor="let machine of windingMachines" [value]="machine.value">
@@ -165,91 +233,47 @@
                 </mat-form-field>
               </div>
             </div>
+            <!-- KT bd Cao BV moved down under QTD Xung quanh -->
+            <div class="form-field combined-field align-right">
+              <div class="field-label">KT bd Cao BV</div>
+              <div class="phase-inputs-group">
+                <mat-form-field appearance="outline" class="phase-input">
+                  <mat-label>1P</mat-label>
+                  <input matInput formControlName="kt_bd_cao_bv_1p">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="phase-input">
+                  <mat-label>2P</mat-label>
+                  <input matInput formControlName="kt_bd_cao_bv_2p">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="phase-input">
+                  <mat-label>3P</mat-label>
+                  <input matInput formControlName="kt_bd_cao_bv_3p">
+                </mat-form-field>
+              </div>
+            </div>
+
+
+          <!-- Chu vi bd Cao TT moved down under Hai đầu -->
+          <div class="form-field combined-field align-right">
+            <div class="field-label">Chu vi bd Cao TT</div>
+            <div class="phase-inputs-group">
+              <mat-form-field appearance="outline" class="phase-input">
+                <mat-label>1P</mat-label>
+                <input matInput formControlName="chu_vi_bd_cao_tt_1p" placeholder="1P">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="phase-input">
+                <mat-label>2P</mat-label>
+                <input matInput formControlName="chu_vi_bd_cao_tt_2p" placeholder="2P">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="phase-input">
+                <mat-label>3P</mat-label>
+                <input matInput formControlName="chu_vi_bd_cao_tt_3p" placeholder="3P">
+              </mat-form-field>
+            </div>
           </div>
-          <!-- Grid Cell 3: Thông số dây quấn -->
-          <div class="grid-cell winding-params-cell">            
-            <div class="form-field combined-field">
-              <div class="field-label">QTD Xung quanh</div>
-              <div class="input-group">                
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>2</mat-label>
-                  <input matInput type="number" formControlName="xung_quanh_day_2" placeholder="2">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>3</mat-label>
-                  <input matInput type="number" formControlName="xung_quanh_day_3" placeholder="3">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>4</mat-label>
-                  <input matInput type="number" formControlName="xung_quanh_day_4" placeholder="4">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>6</mat-label>
-                  <input matInput type="number" formControlName="xung_quanh_day_6" placeholder="6">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>8</mat-label>
-                  <input matInput type="number" formControlName="xung_quanh_day_8" placeholder="8">
-                </mat-form-field>
-              </div>
-            </div>
-
-            <div class="form-field combined-field">
-              <div class="field-label">Hai đầu</div>
-              <div class="input-group">                
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>2</mat-label>
-                  <input matInput type="number" formControlName="hai_dau_day_2" placeholder="2">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>3</mat-label>
-                  <input matInput type="number" formControlName="hai_dau_day_3" placeholder="3">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>4</mat-label>
-                  <input matInput type="number" formControlName="hai_dau_day_4" placeholder="4">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>6</mat-label>
-                  <input matInput type="number" formControlName="hai_dau_day_6" placeholder="6">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>8</mat-label>
-                  <input matInput type="number" formControlName="hai_dau_day_8" placeholder="8">
-                </mat-form-field>
-              </div>
-            </div>
-
-            <div class="form-field combined-field">
-              <div class="field-label">Một đầu</div>
-              <div class="input-group">                
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>2</mat-label>
-                  <input matInput type="number" formControlName="mot_dau_day_2" placeholder="2">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>3</mat-label>
-                  <input matInput type="number" formControlName="mot_dau_day_3" placeholder="3">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>4</mat-label>
-                  <input matInput type="number" formControlName="mot_dau_day_4" placeholder="4">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>6</mat-label>
-                  <input matInput type="number" formControlName="mot_dau_day_6" placeholder="6">
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="small-input">
-                  <mat-label>8</mat-label>
-                  <input matInput type="number" formControlName="mot_dau_day_8" placeholder="8">
-                </mat-form-field>
-              </div>
-            </div>
           </div>
         </div>
       </div>
-
-      
     </form>
   </mat-dialog-content>
 

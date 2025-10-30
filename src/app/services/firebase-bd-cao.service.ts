@@ -63,7 +63,15 @@ export interface BdCaoData {
   kt_bd_cao_ngoai_1p?: number;
   kt_bd_cao_ngoai_2p?: number;
   kt_bd_cao_ngoai_3p?: number;
+  // KT bối dây cao BV (3 phase)
+  kt_bd_cao_bv_1p?: number;
+  kt_bd_cao_bv_2p?: number;
+  kt_bd_cao_bv_3p?: number;
   kt_bd_cao_bv?: number;
+  // Chu vi bd cao TT (3 phase)
+  chu_vi_bd_cao_tt_1p?: number;
+  chu_vi_bd_cao_tt_2p?: number;
+  chu_vi_bd_cao_tt_3p?: number;
   trang_thai: number;
   trang_thai_approve?: string; // 'pending', 'approved', 'rejected'
   user_update?: string;

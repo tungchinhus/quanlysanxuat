@@ -519,14 +519,21 @@ export class DsQuanDayComponent implements OnInit {
       const bdCaoUserMap = new Map();
       const bdEpUserMap = new Map();
       
+      // Normalize map keys to strings to avoid number/string mismatches
       bdHaData.forEach((item: any) => {
-        if (item.id) bdHaUserMap.set(item.id, item.user_update);
+        if (item?.id !== undefined && item?.id !== null) {
+          bdHaUserMap.set(String(item.id), item.user_update);
+        }
       });
       bdCaoData.forEach((item: any) => {
-        if (item.id) bdCaoUserMap.set(item.id, item.user_update);
+        if (item?.id !== undefined && item?.id !== null) {
+          bdCaoUserMap.set(String(item.id), item.user_update);
+        }
       });
       bdEpData.forEach((item: any) => {
-        if (item.id) bdEpUserMap.set(item.id, item.user_update);
+        if (item?.id !== undefined && item?.id !== null) {
+          bdEpUserMap.set(String(item.id), item.user_update);
+        }
       });
       
       // 7. Map dữ liệu từ Firebase sang QuanDayData format
@@ -555,9 +562,10 @@ export class DsQuanDayComponent implements OnInit {
           bd_ha_id: assignment?.bd_ha_id || null,
           bd_cao_id: assignment?.bd_cao_id || null,
           bd_ep_id: assignment?.bd_ep_id || null,
-          user_update_ha: assignment?.bd_ha_id ? bdHaUserMap.get(assignment.bd_ha_id) : null,
-          user_update_cao: assignment?.bd_cao_id ? bdCaoUserMap.get(assignment.bd_cao_id) : null,
-          user_update_ep: assignment?.bd_ep_id ? bdEpUserMap.get(assignment.bd_ep_id) : null,
+          // Use normalized string keys when reading from the maps
+          user_update_ha: assignment?.bd_ha_id ? bdHaUserMap.get(String(assignment.bd_ha_id)) : null,
+          user_update_cao: assignment?.bd_cao_id ? bdCaoUserMap.get(String(assignment.bd_cao_id)) : null,
+          user_update_ep: assignment?.bd_ep_id ? bdEpUserMap.get(String(assignment.bd_ep_id)) : null,
           created_at: bangVe.created_at || new Date(),
           username: bangVe.username || bangVe.user_create || '',
           email: bangVe.email || '',
@@ -1730,6 +1738,23 @@ export class DsQuanDayComponent implements OnInit {
         if (result.reloadData) {
           console.log('Reload data sau khi lưu bối dây cao thành công');
           this.showSuccess(result.message || 'Thông tin bối dây cao đã được lưu thành công!');
+          
+          // Optimistic UI: di chuyển item ra khỏi tab "Quấn dây mới" ngay lập tức
+          try {
+            const currentEmail = this.currentUser?.email || '';
+            // Xóa khỏi danh sách tab mới
+            this.quanDays = this.quanDays.filter(item => item.id !== element.id);
+            this.filteredQuanDays = this.filteredQuanDays.filter(item => item.id !== element.id);
+            this.pagedNewQuanDays = this.getPaginatedData(this.filteredQuanDays, 0, this.pageSize);
+            
+            // Thêm vào danh sách đã xử lý cho user hiện tại
+            const movedItem = { ...updatedElement, user_update_cao: currentEmail } as any;
+            this.completedQuanDays = [movedItem, ...this.completedQuanDays];
+            this.filteredCompletedQuanDays = [...this.completedQuanDays];
+            this.pagedCompletedQuanDays = this.getPaginatedData(this.filteredCompletedQuanDays, 0, this.pageSizeCompleted);
+          } catch (e) {
+            console.warn('Optimistic move to processed failed, will rely on reload.', e);
+          }
           
           // Chuyển sang tab "Quấn dây đã xử lý" trước khi reload data
           this.currentTabIndex = 1;

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +12,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '../../services/auth.service';
+import { firstValueFrom, of } from 'rxjs';
+import { catchError, filter, take, timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dang-nhap',
@@ -39,7 +41,7 @@ export class DangNhapComponent implements OnInit {
   rememberMe = false;
 
   constructor(
-    private fb: FormBuilder,
+    @Inject(FormBuilder) private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar
@@ -158,100 +160,77 @@ export class DangNhapComponent implements OnInit {
     });
   }
 
-  // Redirect user based on their role
-  private redirectBasedOnRole(user: any): void {
-    // Show loading state to prevent flashing
+  // Redirect user based on their role (no arbitrary timeouts)
+  private async redirectBasedOnRole(user: any): Promise<void> {
     this.isLoading = true;
-    
-    if (!user || !user.roles) {
-      // Wait longer to ensure auth data is fully set
-      setTimeout(() => {
-        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
-      }, 1000); // Increased timeout
-      return;
-    }
 
-    const roles = Array.isArray(user.roles) ? user.roles : [user.roles];
-    const roleNames = roles.map((role: any) => typeof role === 'string' ? role : role.name || role.role_name);
-
-    console.log('User roles for redirect:', roleNames);
-
-    // Wait longer to ensure auth data is fully set, then redirect
-    setTimeout(() => {
-      // Check for super_admin role - highest priority
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('super_admin') || 
-        role?.toLowerCase().includes('superadmin')
-      )) {
+    const navigateByRoles = (roleNames: string[]) => {
+      const lower = roleNames.map(r => (r || '').toLowerCase());
+      if (lower.some(r => r.includes('super_admin') || r.includes('superadmin'))) {
         this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
         return;
       }
-
-      // Check for admin role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('admin')
-      )) {
+      if (lower.some(r => r.includes('admin'))) {
         this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
         return;
       }
-
-      // Check for manager role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('manager')
-      )) {
+      if (lower.some(r => r.includes('manager'))) {
         this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
         return;
       }
-
-      // Check for totruong role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('totruong')
-      )) {
+      if (lower.some(r => r.includes('totruong'))) {
         this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
         return;
       }
-
-      // Check for bối dây cao role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('quandaycao') || 
-        role?.toLowerCase().includes('boidaycao') ||
-        role?.toLowerCase().includes('cao')
-      )) {
+      if (lower.some(r => r.includes('quandaycao') || r.includes('boidaycao') || r.includes('cao'))) {
         this.router.navigateByUrl('/ds-quan-day', { skipLocationChange: false });
         return;
       }
-
-      // Check for bối dây hạ role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('quandayha') || 
-        role?.toLowerCase().includes('boidayha') ||
-        role?.toLowerCase().includes('ha')
-      )) {
+      if (lower.some(r => r.includes('quandayha') || r.includes('boidayha') || r.includes('ha'))) {
         this.router.navigateByUrl('/ds-quan-day', { skipLocationChange: false });
         return;
       }
-
-      // Check for ép bối dây role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('epboiday') || 
-        role?.toLowerCase().includes('boidayep') ||
-        role?.toLowerCase().includes('ep')
-      )) {
+      if (lower.some(r => r.includes('epboiday') || r.includes('boidayep') || r.includes('ep'))) {
         this.router.navigateByUrl('/ds-quan-day', { skipLocationChange: false });
         return;
       }
-
-      // Check for KCS role
-      if (roleNames.some((role: any) => 
-        role?.toLowerCase().includes('kcs')
-      )) {
+      if (lower.some(r => r.includes('kcs'))) {
         this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
         return;
       }
-
-      // Default redirect to dashboard
       this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
-    }, 500);
+    };
+
+    try {
+      // If roles are already available, navigate immediately
+      if (user && user.roles && (Array.isArray(user.roles) ? user.roles.length : 1) > 0) {
+        const roles = Array.isArray(user.roles) ? user.roles : [user.roles];
+        const roleNames = roles.map((role: any) => typeof role === 'string' ? role : role.name || role.role_name);
+        navigateByRoles(roleNames);
+        return;
+      }
+
+      // Otherwise, wait for currentUser$ to emit with roles, with a safety timeout
+      const awaitedUser = await firstValueFrom(
+        this.authService.currentUser$.pipe(
+          filter(u => !!u && Array.isArray((u as any).roles) && (u as any).roles.length > 0),
+          take(1),
+          timeout(4000),
+          catchError(() => of(null))
+        )
+      );
+
+      if (awaitedUser && (awaitedUser as any).roles) {
+        const roles = (awaitedUser as any).roles;
+        const roleNames = Array.isArray(roles) ? roles.map((r: any) => typeof r === 'string' ? r : r?.name || r?.role_name) : [roles];
+        navigateByRoles(roleNames as string[]);
+      } else {
+        // Fallback if roles still unavailable
+        this.router.navigateByUrl('/dashboard', { skipLocationChange: false });
+      }
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   // Demo accounts for testing
